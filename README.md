@@ -69,6 +69,7 @@ bash scripts/smoke_test.sh
 
 > Si querés cambiar estas credenciales, modificá `SEED_ADMIN_*` en `backend/.env` antes de ejecutar `make seed`.
 > `make verify-3-nodes` usa prompt oculto para password de login. Para modo no interactivo, exportá `VERIFY_ADMIN_PASSWORD` o `VERIFY_ADMIN_TOKEN` en el entorno.
+> Si el API está sobre HTTPS con CA interna, podés usar `VERIFY_CA_BUNDLE` (o `--ca-bundle`) para validación TLS explícita.
 > El seed valida `APP_ENV=development` por seguridad. Solo se puede forzar fuera de dev con `SEED_ALLOW_NON_DEV=true`.
 > No subas `.env` reales al repositorio; mantené credenciales sensibles fuera de git.
 

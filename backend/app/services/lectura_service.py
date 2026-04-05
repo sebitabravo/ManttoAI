@@ -1,5 +1,7 @@
 """Servicios de lecturas telemétricas con persistencia en base de datos."""
 
+import logging
+
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -12,8 +14,14 @@ from app.services.alerta_service import (
 )
 from app.services.equipo_service import get_equipo_or_404
 
+logger = logging.getLogger(__name__)
 
-def list_lecturas(db: Session, equipo_id: int | None = None) -> list[Lectura]:
+
+def list_lecturas(
+    db: Session,
+    equipo_id: int | None = None,
+    limit: int | None = None,
+) -> list[Lectura]:
     """Lista lecturas persistidas, opcionalmente filtradas por equipo."""
 
     query = select(Lectura)
@@ -21,6 +29,9 @@ def list_lecturas(db: Session, equipo_id: int | None = None) -> list[Lectura]:
         query = query.where(Lectura.equipo_id == equipo_id)
 
     query = query.order_by(Lectura.timestamp.desc(), Lectura.id.desc())
+    if limit is not None:
+        query = query.limit(limit)
+
     return list(db.scalars(query))
 
 
@@ -49,11 +60,24 @@ def create_lectura(db: Session, payload: LecturaCreate) -> Lectura:
     get_equipo_or_404(db, payload.equipo_id)
     lectura = Lectura(**payload.model_dump(exclude_none=True))
     db.add(lectura)
-    db.flush()
-    alertas_creadas = evaluate_thresholds(db, lectura)
-    db.commit()
+
+    try:
+        db.flush()
+        alertas_creadas = evaluate_thresholds(db, lectura)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
     db.refresh(lectura)
-    dispatch_critical_email_notifications(db, alertas_creadas)
+    try:
+        dispatch_critical_email_notifications(db, alertas_creadas)
+    except Exception:
+        logger.exception(
+            "No se pudo despachar notificación crítica para lectura id=%s",
+            lectura.id,
+        )
+
     return lectura
 
 

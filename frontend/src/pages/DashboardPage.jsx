@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import ResumenCards from "../components/dashboard/ResumenCards";
 import GraficoTemperatura from "../components/dashboard/GraficoTemperatura";
 import GraficoVibracion from "../components/dashboard/GraficoVibracion";
@@ -22,8 +24,10 @@ export default function DashboardPage() {
   const { data, loading, error } = usePolling(getDashboardData, DASHBOARD_POLLING_INTERVAL_MS, null);
 
   const resumen = data?.resumen || resumenInicial;
-  const fetchedLecturas = Array.isArray(data?.lecturas) ? data.lecturas : [];
-  const lecturas = [...fetchedLecturas].sort(compareByTimestampDesc);
+  const lecturas = useMemo(() => {
+    const fetchedLecturas = Array.isArray(data?.lecturas) ? data.lecturas : [];
+    return [...fetchedLecturas].sort(compareByTimestampDesc);
+  }, [data?.lecturas]);
 
   const isInitialLoading = loading && !data;
 

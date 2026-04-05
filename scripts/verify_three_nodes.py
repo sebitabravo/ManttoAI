@@ -52,6 +52,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Permite HTTP hacia hosts remotos (solo para entornos controlados).",
     )
+    parser.add_argument(
+        "--ca-bundle",
+        default="",
+        help=(
+            "Ruta a bundle de CA para validar TLS en HTTPS. "
+            "También se puede definir con VERIFY_CA_BUNDLE."
+        ),
+    )
     parser.add_argument("--output", default="")
     return parser.parse_args()
 
@@ -107,6 +115,7 @@ def fetch_json(
     method: str = "GET",
     payload: dict | None = None,
     token: str = "",
+    ca_bundle: str = "",
 ) -> dict | list:
     """Obtiene JSON vía HTTP usando librería estándar."""
 
@@ -122,7 +131,11 @@ def fetch_json(
     request = Request(url, data=data, headers=headers, method=method)
     parsed_url = urlparse(url)
     if parsed_url.scheme == "https":
-        ssl_context = ssl.create_default_context()
+        ssl_context = (
+            ssl.create_default_context(cafile=ca_bundle)
+            if ca_bundle
+            else ssl.create_default_context()
+        )
         ssl_context.check_hostname = True
         ssl_context.verify_mode = ssl.CERT_REQUIRED
         with urlopen(request, timeout=10, context=ssl_context) as response:  # nosec B310 - URL controlada por operador
@@ -185,12 +198,15 @@ def parse_timestamp(value: str | None) -> datetime | None:
         return None
 
 
-def build_dashboard_map(api_url: str, token: str) -> dict[int, dict]:
+def build_dashboard_map(
+    api_url: str, token: str, ca_bundle: str = ""
+) -> dict[int, dict]:
     """Construye mapa de resumen por equipo para validación rápida."""
 
     dashboard_payload = fetch_json(
         f"{api_url.rstrip('/')}/dashboard/resumen",
         token=token,
+        ca_bundle=ca_bundle,
     )
     equipos_payload = (
         dashboard_payload.get("equipos", [])
@@ -217,6 +233,7 @@ def validate_equipo(
     dashboard_map: dict[int, dict],
     cutoff: datetime,
     token: str,
+    ca_bundle: str,
 ) -> EquipoCheck:
     """Valida lectura reciente y presencia en dashboard para un equipo."""
 
@@ -224,6 +241,7 @@ def validate_equipo(
         lectura_payload = fetch_json(
             f"{api_url.rstrip('/')}/lecturas/latest/{equipo_id}",
             token=token,
+            ca_bundle=ca_bundle,
         )
     except HTTPError as exc:
         return EquipoCheck(
@@ -339,7 +357,7 @@ def build_markdown_report(
     return "\n".join(lines) + "\n"
 
 
-def resolve_auth_token(api_url: str, token: str, email: str) -> str:
+def resolve_auth_token(api_url: str, token: str, email: str, ca_bundle: str) -> str:
     """Resuelve token JWT desde variable de entorno, argumento o login API.
 
     Orden de prioridad:
@@ -379,6 +397,7 @@ def resolve_auth_token(api_url: str, token: str, email: str) -> str:
         f"{api_url.rstrip('/')}/auth/login",
         method="POST",
         payload={"email": email, "password": password},
+        ca_bundle=ca_bundle,
     )
 
     if not isinstance(login_payload, dict):
@@ -398,6 +417,11 @@ def main() -> int:
     equipos = parse_equipos(args.equipos)
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(minutes=args.ventana_minutos)
+    ca_bundle = (args.ca_bundle.strip() or getenv("VERIFY_CA_BUNDLE") or "").strip()
+
+    if ca_bundle and not Path(ca_bundle).exists():
+        print(f"No existe el archivo de CA bundle indicado: {ca_bundle}")
+        return 1
 
     try:
         validate_api_url_security(args.api_url, allow_insecure=args.allow_insecure)
@@ -410,6 +434,7 @@ def main() -> int:
             api_url=args.api_url,
             token=args.token,
             email=args.auth_email,
+            ca_bundle=ca_bundle,
         )
     except HTTPError as exc:
         print(format_http_error("No se pudo obtener token desde /auth/login", exc))
@@ -423,7 +448,9 @@ def main() -> int:
         return 1
 
     try:
-        dashboard_map = build_dashboard_map(args.api_url, auth_token)
+        dashboard_map = build_dashboard_map(
+            args.api_url, auth_token, ca_bundle=ca_bundle
+        )
     except HTTPError as exc:
         print(format_http_error("No se pudo leer /dashboard/resumen", exc))
         return 1
@@ -432,7 +459,14 @@ def main() -> int:
         return 1
 
     checks = [
-        validate_equipo(args.api_url, equipo_id, dashboard_map, cutoff, auth_token)
+        validate_equipo(
+            args.api_url,
+            equipo_id,
+            dashboard_map,
+            cutoff,
+            auth_token,
+            ca_bundle,
+        )
         for equipo_id in equipos
     ]
 

@@ -1,17 +1,20 @@
+import { useMemo } from "react";
 import PropTypes from "prop-types";
 
 import GraficoLineaBase from "./GraficoLineaBase";
 import { compareByTimestampAsc } from "../../utils/formatDate";
 
 export default function GraficoTemperatura({ lecturas = [] }) {
-  const temporalSeries = [...lecturas]
-    .sort(compareByTimestampAsc)
-    .slice(-24)
-    .map((lectura) => ({
-      timestamp: lectura.timestamp,
-      value: Number(lectura.temperatura),
-    }))
-    .filter((point) => Number.isFinite(point.value));
+  const temporalSeries = useMemo(() => {
+    return [...lecturas]
+      .sort(compareByTimestampAsc)
+      .slice(-24)
+      .map((lectura) => ({
+        timestamp: lectura.timestamp,
+        value: Number(lectura.temperatura),
+      }))
+      .filter((point) => Number.isFinite(point.value));
+  }, [lecturas]);
 
   return (
     <GraficoLineaBase

@@ -133,6 +133,7 @@ make verify-3-nodes
 
 > Si no definís `VERIFY_ADMIN_PASSWORD`, el script pedirá password en un prompt oculto.
 > Para ejecución no interactiva, definir `VERIFY_ADMIN_PASSWORD` en el entorno antes de ejecutar.
+> Para HTTPS con CA privada/interna, usar `VERIFY_CA_BUNDLE` o `--ca-bundle /ruta/ca.pem`.
 
 ### 4) Evidencia mínima recomendada
 

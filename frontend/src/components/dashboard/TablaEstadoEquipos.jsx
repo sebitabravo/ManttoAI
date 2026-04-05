@@ -36,7 +36,10 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
           Aún no hay equipos con telemetría para mostrar.
         </p>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table aria-label="Estado de telemetría por equipo" style={{ width: "100%", borderCollapse: "collapse" }}>
+          <caption style={{ captionSide: "top", textAlign: "left", paddingBottom: 8, color: "#6b7280" }}>
+            Estado de telemetría y alertas activas por equipo.
+          </caption>
           <thead>
             <tr>
               <th scope="col" align="left">ID</th>
@@ -48,16 +51,24 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((equipo) => (
-              <tr key={equipo.id}>
-                <td>{equipo.id}</td>
-                <td>{equipo.nombre || `Equipo ${equipo.id}`}</td>
-                <td>{formatTemperature(equipo.ultima_temperatura)}</td>
-                <td>{formatProbability(equipo.ultima_probabilidad)}</td>
-                <td>{Number(equipo.alertas_activas || 0)}</td>
-                <td>{resolveTelemetryStatus(equipo)}</td>
-              </tr>
-            ))}
+            {rows.map((equipo) => {
+              const telemetryStatus = resolveTelemetryStatus(equipo);
+
+              return (
+                <tr key={equipo.id}>
+                  <td>{equipo.id}</td>
+                  <td>{equipo.nombre || `Equipo ${equipo.id}`}</td>
+                  <td>{formatTemperature(equipo.ultima_temperatura)}</td>
+                  <td>{formatProbability(equipo.ultima_probabilidad)}</td>
+                  <td>{Number(equipo.alertas_activas || 0)}</td>
+                  <td>
+                    <span role="status" aria-live="polite" aria-label={`Telemetría ${telemetryStatus.toLowerCase()}`}>
+                      {telemetryStatus}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

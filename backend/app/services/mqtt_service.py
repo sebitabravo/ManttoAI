@@ -163,6 +163,11 @@ def start_mqtt_subscriber(session_factory: SessionFactory = SessionLocal) -> boo
         client = mqtt.Client(callback_api_version)
     else:
         client = mqtt.Client()
+
+    mqtt_username = settings.mqtt_username.strip()
+    if mqtt_username:
+        client.username_pw_set(mqtt_username, settings.mqtt_password)
+
     client.user_data_set({"session_factory": session_factory})
     client.on_connect = _on_connect
     client.on_message = _on_message

@@ -52,6 +52,9 @@ bash scripts/smoke_test.sh
 
 > El smoke test modifica datos. Ejecutalo en local; para forzar API remota usá `SMOKE_ALLOW_REMOTE=true` de forma explícita.
 
+> `make setup-env` también genera `mosquitto/passwd` (archivo local no versionado) usando `MQTT_USERNAME`/`MQTT_PASSWORD` de `.env` o defaults demo.
+> Si cambiás credenciales MQTT después, regenerá con `make setup-mqtt-creds` y reiniciá `mosquitto`.
+
 ### Credenciales demo del seed
 
 - Email: `admin@manttoai.local`

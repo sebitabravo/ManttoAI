@@ -38,10 +38,18 @@ Parámetros recomendados para demo local:
 
 - `MQTT_HOST`: IP del host con Mosquitto accesible desde el ESP32.
 - `MQTT_PORT`: `1883`.
-- `MQTT_USERNAME` / `MQTT_PASSWORD`: opcional para broker con auth (si se deja vacío usa conexión sin credenciales).
+- `MQTT_USERNAME` / `MQTT_PASSWORD`: requeridos cuando Mosquitto está configurado con `allow_anonymous false`.
 - `MQTT_PUBLISH_INTERVAL_MS`: `5000` (una lectura cada 5 segundos).
 
-> ⚠️ Para entorno de demo local podés usar broker sin auth. Para redes compartidas, activá autenticación MQTT y evitá versionar credenciales reales.
+El archivo de credenciales del broker (`mosquitto/passwd`) se genera con:
+
+```bash
+make setup-mqtt-creds
+```
+
+Si no existe, `make setup-env` lo crea automáticamente.
+
+> ⚠️ No versionar credenciales reales del broker. Usar placeholders en `config.h` y valores reales solo en entorno local/dispositivo.
 
 Topic publicado por firmware:
 
@@ -74,11 +82,15 @@ Checklist rápido:
 
 ## Verificación end-to-end hardware -> broker -> backend -> dashboard
 
+> Si el ESP32 está fuera del host Docker, recordá exponer Mosquitto para LAN.
+> En `docker-compose.yml` podés cambiar temporalmente `127.0.0.1:1883:1883` por `1883:1883` para la demo física,
+> y luego revertir para mantener menor superficie de exposición en desarrollo local.
+
 1. Cargar firmware al ESP32.
 2. En el host del broker, abrir:
 
    ```bash
-   mosquitto_sub -h <broker> -t "manttoai/#" -v
+   mosquitto_sub -h <broker> -u <mqtt_user> -P <mqtt_pass> -t "manttoai/#" -v
    ```
 
 3. Verificar llegada de payload JSON con `temperatura`, `humedad`, `vib_x`, `vib_y`, `vib_z`.
@@ -117,37 +129,37 @@ Un ciclo publica **1 lectura por equipo**.
 ### Caso mínimo
 
 ```bash
-python iot/simulator/mqtt_simulator.py --count 5 --interval 1
+python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <mqtt_user> --password <mqtt_pass> --count 5 --interval 1
 ```
 
 Compatibilidad hacia atrás:
 
 ```bash
-python iot/simulator/mqtt_simulator.py --equipo-id 1 --count 5
+python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <mqtt_user> --password <mqtt_pass> --equipo-id 1 --count 5
 ```
 
 ### Multi-equipo
 
 ```bash
-python iot/simulator/mqtt_simulator.py --devices 3 --count 5 --interval 0.5
+python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <mqtt_user> --password <mqtt_pass> --devices 3 --count 5 --interval 0.5
 ```
 
 ### Datos reproducibles
 
 ```bash
-python iot/simulator/mqtt_simulator.py --devices 2 --count 5 --seed 42
+python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <mqtt_user> --password <mqtt_pass> --devices 2 --count 5 --seed 42
 ```
 
 ### Topic prefix personalizado
 
 ```bash
-python iot/simulator/mqtt_simulator.py --topic-prefix "manttoai/equipo" --devices 2
+python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <mqtt_user> --password <mqtt_pass> --topic-prefix "manttoai/equipo" --devices 2
 ```
 
 ### IDs iniciales personalizados
 
 ```bash
-python iot/simulator/mqtt_simulator.py --devices 2 --start-id 10 --count 3
+python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <mqtt_user> --password <mqtt_pass> --devices 2 --start-id 10 --count 3
 ```
 
 Publica en:
@@ -158,5 +170,5 @@ Publica en:
 ## Escuchar mensajes publicados
 
 ```bash
-mosquitto_sub -h localhost -t "manttoai/#" -v
+mosquitto_sub -h localhost -u <mqtt_user> -P <mqtt_pass> -t "manttoai/#" -v
 ```

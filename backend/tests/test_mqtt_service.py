@@ -1,6 +1,7 @@
 """Tests de parsing y persistencia del servicio MQTT."""
 
 import json
+from types import SimpleNamespace
 from collections.abc import Generator
 
 import pytest
@@ -16,6 +17,8 @@ from app.services.mqtt_service import (
     extract_equipo_id,
     parse_message,
     process_mqtt_message,
+    start_mqtt_subscriber,
+    stop_mqtt_subscriber,
 )
 
 
@@ -133,3 +136,89 @@ def test_process_mqtt_message_invalid_payload_does_not_break_loop(
         assert total_lecturas == 0
     finally:
         db.close()
+
+
+class _DummyMqttClient:
+    """Cliente MQTT de prueba para validar autenticación configurada."""
+
+    def __init__(self, *_args, **_kwargs):
+        self.auth_calls: list[tuple[str, str]] = []
+        self.userdata = None
+        self.on_connect = None
+        self.on_message = None
+        self.loop_started = False
+
+    def username_pw_set(self, username: str, password: str) -> None:
+        self.auth_calls.append((username, password))
+
+    def user_data_set(self, userdata) -> None:
+        self.userdata = userdata
+
+    def connect(self, _host: str, _port: int) -> None:
+        return None
+
+    def loop_start(self) -> None:
+        self.loop_started = True
+
+    def loop_stop(self) -> None:
+        self.loop_started = False
+
+    def disconnect(self) -> None:
+        return None
+
+
+def test_start_mqtt_subscriber_sets_auth_when_username_is_configured(monkeypatch):
+    """Valida que el subscriber configure auth MQTT cuando hay usuario."""
+
+    dummy_client = _DummyMqttClient()
+    mqtt_stub = SimpleNamespace(
+        CallbackAPIVersion=SimpleNamespace(VERSION2=object()),
+        Client=lambda *_args, **_kwargs: dummy_client,
+    )
+    settings_stub = SimpleNamespace(
+        mqtt_broker_host="mosquitto",
+        mqtt_broker_port=1883,
+        mqtt_username="manttoai_mqtt",
+        mqtt_password="manttoai_mqtt_dev",
+    )
+
+    import app.services.mqtt_service as mqtt_service
+
+    stop_mqtt_subscriber()
+    monkeypatch.setattr(mqtt_service, "mqtt", mqtt_stub)
+    monkeypatch.setattr(mqtt_service, "get_settings", lambda: settings_stub)
+
+    started = start_mqtt_subscriber()
+    assert started is True
+    assert dummy_client.auth_calls == [("manttoai_mqtt", "manttoai_mqtt_dev")]
+    assert dummy_client.loop_started is True
+
+    stop_mqtt_subscriber()
+
+
+def test_start_mqtt_subscriber_skips_auth_when_username_is_empty(monkeypatch):
+    """Valida que el subscriber no configure auth si no hay usuario."""
+
+    dummy_client = _DummyMqttClient()
+    mqtt_stub = SimpleNamespace(
+        CallbackAPIVersion=SimpleNamespace(VERSION2=object()),
+        Client=lambda *_args, **_kwargs: dummy_client,
+    )
+    settings_stub = SimpleNamespace(
+        mqtt_broker_host="mosquitto",
+        mqtt_broker_port=1883,
+        mqtt_username="",
+        mqtt_password="",
+    )
+
+    import app.services.mqtt_service as mqtt_service
+
+    stop_mqtt_subscriber()
+    monkeypatch.setattr(mqtt_service, "mqtt", mqtt_stub)
+    monkeypatch.setattr(mqtt_service, "get_settings", lambda: settings_stub)
+
+    started = start_mqtt_subscriber()
+    assert started is True
+    assert dummy_client.auth_calls == []
+
+    stop_mqtt_subscriber()

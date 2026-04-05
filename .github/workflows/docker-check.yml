@@ -6,6 +6,7 @@ on:
       - develop
       - main
     paths:
+      - .github/workflows/docker-check.yml
       - backend/Dockerfile
       - frontend/Dockerfile
       - docker-compose.yml

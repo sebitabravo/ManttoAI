@@ -14,3 +14,8 @@ export async function createEquipo(payload) {
   const { data } = await client.post("/equipos", payload);
   return data;
 }
+
+export async function updateEquipo(id, payload) {
+  const { data } = await client.put(`/equipos/${id}`, payload);
+  return data;
+}

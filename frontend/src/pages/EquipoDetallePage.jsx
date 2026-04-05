@@ -1,15 +1,31 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { getEquipo } from "../api/equipos";
+import { getEquipo, updateEquipo } from "../api/equipos";
+import EquipoForm from "../components/equipos/EquipoForm";
 import { getLecturas } from "../api/lecturas";
 import { getMantenciones } from "../api/mantenciones";
 import { getPredicciones } from "../api/predicciones";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Button from "../components/ui/Button";
+import { notifyEquiposRefresh } from "../utils/equiposEvents";
 import { formatDate } from "../utils/formatDate";
 import { formatMetric, resolveMaxVibration } from "../utils/metrics";
+
+function resolveRequestErrorMessage(error, fallbackMessage) {
+  const backendDetail = error?.response?.data?.detail;
+
+  if (typeof backendDetail === "string" && backendDetail.trim()) {
+    return backendDetail;
+  }
+
+  if (typeof error?.message === "string" && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallbackMessage;
+}
 
 export default function EquipoDetallePage() {
   const { equipoId } = useParams();
@@ -21,6 +37,9 @@ export default function EquipoDetallePage() {
   const [mantenciones, setMantenciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateErrorMessage, setUpdateErrorMessage] = useState("");
 
   const loadEquipoDetalle = useCallback(async () => {
     if (!Number.isFinite(resolvedEquipoId)) {
@@ -63,6 +82,39 @@ export default function EquipoDetallePage() {
     loadEquipoDetalle();
   }, [loadEquipoDetalle]);
 
+  async function handleUpdateEquipo(payload) {
+    if (!Number.isFinite(resolvedEquipoId)) {
+      setUpdateErrorMessage("No se puede actualizar: identificador de equipo inválido.");
+      return;
+    }
+
+    setUpdateErrorMessage("");
+    setIsUpdating(true);
+
+    try {
+      await updateEquipo(resolvedEquipoId, payload);
+      await loadEquipoDetalle();
+      notifyEquiposRefresh();
+      setShowEditForm(false);
+    } catch (updateError) {
+      setUpdateErrorMessage(
+        resolveRequestErrorMessage(updateError, "No pudimos actualizar el equipo. Revisá los datos ingresados.")
+      );
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  function openEditForm() {
+    setUpdateErrorMessage("");
+    setShowEditForm(true);
+  }
+
+  function closeEditForm() {
+    setUpdateErrorMessage("");
+    setShowEditForm(false);
+  }
+
   const lecturasOrdenadas = useMemo(() => {
     return [...lecturas]
       .sort((current, next) => new Date(next.timestamp).getTime() - new Date(current.timestamp).getTime())
@@ -77,9 +129,19 @@ export default function EquipoDetallePage() {
     <section style={{ display: "grid", gap: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <h1 style={{ margin: 0 }}>Detalle del equipo {equipoId}</h1>
-        <Button type="button" variant="outline" onClick={loadEquipoDetalle} disabled={loading}>
-          {loading ? "Actualizando..." : "Actualizar"}
-        </Button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <Button
+            type="button"
+            variant={showEditForm ? "primary" : "outline"}
+            onClick={showEditForm ? closeEditForm : openEditForm}
+            disabled={!equipo || isUpdating}
+          >
+            {showEditForm ? "Cerrar edición" : "Editar equipo"}
+          </Button>
+          <Button type="button" variant="outline" onClick={loadEquipoDetalle} disabled={loading || isUpdating}>
+            {loading ? "Actualizando..." : "Actualizar"}
+          </Button>
+        </div>
       </div>
 
       {loading ? <LoadingSpinner label="Cargando detalle de equipo..." /> : null}
@@ -104,6 +166,25 @@ export default function EquipoDetallePage() {
           <p>Ubicación: {equipo.ubicacion}</p>
           <p>Tipo: {equipo.tipo}</p>
         </article>
+      ) : null}
+
+      {equipo && showEditForm ? (
+        <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
+          <h2 style={{ marginTop: 0 }}>Editar equipo</h2>
+          <EquipoForm
+            initialValues={{
+              nombre: equipo.nombre,
+              ubicacion: equipo.ubicacion,
+              tipo: equipo.tipo,
+              estado: equipo.estado,
+            }}
+            submitLabel="Guardar cambios"
+            onSubmit={handleUpdateEquipo}
+            onCancel={closeEditForm}
+            isSubmitting={isUpdating}
+            errorMessage={updateErrorMessage}
+          />
+        </section>
       ) : null}
 
       <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>

@@ -1,0 +1,125 @@
+import { expect, test } from "@playwright/test";
+
+function createFakeJwtToken() {
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+  const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+  const payload = Buffer.from(
+    JSON.stringify({ sub: "demo@example.com", exp: nowInSeconds + 3600 })
+  ).toString("base64url");
+
+  return `${header}.${payload}.signature`;
+}
+
+test("dashboard consume API real y reemplaza placeholders", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => {
+    pageErrors.push(error.message);
+  });
+
+  const now = new Date();
+  const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
+  const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+
+  await page.addInitScript((args) => {
+    window.localStorage.setItem("manttoai_token", args.token);
+    window.localStorage.setItem("manttoai_user", JSON.stringify(args.user));
+  }, {
+    token: createFakeJwtToken(),
+    user: {
+      nombre: "demo",
+      email: "demo@example.com",
+      rol: "visualizador",
+    },
+  });
+
+  await page.route("**/api/dashboard/resumen", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        total_equipos: 2,
+        alertas_activas: 1,
+        equipos_en_riesgo: 1,
+        ultima_clasificacion: "alerta",
+        probabilidad_falla: 0.68,
+        equipos: [
+          {
+            id: 1,
+            nombre: "Compresor principal",
+            ultima_temperatura: 51.2,
+            ultima_probabilidad: 0.68,
+            alertas_activas: 1,
+          },
+          {
+            id: 2,
+            nombre: "Bomba respaldo",
+            ultima_temperatura: 35.4,
+            ultima_probabilidad: 0.22,
+            alertas_activas: 0,
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.route("**/api/lecturas**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([
+        {
+          id: 1001,
+          equipo_id: 1,
+          temperatura: 51.2,
+          humedad: 60.1,
+          vib_x: 0.28,
+          vib_y: 0.21,
+          vib_z: 0.18,
+          timestamp: now.toISOString(),
+        },
+        {
+          id: 1002,
+          equipo_id: 2,
+          temperatura: 35.4,
+          humedad: 54.3,
+          vib_x: 0.12,
+          vib_y: 0.16,
+          vib_z: 0.15,
+          timestamp: oneMinuteAgo.toISOString(),
+        },
+        {
+          id: 1003,
+          equipo_id: 1,
+          temperatura: 49.8,
+          humedad: 59.6,
+          vib_x: 0.26,
+          vib_y: 0.2,
+          vib_z: 0.17,
+          timestamp: twoMinutesAgo.toISOString(),
+        },
+      ]),
+    });
+  });
+
+  await page.goto("/dashboard");
+
+  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await expect(page.getByText("Probabilidad de falla")).toBeVisible();
+  await expect(page.getByText("68.0 %")).toBeVisible();
+
+  await expect(page.getByRole("heading", { name: "Temperatura" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Vibración" })).toBeVisible();
+  await expect(
+    page.getByText("Placeholder del gráfico temporal de temperatura.")
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Placeholder del gráfico temporal de vibración.")
+  ).toHaveCount(0);
+
+  await expect(page.getByRole("cell", { name: "Compresor principal" }).first()).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Bomba respaldo" }).first()).toBeVisible();
+  await expect(page.getByRole("cell", { name: "51.20 °C" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "35.40 °C" })).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+});

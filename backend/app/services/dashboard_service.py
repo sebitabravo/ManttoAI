@@ -10,11 +10,18 @@ def get_dashboard_summary(db: Session) -> dict[str, int | float | str]:
 
     equipos = equipo_service.list_equipos(db)
     alertas = alerta_service.list_alertas(db, solo_no_leidas=True, limite=None)
-    prediccion = prediccion_service.get_prediction(1)
+    prediccion = prediccion_service.get_latest_prediction_global(db)
+    if prediccion is not None:
+        clasificacion = prediccion.clasificacion
+        probabilidad = float(prediccion.probabilidad)
+    else:
+        clasificacion = "normal"
+        probabilidad = 0.0
+
     return {
         "total_equipos": len(equipos),
         "alertas_activas": len(alertas),
-        "equipos_en_riesgo": 1 if prediccion.probabilidad >= 0.5 else 0,
-        "ultima_clasificacion": prediccion.clasificacion,
-        "probabilidad_falla": prediccion.probabilidad,
+        "equipos_en_riesgo": 1 if probabilidad >= 0.5 else 0,
+        "ultima_clasificacion": clasificacion,
+        "probabilidad_falla": probabilidad,
     }

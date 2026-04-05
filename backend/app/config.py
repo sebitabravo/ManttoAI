@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_password: str = ""
+    smtp_from_email: str = ""
+    smtp_to_email: str = ""
 
 
 @lru_cache

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.alerta import Alerta
 from app.models.lectura import Lectura
 from app.models.umbral import Umbral
+from app.services.email_service import send_alert_email
 
 
 def _is_out_of_range(value: float, valor_min: float, valor_max: float) -> bool:
@@ -84,6 +85,7 @@ def evaluate_thresholds(db: Session, lectura: Lectura) -> list[Alerta]:
             email_enviado=False,
             leida=False,
         )
+
         db.add(alerta)
         alertas_creadas.append(alerta)
 
@@ -136,3 +138,28 @@ def mark_as_read(db: Session, alerta_id: int) -> dict[str, int | bool]:
 
     db.refresh(alerta)
     return {"id": alerta.id, "leida": alerta.leida}
+
+
+def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) -> None:
+    """Intenta enviar email para alertas críticas ya persistidas."""
+
+    if not alertas:
+        return
+
+    for alerta in alertas:
+        if alerta.nivel != "alto":
+            continue
+
+        email_result = send_alert_email(
+            subject="Alerta crítica ManttoAI",
+            message=(
+                f"Equipo {alerta.equipo_id}: {alerta.mensaje}. "
+                f"Tipo de alerta: {alerta.tipo}."
+            ),
+        )
+        alerta.email_enviado = bool(email_result.get("sent"))
+
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()

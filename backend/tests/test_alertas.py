@@ -1,5 +1,7 @@
 """Tests de alertas."""
 
+from app.services import alerta_service
+
 
 def _build_equipo_payload(nombre: str) -> dict[str, str]:
     """Construye un payload válido para crear equipos."""
@@ -87,6 +89,76 @@ def test_breach_temperatura_creates_persisted_alert(client):
     assert len(alertas) == 1
     assert alertas[0]["tipo"] == "temperatura"
     assert alertas[0]["leida"] is False
+
+
+def test_critical_alert_marks_email_enviado_when_send_succeeds(client, monkeypatch):
+    """Valida que una alerta crítica marque email_enviado=True al enviar."""
+
+    calls: list[tuple[str, str]] = []
+
+    def fake_send_alert_email(subject: str, message: str) -> dict[str, str | bool]:
+        calls.append((subject, message))
+        return {"sent": True, "subject": subject, "message": message}
+
+    monkeypatch.setattr(alerta_service, "send_alert_email", fake_send_alert_email)
+
+    equipo_id = _create_equipo(client)
+    _create_umbral(
+        client,
+        equipo_id=equipo_id,
+        variable="temperatura",
+        valor_min=10.0,
+        valor_max=45.0,
+    )
+
+    _create_lectura(client, equipo_id=equipo_id, temperatura=57.0)
+
+    response = client.get("/alertas", params={"equipo_id": equipo_id})
+    assert response.status_code == 200
+
+    alertas = response.json()
+    assert len(alertas) == 1
+    assert alertas[0]["email_enviado"] is True
+    assert len(calls) == 1
+
+
+def test_critical_alert_marks_email_enviado_false_when_send_fails(
+    client,
+    monkeypatch,
+):
+    """Valida que el fallo de envío deje email_enviado=False."""
+
+    calls: list[tuple[str, str]] = []
+
+    def fake_send_alert_email(subject: str, message: str) -> dict[str, str | bool]:
+        calls.append((subject, message))
+        return {
+            "sent": False,
+            "subject": subject,
+            "message": message,
+            "error": "smtp unavailable",
+        }
+
+    monkeypatch.setattr(alerta_service, "send_alert_email", fake_send_alert_email)
+
+    equipo_id = _create_equipo(client)
+    _create_umbral(
+        client,
+        equipo_id=equipo_id,
+        variable="temperatura",
+        valor_min=10.0,
+        valor_max=45.0,
+    )
+
+    _create_lectura(client, equipo_id=equipo_id, temperatura=58.5)
+
+    response = client.get("/alertas", params={"equipo_id": equipo_id})
+    assert response.status_code == 200
+
+    alertas = response.json()
+    assert len(alertas) == 1
+    assert alertas[0]["email_enviado"] is False
+    assert len(calls) == 1
 
 
 def test_repeated_breach_does_not_duplicate_active_alert(client):

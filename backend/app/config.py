@@ -22,10 +22,12 @@ class Settings(BaseSettings):
     app_env: str = "development"
     api_prefix: str = ""
     database_url: str = "sqlite:///./manttoai.db"
+    database_auto_init: bool = True
     secret_key: str = "manttoai-dev-secret"
     mqtt_broker_host: str = "localhost"
     mqtt_broker_port: int = 1883
     mqtt_base_topic: str = "manttoai/equipo"
+    mqtt_enabled: bool = True
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""

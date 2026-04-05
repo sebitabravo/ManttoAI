@@ -11,7 +11,7 @@ from sqlalchemy.pool import StaticPool
 from app import models  # noqa: F401
 from app.database import Base
 from app.dependencies import get_db
-from app.main import app
+from app import main
 
 
 @pytest.fixture
@@ -40,11 +40,18 @@ def client() -> Generator[TestClient, None, None]:
         finally:
             db.close()
 
-    app.dependency_overrides[get_db] = override_get_db
+    previous_database_auto_init = main.settings.database_auto_init
+    previous_mqtt_enabled = main.settings.mqtt_enabled
 
-    with TestClient(app) as test_client:
+    main.settings.database_auto_init = False
+    main.settings.mqtt_enabled = False
+    main.app.dependency_overrides[get_db] = override_get_db
+
+    with TestClient(main.app) as test_client:
         yield test_client
 
-    app.dependency_overrides.pop(get_db, None)
+    main.app.dependency_overrides.pop(get_db, None)
+    main.settings.database_auto_init = previous_database_auto_init
+    main.settings.mqtt_enabled = previous_mqtt_enabled
     Base.metadata.drop_all(bind=engine)
     engine.dispose()

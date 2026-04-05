@@ -43,6 +43,9 @@ make seed
 # 5) Enviar lecturas demo por MQTT
 make simulate
 
+# 5b) (Opcional) validar escenario de 3 nodos en paralelo
+make verify-3-nodes
+
 # 6) Verificar resumen del dashboard
 curl http://localhost:8000/dashboard/resumen
 
@@ -81,6 +84,7 @@ make logs
 # Seed / simulación
 make seed
 make simulate
+make verify-3-nodes
 make smoke-test
 
 # Backend

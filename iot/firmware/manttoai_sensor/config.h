@@ -10,6 +10,7 @@ static const char* MQTT_HOST = "192.168.1.10";
 static const int MQTT_PORT = 1883;
 static const char* MQTT_USERNAME = "REEMPLAZAR_MQTT_USERNAME";
 static const char* MQTT_PASSWORD = "REEMPLAZAR_MQTT_PASSWORD";
+// Para demo con múltiples nodos, cada ESP32 debe usar un EQUIPO_ID distinto.
 static const int EQUIPO_ID = 1;
 
 static const unsigned long MQTT_PUBLISH_INTERVAL_MS = 5000;

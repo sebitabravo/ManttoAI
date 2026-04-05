@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import ResumenCards from "../components/dashboard/ResumenCards";
 import GraficoTemperatura from "../components/dashboard/GraficoTemperatura";
 import GraficoVibracion from "../components/dashboard/GraficoVibracion";
+import TablaEstadoEquipos from "../components/dashboard/TablaEstadoEquipos";
 import TablaUltimasLecturas from "../components/dashboard/TablaUltimasLecturas";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import { getDashboardData } from "../api/dashboard";
@@ -38,6 +39,8 @@ export default function DashboardPage() {
       </div>
 
       {isInitialLoading ? <LoadingSpinner label="Cargando resumen del dashboard..." /> : <ResumenCards resumen={resumen} />}
+
+      <TablaEstadoEquipos equipos={resumen.equipos || []} />
 
       {loading && data ? (
         <div

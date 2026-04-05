@@ -45,7 +45,12 @@ make simulate
 
 # 6) Verificar resumen del dashboard
 curl http://localhost:8000/dashboard/resumen
+
+# 7) (Opcional recomendado) validar flujo completo de smoke
+bash scripts/smoke_test.sh
 ```
+
+> El smoke test modifica datos. Ejecutalo en local; para forzar API remota usá `SMOKE_ALLOW_REMOTE=true` de forma explícita.
 
 ### Credenciales demo del seed
 
@@ -73,6 +78,7 @@ make logs
 # Seed / simulación
 make seed
 make simulate
+make smoke-test
 
 # Backend
 make test
@@ -97,3 +103,6 @@ make e2e-front
 - Flujo del equipo con IA: `docs/flujo-trabajo-ia.md`
 - Endpoints: `docs/api-endpoints.md`
 - Modelo ML: `docs/modelo-ml.md`
+- Guía de demo: `docs/demo.md`
+- Manual de usuario: `docs/manual-usuario.md`
+- Checklist final de entrega: `docs/checklist-entrega.md`

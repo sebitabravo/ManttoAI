@@ -1,7 +1,7 @@
 # Makefile — Atajos para ManttoAI
 # Uso: make <comando>
 
-.PHONY: setup-env up down logs build config test lint lint-fix seed seed-run backup db-shell simulate train evaluate dev-front lint-front build-front e2e-front mqtt-listen mqtt-test
+.PHONY: setup-env up down logs build config test lint lint-fix seed seed-run smoke-test backup db-shell simulate train evaluate dev-front lint-front build-front e2e-front mqtt-listen mqtt-test
 
 # === Docker ===
 setup-env:
@@ -39,6 +39,9 @@ seed:
 
 seed-run:
 	docker compose run --rm -e APP_ENV=development backend python /scripts/seed_db.py
+
+smoke-test:
+	bash scripts/smoke_test.sh
 
 # === Frontend ===
 dev-front:

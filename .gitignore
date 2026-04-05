@@ -51,3 +51,6 @@ mosquitto/passwd
 # === Backups ===
 *.sql
 *.sql.gz
+*.db
+*.sqlite
+*.sqlite3

@@ -154,6 +154,19 @@ make simulate
 make mqtt-test
 ```
 
+### Review IA estandarizada en PR
+
+Para que todas las revisiones tengan el mismo criterio (sin importar si se usa Claude, Gemini u otra IA), usar estas plantillas:
+
+- Template oficial de PR: `.github/PULL_REQUEST_TEMPLATE.md`
+- Prompt base y reglas: `docs/plantilla-code-review-ia.md`
+- Formato de comentario para GitHub: `.github/AI_REVIEW_COMMENT_TEMPLATE.md`
+
+Regla del equipo:
+
+- sin evidencia técnica (`archivo:línea` + contexto), el hallazgo no bloquea por sí solo
+- con hallazgos **Critical/High** sin resolver, no se aprueba el PR
+
 ---
 
 ## Definition of done del equipo

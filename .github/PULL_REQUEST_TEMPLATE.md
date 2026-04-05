@@ -1,37 +1,161 @@
-## Descripción
+## 📌 Resumen ejecutivo
 
-<!-- Qué hace este PR y por qué -->
+<!-- Máximo 3 bullets: qué cambia, por qué cambia, impacto esperado -->
 
-## Issue relacionado
+-
+-
+-
 
-<!-- Closes #XX o referencia al issue -->
+## 🎯 Objetivo y contexto
 
-## Tipo de cambio
+### Problema
 
-- [ ] Feature (funcionalidad nueva)
-- [ ] Fix (corrección de bug)
-- [ ] Refactor (mejora sin cambiar funcionalidad)
-- [ ] Docs (documentación)
-- [ ] Config (Docker, CI, dependencias)
+<!-- Qué problema real resuelve este PR -->
 
-## Módulo afectado
+### Objetivo
+
+<!-- Resultado esperado al hacer merge -->
+
+### Alcance
+
+- **En scope:**
+- **Fuera de scope:**
+
+## 🔗 Trazabilidad
+
+- **Issue:** Closes #
+- **Docs/ADRs relacionados (si aplica):**
+
+### Mapa de criterios de aceptación
+
+| Criterio de la issue | Estado (✅/⚠️/❌) | Evidencia (archivo:línea, test, comando) |
+|---|---|---|
+| [Completar] | [ ] | [Completar] |
+
+## 🧩 Tipo de cambio
+
+- [ ] 🐛 Fix (corrige bug sin breaking change)
+- [ ] ✨ Feature (agrega funcionalidad sin breaking change)
+- [ ] 💥 Breaking change
+- [ ] 📝 Documentación
+- [ ] 🎨 Refactor
+- [ ] 🚀 Performance
+- [ ] ⚙️ Config/Infra (Docker, CI/CD, variables, despliegue)
+
+## 🗂️ Módulo(s) y archivos impactados
 
 - [ ] Backend (FastAPI)
 - [ ] Frontend (React)
-- [ ] IoT (ESP32)
+- [ ] IoT (ESP32 / MQTT)
 - [ ] ML (modelo predictivo)
 - [ ] Infra (Docker, Nginx, CI/CD)
 
-## Checklist
+| Módulo | Archivos principales | Motivo del cambio |
+|---|---|---|
+| [Completar] | [Completar] | [Completar] |
 
-- [ ] El código compila sin errores
-- [ ] El título del PR sigue Conventional Commits (`feat(scope):`, `fix(scope):`, etc.)
-- [ ] Los tests pasan (`make test`)
-- [ ] El lint está limpio (`make lint`)
-- [ ] Agregué tests para la funcionalidad nueva (si aplica)
-- [ ] Actualicé la documentación (si aplica)
-- [ ] Probé manualmente en el navegador (si es frontend)
+## 💡 Solución técnica
 
-## Capturas (si es frontend)
+### Decisiones clave
 
-<!-- Pegar screenshots del cambio visual -->
+<!-- Explicar diseño elegido y por qué -->
+
+### Alternativas consideradas (trade-offs)
+
+| Opción | Ventaja | Costo/Riesgo | Decisión |
+|---|---|---|---|
+| [Completar] | [Completar] | [Completar] | [Elegida/Descartada] |
+
+## ✅ Checklist de calidad
+
+### Autor
+
+- [ ] Leí `AGENTS.md` y respeté el alcance de la issue
+- [ ] Hice auto-review del código
+- [ ] No subí secretos ni artefactos locales (`.env`, `.db`, `modelo.joblib`, credenciales)
+- [ ] El cambio es chico, reversible y alineado al MVP académico
+- [ ] Actualicé documentación si correspondía
+
+### Validación técnica ejecutada
+
+- [ ] Backend validado (`make lint` / `make test`) si aplica
+- [ ] Frontend validado (`make lint-front` / `make build-front`) si aplica
+- [ ] Docker/compose validado (`docker compose config --quiet`) si aplica
+- [ ] MQTT/simulador validado (`make simulate` / `make mqtt-test`) si aplica
+
+### Evidencia de comandos
+
+```bash
+# Pegá acá comandos y resultados reales (resumidos)
+# ejemplo:
+# make lint -> OK
+# make test -> 34 passed
+```
+
+## 🧪 Instrucciones para probar (reviewers)
+
+### Precondiciones
+
+<!-- Datos, variables, servicios o fixtures necesarios -->
+
+### Pasos
+
+1.
+2.
+3.
+
+### Resultado esperado
+
+<!-- Qué debería observar el reviewer si está correcto -->
+
+## 📊 Impacto y riesgos
+
+### Impacto
+
+- [ ] 🟢 Bajo (cambio aislado)
+- [ ] 🟡 Medio (afecta múltiples componentes)
+- [ ] 🔴 Alto (afecta flujo crítico)
+
+### Riesgos identificados y mitigación
+
+| Riesgo | Severidad | Mitigación | Plan de rollback |
+|---|---|---|---|
+| [Completar] | [Low/Medium/High/Critical] | [Completar] | [Completar] |
+
+### Seguridad y datos
+
+- [ ] No se exponen secretos/credenciales
+- [ ] Cambios de auth/permisos validados (si aplica)
+- [ ] Migraciones y datos validados (si aplica)
+
+## 🚀 Consideraciones de despliegue
+
+- [ ] No requiere pasos especiales
+- [ ] Requiere migración de base de datos
+- [ ] Requiere actualización de configuración/variables
+- [ ] Requiere coordinación/ventana de despliegue
+
+### Plan de rollback
+
+<!-- Paso a paso para volver atrás si falla -->
+
+## 📸 Evidencia visual (si aplica)
+
+<details>
+<summary>Ver capturas / video</summary>
+
+<!-- Adjuntar screenshots o video -->
+
+</details>
+
+## 👀 Foco para reviewers
+
+- **Revisar primero:**
+- **Áreas sensibles:**
+- **Supuestos importantes:**
+- **Dudas abiertas:**
+
+## 🤖 Review asistida por IA (opcional, recomendado)
+
+- Prompt estándar: `docs/plantilla-code-review-ia.md`
+- Comentario estándar: `.github/AI_REVIEW_COMMENT_TEMPLATE.md`

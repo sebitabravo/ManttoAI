@@ -15,7 +15,39 @@ Este módulo concentra el firmware del ESP32, el pinout y un simulador MQTT para
 - DHT sensor library
 - Adafruit Unified Sensor
 
+> `WiFi.h` y `Wire.h` vienen integradas en el core de ESP32 (no requieren instalación adicional).
+
 Referencia: `iot/firmware/libraries.txt`
+
+## Configuración mínima del firmware
+
+Editar `iot/firmware/manttoai_sensor/config.h` con valores reales de red/broker:
+
+```cpp
+WIFI_SSID
+WIFI_PASSWORD
+MQTT_HOST
+MQTT_PORT
+MQTT_USERNAME
+MQTT_PASSWORD
+EQUIPO_ID
+MQTT_PUBLISH_INTERVAL_MS
+```
+
+Parámetros recomendados para demo local:
+
+- `MQTT_HOST`: IP del host con Mosquitto accesible desde el ESP32.
+- `MQTT_PORT`: `1883`.
+- `MQTT_USERNAME` / `MQTT_PASSWORD`: opcional para broker con auth (si se deja vacío usa conexión sin credenciales).
+- `MQTT_PUBLISH_INTERVAL_MS`: `5000` (una lectura cada 5 segundos).
+
+> ⚠️ Para entorno de demo local podés usar broker sin auth. Para redes compartidas, activá autenticación MQTT y evitá versionar credenciales reales.
+
+Topic publicado por firmware:
+
+```text
+manttoai/equipo/{EQUIPO_ID}/lecturas
+```
 
 ## Pinout y armado
 
@@ -39,6 +71,19 @@ Checklist rápido:
 - temperatura/humedad cambian con el ambiente real
 - `vib_x`, `vib_y`, `vib_z` varían al mover el MPU-6050
 - no aparecen valores fijos hardcodeados
+
+## Verificación end-to-end hardware -> broker -> backend -> dashboard
+
+1. Cargar firmware al ESP32.
+2. En el host del broker, abrir:
+
+   ```bash
+   mosquitto_sub -h <broker> -t "manttoai/#" -v
+   ```
+
+3. Verificar llegada de payload JSON con `temperatura`, `humedad`, `vib_x`, `vib_y`, `vib_z`.
+4. Confirmar persistencia en backend consultando lecturas del equipo.
+5. Confirmar visualización en dashboard (`/dashboard` y detalle de equipo).
 
 ## Contrato MQTT del simulador
 

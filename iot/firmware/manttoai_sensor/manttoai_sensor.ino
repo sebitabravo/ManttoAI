@@ -14,5 +14,5 @@ void loop() {
   maintainMqttConnection();
   logSensorReadings();
   publishSensorReading();
-  delay(5000);
+  delay(MAIN_LOOP_DELAY_MS);
 }

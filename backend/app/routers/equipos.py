@@ -1,6 +1,6 @@
 """Endpoints de equipos."""
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
@@ -8,7 +8,7 @@ from app.schemas.equipo import EquipoCreate, EquipoResponse, EquipoUpdate
 from app.services.equipo_service import (
     create_equipo,
     delete_equipo,
-    get_equipo,
+    get_equipo_or_404,
     list_equipos,
     update_equipo,
 )
@@ -27,14 +27,23 @@ def get_equipos(db: Session = Depends(get_db)) -> list[EquipoResponse]:
 def get_equipo_by_id(equipo_id: int, db: Session = Depends(get_db)) -> EquipoResponse:
     """Obtiene un equipo por identificador."""
 
-    return get_equipo(db, equipo_id)
+    return get_equipo_or_404(db, equipo_id)
 
 
-@router.post("", response_model=EquipoResponse)
-def post_equipo(payload: EquipoCreate, db: Session = Depends(get_db)) -> EquipoResponse:
+@router.post("", response_model=EquipoResponse, status_code=status.HTTP_201_CREATED)
+def post_equipo(
+    payload: EquipoCreate,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> EquipoResponse:
     """Crea un equipo persistido."""
 
-    return create_equipo(db, payload)
+    equipo = create_equipo(db, payload)
+    response.headers["Location"] = str(
+        request.url_for("get_equipo_by_id", equipo_id=str(equipo.id))
+    )
+    return equipo
 
 
 @router.put("/{equipo_id}", response_model=EquipoResponse)

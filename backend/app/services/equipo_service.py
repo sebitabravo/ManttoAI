@@ -26,12 +26,6 @@ def get_equipo_or_404(db: Session, equipo_id: int) -> Equipo:
     return equipo
 
 
-def get_equipo(db: Session, equipo_id: int) -> Equipo:
-    """Entrega un equipo por identificador."""
-
-    return get_equipo_or_404(db, equipo_id)
-
-
 def create_equipo(db: Session, payload: EquipoCreate) -> Equipo:
     """Crea y persiste un equipo."""
 

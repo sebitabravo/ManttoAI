@@ -42,9 +42,12 @@ def test_create_equipo_persists_and_can_be_retrieved(client):
     payload = _build_equipo_payload("Ventilador")
     create_response = client.post("/equipos", json=payload)
 
-    assert create_response.status_code == 200
+    assert create_response.status_code == 201
 
     created = create_response.json()
+    assert "Location" in create_response.headers
+    assert create_response.headers["Location"].endswith(f"/equipos/{created['id']}")
+
     get_response = client.get(f"/equipos/{created['id']}")
 
     assert get_response.status_code == 200

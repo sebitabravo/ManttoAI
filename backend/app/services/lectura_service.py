@@ -6,7 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.models.lectura import Lectura
 from app.schemas.lectura import LecturaCreate, LecturaMqttPayload
-from app.services.alerta_service import evaluate_thresholds
+from app.services.alerta_service import (
+    dispatch_critical_email_notifications,
+    evaluate_thresholds,
+)
 from app.services.equipo_service import get_equipo_or_404
 
 
@@ -47,9 +50,10 @@ def create_lectura(db: Session, payload: LecturaCreate) -> Lectura:
     lectura = Lectura(**payload.model_dump(exclude_none=True))
     db.add(lectura)
     db.flush()
-    evaluate_thresholds(db, lectura)
+    alertas_creadas = evaluate_thresholds(db, lectura)
     db.commit()
     db.refresh(lectura)
+    dispatch_critical_email_notifications(db, alertas_creadas)
     return lectura
 
 

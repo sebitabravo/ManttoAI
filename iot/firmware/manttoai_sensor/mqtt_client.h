@@ -1,4 +1,4 @@
-// Funciones MQTT del scaffold Arduino.
+// Funciones de conectividad WiFi/MQTT del firmware ESP32.
 
 #pragma once
 

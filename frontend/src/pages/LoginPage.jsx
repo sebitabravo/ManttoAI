@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { login as loginRequest } from "../api/auth";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import useAuth from "../hooks/useAuth";
@@ -8,27 +9,76 @@ import useAuth from "../hooks/useAuth";
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [form, setForm] = useState({ email: "demo@example.com", password: "123456" });
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event) {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    login("demo-token", { nombre: "Usuario Demo", email: form.email, rol: "admin" });
-    navigate("/dashboard");
+    setErrorMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const normalizedEmail = form.email.trim();
+      const result = await loginRequest({
+        email: normalizedEmail,
+        password: form.password,
+      });
+
+      if (!result?.access_token) {
+        throw new Error("Respuesta de autenticación inválida");
+      }
+
+      const nombreUsuario = normalizedEmail.split("@")[0] || "usuario";
+      login(result.access_token, {
+        nombre: nombreUsuario,
+        email: normalizedEmail,
+        rol: "visualizador",
+      });
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      const backendDetail = error?.response?.data?.detail;
+      if (typeof backendDetail === "string" && backendDetail.trim()) {
+        setErrorMessage(backendDetail);
+      } else if (Array.isArray(backendDetail) && backendDetail.length > 0) {
+        setErrorMessage("Credenciales inválidas. Revisá email y contraseña.");
+      } else if (typeof error?.message === "string" && error.message.trim()) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("No pudimos iniciar sesión. Revisá tus credenciales y el backend.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "2rem" }}>
       <section style={{ width: "100%", maxWidth: 420, border: "1px solid #d1d5db", borderRadius: 16, padding: 24 }}>
         <h1 style={{ marginTop: 0 }}>ManttoAI Predictivo</h1>
-        <p>Entrá en modo demo para recorrer el dashboard inicial.</p>
+        <p>Iniciá sesión contra el backend para acceder al dashboard.</p>
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16 }}>
-          <Input label="Email" name="email" value={form.email} onChange={handleChange} />
-          <Input label="Contraseña" name="password" type="password" value={form.password} onChange={handleChange} />
-          <Button type="submit">Entrar en modo demo</Button>
+          <Input label="Email" name="email" type="email" value={form.email} onChange={handleChange} required />
+          <Input
+            label="Contraseña"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
+          {errorMessage ? (
+            <div style={{ color: "#dc2626", fontSize: 14 }} role="alert">
+              {errorMessage}
+            </div>
+          ) : null}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Ingresando..." : "Iniciar sesión"}
+          </Button>
         </form>
       </section>
     </main>

@@ -68,6 +68,12 @@ jobs:
         if: steps.playwright_check.outputs.present == 'true'
         run: npm ci
 
+      - name: Build frontend for preview server
+        if: steps.playwright_check.outputs.present == 'true'
+        env:
+          CI: "true"
+        run: npm run build
+
       - name: Install Playwright browser
         if: steps.playwright_check.outputs.present == 'true'
         run: npx playwright install --with-deps chromium

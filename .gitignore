@@ -1,0 +1,53 @@
+# === Entorno ===
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.python-version
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+
+# === Node / Frontend ===
+node_modules/
+dist/
+build/
+frontend/playwright-report/
+frontend/test-results/
+
+# === IDE ===
+.idea/
+.vscode/
+
+# === Logs ===
+*.log
+
+# === Modelos / datasets ===
+backend/app/ml/modelo.joblib
+backend/app/ml/data/*
+!backend/app/ml/data/.gitkeep
+!backend/app/ml/data/README.md
+data/*
+!data/.gitkeep
+!data/README.md
+
+# === Secretos / credenciales ===
+mosquitto/passwd
+*.pem
+*.key
+*.crt
+
+# === Backups ===
+*.sql
+*.sql.gz

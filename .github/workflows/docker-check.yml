@@ -1,0 +1,57 @@
+name: Docker Check
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - backend/Dockerfile
+      - frontend/Dockerfile
+      - docker-compose.yml
+      - docker-compose.yaml
+      - backend/requirements.txt
+      - frontend/package.json
+      - frontend/package-lock.json
+      - mosquitto/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-build:
+    name: Docker — Compose Build Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect compose file
+        id: compose_check
+        run: |
+          if [ -f docker-compose.yml ]; then
+            echo "file=docker-compose.yml" >> "$GITHUB_OUTPUT"
+          elif [ -f docker-compose.yaml ]; then
+            echo "file=docker-compose.yaml" >> "$GITHUB_OUTPUT"
+          else
+            echo "file=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip until Docker Compose exists
+        if: steps.compose_check.outputs.file == ''
+        run: |
+          echo "::warning::Docker Compose is not initialized yet. Skipping Docker build check."
+
+      - name: Validate Docker Compose config
+        if: steps.compose_check.outputs.file != ''
+        run: docker compose -f "${{ steps.compose_check.outputs.file }}" config --quiet
+
+      - name: Build services
+        if: steps.compose_check.outputs.file != ''
+        run: docker compose -f "${{ steps.compose_check.outputs.file }}" build

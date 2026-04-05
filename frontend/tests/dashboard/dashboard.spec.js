@@ -119,8 +119,8 @@ test("dashboard consume API real y reemplaza placeholders", async ({ page }) => 
 
   await expect(page.getByRole("cell", { name: "Compresor principal" }).first()).toBeVisible();
   await expect(page.getByRole("cell", { name: "Bomba respaldo" }).first()).toBeVisible();
-  await expect(page.getByRole("cell", { name: "51.20 °C" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "35.40 °C" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "51.20 °C" }).first()).toBeVisible();
+  await expect(page.getByRole("cell", { name: "35.40 °C" }).first()).toBeVisible();
 
   expect(pageErrors).toEqual([]);
 });

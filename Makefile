@@ -1,12 +1,16 @@
 # Makefile — Atajos para ManttoAI
 # Uso: make <comando>
 
-.PHONY: setup-env up down logs build config test lint lint-fix seed seed-run smoke-test backup db-shell simulate train evaluate dev-front lint-front build-front e2e-front mqtt-listen mqtt-test
+.PHONY: setup-env setup-mqtt-creds up down logs build config test lint lint-fix seed seed-run smoke-test backup db-shell simulate train evaluate dev-front lint-front build-front e2e-front mqtt-listen mqtt-test
 
 # === Docker ===
 setup-env:
 	@test -f .env || cp .env.example .env
 	@test -f backend/.env || cp backend/.env.example backend/.env
+	@test -f mosquitto/passwd || bash scripts/generate_mosquitto_passwd.sh
+
+setup-mqtt-creds:
+	bash scripts/generate_mosquitto_passwd.sh
 
 up: setup-env config
 	docker compose up --build -d
@@ -58,7 +62,7 @@ e2e-front:
 
 # === IoT ===
 simulate:
-	docker compose exec backend python /simulator/mqtt_simulator.py --host mosquitto --port 1883 --devices 3 --count 8 --interval 1
+	docker compose exec backend python /simulator/mqtt_simulator.py --host mosquitto --port 1883 --username "$${MQTT_USERNAME:-manttoai_mqtt}" --password "$${MQTT_PASSWORD:-manttoai_mqtt_dev}" --devices 3 --count 8 --interval 1
 
 # === Base de datos ===
 backup:
@@ -79,5 +83,5 @@ mqtt-listen:
 	mosquitto_sub -h localhost -t "manttoai/#" -v
 
 mqtt-test:
-	mosquitto_pub -h localhost -t "manttoai/equipo/1/lecturas" \
+	mosquitto_pub -h localhost -u "$${MQTT_USERNAME:-manttoai_mqtt}" -P "$${MQTT_PASSWORD:-manttoai_mqtt_dev}" -t "manttoai/equipo/1/lecturas" \
 		-m '{"temperatura":45.2,"humedad":60,"vib_x":0.3,"vib_y":0.1,"vib_z":9.8}'

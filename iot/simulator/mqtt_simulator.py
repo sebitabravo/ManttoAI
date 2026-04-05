@@ -83,6 +83,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Simulador MQTT de ManttoAI")
     parser.add_argument("--host", default="localhost")
     parser.add_argument("--port", type=positive_int, default=1883)
+    parser.add_argument("--username", default="")
+    parser.add_argument("--password", default="")
     parser.add_argument("--devices", type=positive_int, default=1)
     parser.add_argument("--start-id", type=positive_int, default=1)
     parser.add_argument(
@@ -118,6 +120,8 @@ def main() -> int:
         return 1
 
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+    if args.username:
+        client.username_pw_set(args.username, args.password)
     client.connect(args.host, args.port)
 
     for ciclo in range(args.count):

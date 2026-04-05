@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     secret_key: str = "manttoai-dev-secret"
     mqtt_broker_host: str = "localhost"
     mqtt_broker_port: int = 1883
+    mqtt_username: str = ""
+    mqtt_password: str = ""
     mqtt_base_topic: str = "manttoai/equipo"
     mqtt_enabled: bool = True
     smtp_host: str = ""

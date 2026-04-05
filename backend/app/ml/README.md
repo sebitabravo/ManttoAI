@@ -1,11 +1,42 @@
 # ML ManttoAI
 
-Este módulo contiene un pipeline mínimo para generar datos sintéticos, entrenar un modelo base y evaluar su desempeño.
+Este módulo contiene un pipeline reproducible para generar datos sintéticos, entrenar Random Forest y evaluar métricas de forma honesta (train/test split).
+
+## Dataset y features
+
+- Dataset base: `app/ml/data/synthetic_readings.csv`
+- Target: `riesgo`
+- Features explícitas del MVP:
+  - `temperatura`
+  - `humedad`
+  - `vib_x`
+  - `vib_y`
+  - `vib_z`
+
+La generación usa una semilla fija por defecto para que el pipeline sea repetible en la memoria técnica.
+
+## Modelo
+
+- Algoritmo: `RandomForestClassifier`
+- Artefacto: `app/ml/modelo.joblib`
+- El artefacto queda fuera de git por `.gitignore`.
 
 ## Comandos
 
 ```bash
-python generate_dataset.py
-python train.py
-python evaluate.py
+cd backend/app/ml
+../../.venv/bin/python generate_dataset.py
+../../.venv/bin/python train.py
+../../.venv/bin/python evaluate.py
 ```
+
+## Métricas esperadas (referencia MVP)
+
+En dataset sintético reproducible, la evaluación debería reportar métricas estables entre ejecuciones cercanas, normalmente con `accuracy` y `f1` sobre 0.80 para cumplir el objetivo académico del prototipo.
+
+## Seguridad del artefacto
+
+`joblib` usa serialización basada en pickle. Por eso:
+
+- no cargues `modelo.joblib` desde fuentes no confiables
+- regenerá el modelo localmente con `train.py` cuando haya dudas

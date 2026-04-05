@@ -1,25 +1,16 @@
+import PropTypes from "prop-types";
+
 import GraficoLineaBase from "./GraficoLineaBase";
-
-function sortByTimestampAsc(lecturas) {
-  return [...lecturas].sort((current, next) => {
-    return new Date(current.timestamp).getTime() - new Date(next.timestamp).getTime();
-  });
-}
-
-function resolveVibrationMagnitude(lectura) {
-  return Math.max(
-    Math.abs(Number(lectura.vib_x) || 0),
-    Math.abs(Number(lectura.vib_y) || 0),
-    Math.abs(Number(lectura.vib_z) || 0)
-  );
-}
+import { compareByTimestampAsc } from "../../utils/formatDate";
+import { resolveMaxVibration } from "../../utils/metrics";
 
 export default function GraficoVibracion({ lecturas = [] }) {
-  const temporalSeries = sortByTimestampAsc(lecturas)
+  const temporalSeries = [...lecturas]
+    .sort(compareByTimestampAsc)
     .slice(-24)
     .map((lectura) => ({
       timestamp: lectura.timestamp,
-      value: resolveVibrationMagnitude(lectura),
+      value: resolveMaxVibration(lectura),
     }))
     .filter((point) => Number.isFinite(point.value));
 
@@ -34,3 +25,14 @@ export default function GraficoVibracion({ lecturas = [] }) {
     />
   );
 }
+
+GraficoVibracion.propTypes = {
+  lecturas: PropTypes.arrayOf(
+    PropTypes.shape({
+      timestamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      vib_x: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      vib_y: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      vib_z: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    })
+  ),
+};

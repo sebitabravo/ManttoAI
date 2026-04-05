@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import getpass
 import json
+import ssl
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from os import getenv
@@ -119,8 +120,17 @@ def fetch_json(
         headers["Authorization"] = f"Bearer {token}"
 
     request = Request(url, data=data, headers=headers, method=method)
-    with urlopen(request, timeout=10) as response:  # nosec B310 - URL controlada por operador
-        payload = response.read().decode("utf-8")
+    parsed_url = urlparse(url)
+    if parsed_url.scheme == "https":
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = True
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        with urlopen(request, timeout=10, context=ssl_context) as response:  # nosec B310 - URL controlada por operador
+            payload = response.read().decode("utf-8")
+    else:
+        with urlopen(request, timeout=10) as response:  # nosec B310 - URL controlada por operador
+            payload = response.read().decode("utf-8")
+
     return json.loads(payload)
 
 
@@ -169,7 +179,10 @@ def parse_timestamp(value: str | None) -> datetime | None:
         return None
 
     normalized = value.replace("Z", "+00:00")
-    return datetime.fromisoformat(normalized).astimezone(timezone.utc)
+    try:
+        return datetime.fromisoformat(normalized).astimezone(timezone.utc)
+    except ValueError:
+        return None
 
 
 def build_dashboard_map(api_url: str, token: str) -> dict[int, dict]:

@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+
 function formatTemperature(value) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) {
@@ -37,12 +39,12 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th align="left">ID</th>
-              <th align="left">Equipo</th>
-              <th align="left">Última temperatura</th>
-              <th align="left">Última probabilidad</th>
-              <th align="left">Alertas activas</th>
-              <th align="left">Telemetría</th>
+              <th scope="col" align="left">ID</th>
+              <th scope="col" align="left">Equipo</th>
+              <th scope="col" align="left">Última temperatura</th>
+              <th scope="col" align="left">Última probabilidad</th>
+              <th scope="col" align="left">Alertas activas</th>
+              <th scope="col" align="left">Telemetría</th>
             </tr>
           </thead>
           <tbody>
@@ -62,3 +64,15 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
     </section>
   );
 }
+
+TablaEstadoEquipos.propTypes = {
+  equipos: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+      nombre: PropTypes.string,
+      ultima_temperatura: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      ultima_probabilidad: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      alertas_activas: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    })
+  ),
+};

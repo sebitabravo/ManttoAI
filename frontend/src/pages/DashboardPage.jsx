@@ -6,6 +6,8 @@ import TablaUltimasLecturas from "../components/dashboard/TablaUltimasLecturas";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import { getDashboardData } from "../api/dashboard";
 import usePolling from "../hooks/usePolling";
+import { DASHBOARD_POLLING_INTERVAL_MS } from "../utils/constants";
+import { compareByTimestampDesc } from "../utils/formatDate";
 
 const resumenInicial = {
   total_equipos: 0,
@@ -16,19 +18,12 @@ const resumenInicial = {
   equipos: [],
 };
 
-function resolveTimestamp(value) {
-  const parsed = Date.parse(value ?? "");
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 export default function DashboardPage() {
-  const { data, loading, error } = usePolling(getDashboardData, 15000, null);
+  const { data, loading, error } = usePolling(getDashboardData, DASHBOARD_POLLING_INTERVAL_MS, null);
 
   const resumen = data?.resumen || resumenInicial;
   const fetchedLecturas = Array.isArray(data?.lecturas) ? data.lecturas : [];
-  const lecturas = [...fetchedLecturas].sort((current, next) => {
-    return resolveTimestamp(next?.timestamp) - resolveTimestamp(current?.timestamp);
-  });
+  const lecturas = [...fetchedLecturas].sort(compareByTimestampDesc);
 
   const isInitialLoading = loading && !data;
 

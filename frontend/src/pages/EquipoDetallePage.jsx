@@ -13,7 +13,7 @@ import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Button from "../components/ui/Button";
 import { notifyEquiposRefresh } from "../utils/equiposEvents";
 import { notifyMantencionesRefresh } from "../utils/mantencionesEvents";
-import { formatDate } from "../utils/formatDate";
+import { compareByTimestampDesc, formatDate } from "../utils/formatDate";
 import { formatMetric, resolveMaxVibration } from "../utils/metrics";
 
 function resolveRequestErrorMessage(error, fallbackMessage) {
@@ -352,9 +352,7 @@ export default function EquipoDetallePage() {
   }
 
   const lecturasOrdenadas = useMemo(() => {
-    return [...lecturas]
-      .sort((current, next) => new Date(next.timestamp).getTime() - new Date(current.timestamp).getTime())
-      .slice(0, 10);
+    return [...lecturas].sort(compareByTimestampDesc).slice(0, 10);
   }, [lecturas]);
 
   const mantencionesRecientes = useMemo(() => {

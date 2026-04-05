@@ -9,3 +9,5 @@ export const NIVELES_ALERTA = {
   medio: "#f59e0b",
   alto: "#ef4444",
 };
+
+export const DASHBOARD_POLLING_INTERVAL_MS = 15000;

@@ -1,13 +1,11 @@
-import GraficoLineaBase from "./GraficoLineaBase";
+import PropTypes from "prop-types";
 
-function sortByTimestampAsc(lecturas) {
-  return [...lecturas].sort((current, next) => {
-    return new Date(current.timestamp).getTime() - new Date(next.timestamp).getTime();
-  });
-}
+import GraficoLineaBase from "./GraficoLineaBase";
+import { compareByTimestampAsc } from "../../utils/formatDate";
 
 export default function GraficoTemperatura({ lecturas = [] }) {
-  const temporalSeries = sortByTimestampAsc(lecturas)
+  const temporalSeries = [...lecturas]
+    .sort(compareByTimestampAsc)
     .slice(-24)
     .map((lectura) => ({
       timestamp: lectura.timestamp,
@@ -26,3 +24,12 @@ export default function GraficoTemperatura({ lecturas = [] }) {
     />
   );
 }
+
+GraficoTemperatura.propTypes = {
+  lecturas: PropTypes.arrayOf(
+    PropTypes.shape({
+      timestamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      temperatura: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    })
+  ),
+};

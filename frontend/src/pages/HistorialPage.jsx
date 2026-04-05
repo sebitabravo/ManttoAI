@@ -8,7 +8,7 @@ import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import { notifyMantencionesRefresh, subscribeMantencionesRefresh } from "../utils/mantencionesEvents";
-import { formatDate } from "../utils/formatDate";
+import { compareByTimestampDesc, formatDate } from "../utils/formatDate";
 import { formatMetric, resolveMaxVibration } from "../utils/metrics";
 
 function resolveRequestErrorMessage(error, fallbackMessage) {
@@ -72,9 +72,7 @@ export default function HistorialPage() {
   }, [loadHistorial]);
 
   const lecturasRecientes = useMemo(() => {
-    return [...lecturas]
-      .sort((current, next) => new Date(next.timestamp).getTime() - new Date(current.timestamp).getTime())
-      .slice(0, 25);
+    return [...lecturas].sort(compareByTimestampDesc).slice(0, 25);
   }, [lecturas]);
 
   const mantencionesRecientes = useMemo(() => {

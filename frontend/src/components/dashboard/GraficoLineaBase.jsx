@@ -1,4 +1,7 @@
+import PropTypes from "prop-types";
+
 import { formatDate } from "../../utils/formatDate";
+import { formatMetric } from "../../utils/metrics";
 
 const CHART_WIDTH = 560;
 const CHART_HEIGHT = 220;
@@ -24,14 +27,6 @@ function buildLinePoints(values) {
       return `${x},${y}`;
     })
     .join(" ");
-}
-
-function formatMetric(value, unit) {
-  if (!Number.isFinite(value)) {
-    return "—";
-  }
-
-  return `${value.toFixed(2)} ${unit}`;
 }
 
 export default function GraficoLineaBase({
@@ -129,3 +124,17 @@ export default function GraficoLineaBase({
     </section>
   );
 }
+
+GraficoLineaBase.propTypes = {
+  title: PropTypes.string.isRequired,
+  subtitle: PropTypes.string.isRequired,
+  series: PropTypes.arrayOf(
+    PropTypes.shape({
+      timestamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    })
+  ).isRequired,
+  unit: PropTypes.string.isRequired,
+  color: PropTypes.string.isRequired,
+  emptyMessage: PropTypes.string.isRequired,
+};

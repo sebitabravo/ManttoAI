@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+
 export default function ResumenCards({ resumen }) {
   const probabilidadFalla = Number(resumen.probabilidad_falla || 0);
 
@@ -20,3 +22,13 @@ export default function ResumenCards({ resumen }) {
     </div>
   );
 }
+
+ResumenCards.propTypes = {
+  resumen: PropTypes.shape({
+    total_equipos: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    alertas_activas: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    equipos_en_riesgo: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    ultima_clasificacion: PropTypes.string,
+    probabilidad_falla: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  }).isRequired,
+};

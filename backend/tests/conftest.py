@@ -42,9 +42,11 @@ def client() -> Generator[TestClient, None, None]:
 
     previous_database_auto_init = main.settings.database_auto_init
     previous_mqtt_enabled = main.settings.mqtt_enabled
+    previous_prediction_scheduler = main.settings.enable_prediction_scheduler
 
     main.settings.database_auto_init = False
     main.settings.mqtt_enabled = False
+    main.settings.enable_prediction_scheduler = False
     main.app.dependency_overrides[get_db] = override_get_db
 
     with TestClient(main.app) as test_client:
@@ -53,5 +55,6 @@ def client() -> Generator[TestClient, None, None]:
     main.app.dependency_overrides.pop(get_db, None)
     main.settings.database_auto_init = previous_database_auto_init
     main.settings.mqtt_enabled = previous_mqtt_enabled
+    main.settings.enable_prediction_scheduler = previous_prediction_scheduler
     Base.metadata.drop_all(bind=engine)
     engine.dispose()

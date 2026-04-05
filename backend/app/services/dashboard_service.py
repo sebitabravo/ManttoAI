@@ -9,7 +9,7 @@ def get_dashboard_summary(db: Session) -> dict[str, int | float | str]:
     """Retorna un resumen agregado para la vista principal."""
 
     equipos = equipo_service.list_equipos(db)
-    alertas = alerta_service.list_alertas()
+    alertas = alerta_service.list_alertas(db, solo_no_leidas=True, limite=None)
     prediccion = prediccion_service.get_prediction(1)
     return {
         "total_equipos": len(equipos),

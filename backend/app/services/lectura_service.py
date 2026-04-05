@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.lectura import Lectura
 from app.schemas.lectura import LecturaCreate, LecturaMqttPayload
+from app.services.alerta_service import evaluate_thresholds
 from app.services.equipo_service import get_equipo_or_404
 
 
@@ -45,6 +46,8 @@ def create_lectura(db: Session, payload: LecturaCreate) -> Lectura:
     get_equipo_or_404(db, payload.equipo_id)
     lectura = Lectura(**payload.model_dump(exclude_none=True))
     db.add(lectura)
+    db.flush()
+    evaluate_thresholds(db, lectura)
     db.commit()
     db.refresh(lectura)
     return lectura

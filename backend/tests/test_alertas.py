@@ -1,17 +1,192 @@
 """Tests de alertas."""
 
 
-def test_list_alertas_returns_array(client):
-    """Valida que el endpoint retorne un arreglo."""
+def _build_equipo_payload(nombre: str) -> dict[str, str]:
+    """Construye un payload válido para crear equipos."""
 
-    response = client.get("/alertas")
+    return {
+        "nombre": nombre,
+        "ubicacion": "Planta piloto",
+        "tipo": "Motor",
+        "estado": "operativo",
+    }
+
+
+def _create_equipo(client, nombre: str = "Equipo Alertas") -> int:
+    """Crea un equipo auxiliar y retorna su id."""
+
+    response = client.post("/equipos", json=_build_equipo_payload(nombre))
+    assert response.status_code == 201
+    return response.json()["id"]
+
+
+def _create_umbral(
+    client,
+    equipo_id: int,
+    variable: str,
+    valor_min: float,
+    valor_max: float,
+) -> None:
+    """Crea un umbral para el equipo indicado."""
+
+    response = client.post(
+        "/umbrales",
+        json={
+            "equipo_id": equipo_id,
+            "variable": variable,
+            "valor_min": valor_min,
+            "valor_max": valor_max,
+        },
+    )
+    assert response.status_code == 201
+
+
+def _create_lectura(
+    client,
+    equipo_id: int,
+    temperatura: float = 40.0,
+    humedad: float = 55.0,
+    vib_x: float = 0.3,
+    vib_y: float = 0.2,
+    vib_z: float = 9.8,
+) -> None:
+    """Crea una lectura para gatillar evaluación de umbrales."""
+
+    response = client.post(
+        "/lecturas",
+        json={
+            "equipo_id": equipo_id,
+            "temperatura": temperatura,
+            "humedad": humedad,
+            "vib_x": vib_x,
+            "vib_y": vib_y,
+            "vib_z": vib_z,
+        },
+    )
+    assert response.status_code == 201
+
+
+def test_breach_temperatura_creates_persisted_alert(client):
+    """Valida que una temperatura fuera de rango cree alerta persistida."""
+
+    equipo_id = _create_equipo(client)
+    _create_umbral(
+        client,
+        equipo_id=equipo_id,
+        variable="temperatura",
+        valor_min=10.0,
+        valor_max=45.0,
+    )
+
+    _create_lectura(client, equipo_id=equipo_id, temperatura=58.0)
+
+    response = client.get("/alertas", params={"equipo_id": equipo_id})
+
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
+    alertas = response.json()
+    assert len(alertas) == 1
+    assert alertas[0]["tipo"] == "temperatura"
+    assert alertas[0]["leida"] is False
 
 
-def test_mark_alert_as_read(client):
-    """Valida el marcado de una alerta demo."""
+def test_repeated_breach_does_not_duplicate_active_alert(client):
+    """Valida que no se duplique alerta activa por breach repetido."""
 
-    response = client.patch("/alertas/1/leer")
+    equipo_id = _create_equipo(client)
+    _create_umbral(
+        client,
+        equipo_id=equipo_id,
+        variable="temperatura",
+        valor_min=10.0,
+        valor_max=45.0,
+    )
+
+    _create_lectura(client, equipo_id=equipo_id, temperatura=57.0)
+    _create_lectura(client, equipo_id=equipo_id, temperatura=59.0)
+
+    response = client.get(
+        "/alertas",
+        params={"equipo_id": equipo_id, "solo_no_leidas": True},
+    )
+
     assert response.status_code == 200
-    assert response.json()["leida"] is True
+    alertas = response.json()
+    assert len(alertas) == 1
+    assert alertas[0]["tipo"] == "temperatura"
+
+
+def test_normal_reading_does_not_create_new_alert(client):
+    """Valida que una lectura normal no cree alertas innecesarias."""
+
+    equipo_id = _create_equipo(client)
+    _create_umbral(
+        client,
+        equipo_id=equipo_id,
+        variable="temperatura",
+        valor_min=10.0,
+        valor_max=70.0,
+    )
+
+    _create_lectura(client, equipo_id=equipo_id, temperatura=42.0)
+
+    response = client.get("/alertas", params={"equipo_id": equipo_id})
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_breach_vibracion_creates_persisted_alert(client):
+    """Valida que una vibración fuera de rango cree alerta persistida."""
+
+    equipo_id = _create_equipo(client)
+    _create_umbral(
+        client,
+        equipo_id=equipo_id,
+        variable="vib_x",
+        valor_min=0.0,
+        valor_max=0.5,
+    )
+
+    _create_lectura(client, equipo_id=equipo_id, vib_x=0.9)
+
+    response = client.get("/alertas", params={"equipo_id": equipo_id})
+
+    assert response.status_code == 200
+    alertas = response.json()
+    assert len(alertas) == 1
+    assert alertas[0]["tipo"] == "vibracion"
+
+
+def test_patch_alerta_marks_record_as_read(client):
+    """Valida que PATCH /alertas/{id}/leer actualice datos persistidos."""
+
+    equipo_id = _create_equipo(client)
+    _create_umbral(
+        client,
+        equipo_id=equipo_id,
+        variable="temperatura",
+        valor_min=10.0,
+        valor_max=45.0,
+    )
+    _create_lectura(client, equipo_id=equipo_id, temperatura=59.0)
+
+    initial = client.get(
+        "/alertas",
+        params={"equipo_id": equipo_id, "solo_no_leidas": True},
+    )
+    assert initial.status_code == 200
+    alertas_no_leidas = initial.json()
+    assert len(alertas_no_leidas) == 1
+    alerta_id = alertas_no_leidas[0]["id"]
+
+    patch_response = client.patch(f"/alertas/{alerta_id}/leer")
+    assert patch_response.status_code == 200
+    assert patch_response.json()["id"] == alerta_id
+    assert patch_response.json()["leida"] is True
+
+    after_patch = client.get(
+        "/alertas",
+        params={"equipo_id": equipo_id, "solo_no_leidas": True},
+    )
+    assert after_patch.status_code == 200
+    assert after_patch.json() == []

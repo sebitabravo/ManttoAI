@@ -24,3 +24,10 @@ class AlertaUpdate(BaseModel):
     """Payload para marcar una alerta."""
 
     leida: bool = True
+
+
+class AlertaMarkReadResponse(BaseModel):
+    """Respuesta simple al marcar una alerta como leída."""
+
+    id: int
+    leida: bool

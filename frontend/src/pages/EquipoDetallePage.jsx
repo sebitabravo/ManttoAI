@@ -3,14 +3,16 @@ import { useParams } from "react-router-dom";
 
 import { getEquipo, updateEquipo } from "../api/equipos";
 import EquipoForm from "../components/equipos/EquipoForm";
+import MantencionForm from "../components/mantenciones/MantencionForm";
 import { getLecturas } from "../api/lecturas";
-import { getMantenciones } from "../api/mantenciones";
+import { createMantencion, getMantenciones, updateMantencion } from "../api/mantenciones";
 import { getPredicciones } from "../api/predicciones";
 import { getUmbrales, updateUmbral } from "../api/umbrales";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Button from "../components/ui/Button";
 import { notifyEquiposRefresh } from "../utils/equiposEvents";
+import { notifyMantencionesRefresh } from "../utils/mantencionesEvents";
 import { formatDate } from "../utils/formatDate";
 import { formatMetric, resolveMaxVibration } from "../utils/metrics";
 
@@ -71,6 +73,12 @@ export default function EquipoDetallePage() {
   const [savingUmbralById, setSavingUmbralById] = useState({});
   const [umbralErrorById, setUmbralErrorById] = useState({});
   const [umbralSuccessById, setUmbralSuccessById] = useState({});
+  const [showCreateMantencionForm, setShowCreateMantencionForm] = useState(false);
+  const [isCreatingMantencion, setIsCreatingMantencion] = useState(false);
+  const [createMantencionErrorMessage, setCreateMantencionErrorMessage] = useState("");
+  const [editingMantencionId, setEditingMantencionId] = useState(null);
+  const [isSavingMantencion, setIsSavingMantencion] = useState(false);
+  const [updateMantencionErrorMessage, setUpdateMantencionErrorMessage] = useState("");
 
   const loadEquipoDetalle = useCallback(async () => {
     if (!Number.isFinite(resolvedEquipoId)) {
@@ -192,6 +200,79 @@ export default function EquipoDetallePage() {
     setShowEditForm(false);
   }
 
+  function openCreateMantencionForm() {
+    setCreateMantencionErrorMessage("");
+    setEditingMantencionId(null);
+    setShowCreateMantencionForm(true);
+  }
+
+  function closeCreateMantencionForm() {
+    setCreateMantencionErrorMessage("");
+    setShowCreateMantencionForm(false);
+  }
+
+  function openMantencionEdit(mantencionId) {
+    setShowCreateMantencionForm(false);
+    setEditingMantencionId(Number(mantencionId));
+    setUpdateMantencionErrorMessage("");
+  }
+
+  function closeMantencionEdit() {
+    setEditingMantencionId(null);
+    setUpdateMantencionErrorMessage("");
+  }
+
+  async function handleCreateMantencion(payload) {
+    if (!Number.isFinite(resolvedEquipoId)) {
+      setCreateMantencionErrorMessage("No se puede crear mantención: identificador de equipo inválido.");
+      return;
+    }
+
+    setCreateMantencionErrorMessage("");
+    setIsCreatingMantencion(true);
+
+    try {
+      await createMantencion({
+        equipo_id: resolvedEquipoId,
+        ...payload,
+      });
+      await loadEquipoDetalle();
+      notifyMantencionesRefresh();
+      setEditingMantencionId(null);
+      setShowCreateMantencionForm(false);
+    } catch (createError) {
+      setCreateMantencionErrorMessage(
+        resolveRequestErrorMessage(createError, "No pudimos crear la mantención. Revisá los datos ingresados.")
+      );
+    } finally {
+      setIsCreatingMantencion(false);
+    }
+  }
+
+  async function handleUpdateMantencion(payload) {
+    const resolvedMantencionId = Number(editingMantencionId);
+    if (!Number.isFinite(resolvedMantencionId)) {
+      setUpdateMantencionErrorMessage("No se puede actualizar esta mantención.");
+      return;
+    }
+
+    setUpdateMantencionErrorMessage("");
+    setIsSavingMantencion(true);
+
+    try {
+      await updateMantencion(resolvedMantencionId, payload);
+      await loadEquipoDetalle();
+      notifyMantencionesRefresh();
+      setEditingMantencionId(null);
+    } catch (updateError) {
+      setUpdateMantencionErrorMessage(
+        resolveRequestErrorMessage(updateError, "No pudimos actualizar la mantención. Revisá los datos ingresados.")
+      );
+    } finally {
+      setIsSavingMantencion(false);
+    }
+  }
+
   function handleUmbralDraftChange(umbralId, field, value) {
     const resolvedUmbralId = Number(umbralId);
 
@@ -277,8 +358,14 @@ export default function EquipoDetallePage() {
   }, [lecturas]);
 
   const mantencionesRecientes = useMemo(() => {
-    return [...mantenciones].slice(0, 10);
+    return [...mantenciones]
+      .sort((current, next) => Number(next.id) - Number(current.id))
+      .slice(0, 10);
   }, [mantenciones]);
+
+  const selectedMantencion = useMemo(() => {
+    return mantencionesRecientes.find((mantencion) => Number(mantencion.id) === Number(editingMantencionId)) || null;
+  }, [mantencionesRecientes, editingMantencionId]);
 
   return (
     <section style={{ display: "grid", gap: 16 }}>
@@ -297,7 +384,14 @@ export default function EquipoDetallePage() {
             type="button"
             variant="outline"
             onClick={handleRefresh}
-            disabled={loading || isUpdating || umbralesLoading || isSavingAnyUmbral}
+            disabled={
+              loading ||
+              isUpdating ||
+              umbralesLoading ||
+              isSavingAnyUmbral ||
+              isCreatingMantencion ||
+              isSavingMantencion
+            }
           >
             {loading ? "Actualizando..." : "Actualizar"}
           </Button>
@@ -499,8 +593,32 @@ export default function EquipoDetallePage() {
         )}
       </section>
 
-      <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-        <h2 style={{ marginTop: 0 }}>Mantenciones recientes</h2>
+      <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16, display: "grid", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+          <h2 style={{ marginTop: 0, marginBottom: 0 }}>Mantenciones recientes</h2>
+          <Button
+            type="button"
+            variant={showCreateMantencionForm ? "primary" : "outline"}
+            onClick={showCreateMantencionForm ? closeCreateMantencionForm : openCreateMantencionForm}
+            disabled={isCreatingMantencion || isSavingMantencion}
+          >
+            {showCreateMantencionForm ? "Cerrar formulario" : "Nueva mantención"}
+          </Button>
+        </div>
+
+        {showCreateMantencionForm ? (
+          <section style={{ padding: 12, border: "1px solid #e5e7eb", borderRadius: 12 }}>
+            <h3 style={{ marginTop: 0 }}>Registrar mantención</h3>
+            <MantencionForm
+              onSubmit={handleCreateMantencion}
+              onCancel={closeCreateMantencionForm}
+              submitLabel="Registrar mantención"
+              isSubmitting={isCreatingMantencion}
+              errorMessage={createMantencionErrorMessage}
+            />
+          </section>
+        ) : null}
+
         {mantencionesRecientes.length === 0 ? (
           <p style={{ marginBottom: 0, color: "#6b7280" }}>
             No hay mantenciones registradas para este equipo.
@@ -509,22 +627,57 @@ export default function EquipoDetallePage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
+                <th align="left">ID</th>
                 <th align="left">Tipo</th>
                 <th align="left">Descripción</th>
                 <th align="left">Estado</th>
+                <th align="left">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {mantencionesRecientes.map((mantencion) => (
-                <tr key={mantencion.id}>
-                  <td>{mantencion.tipo}</td>
-                  <td>{mantencion.descripcion}</td>
-                  <td>{mantencion.estado}</td>
-                </tr>
-              ))}
+              {mantencionesRecientes.map((mantencion) => {
+                const isEditing = Number(editingMantencionId) === Number(mantencion.id);
+
+                return (
+                  <tr key={mantencion.id}>
+                    <td>{mantencion.id}</td>
+                    <td>{mantencion.tipo}</td>
+                    <td>{mantencion.descripcion}</td>
+                    <td>{mantencion.estado}</td>
+                    <td>
+                      <Button
+                        type="button"
+                        variant={isEditing ? "primary" : "outline"}
+                        onClick={() => (isEditing ? closeMantencionEdit() : openMantencionEdit(mantencion.id))}
+                        disabled={isCreatingMantencion || isSavingMantencion}
+                      >
+                        {isEditing ? "Cancelar" : "Editar"}
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
+
+        {selectedMantencion ? (
+          <section style={{ padding: 12, border: "1px solid #e5e7eb", borderRadius: 12 }}>
+            <h3 style={{ marginTop: 0 }}>Editar mantención #{selectedMantencion.id}</h3>
+            <MantencionForm
+              initialValues={{
+                tipo: selectedMantencion.tipo,
+                descripcion: selectedMantencion.descripcion,
+                estado: selectedMantencion.estado,
+              }}
+              onSubmit={handleUpdateMantencion}
+              onCancel={closeMantencionEdit}
+              submitLabel="Guardar actualización"
+              isSubmitting={isSavingMantencion}
+              errorMessage={updateMantencionErrorMessage}
+            />
+          </section>
+        ) : null}
       </section>
     </section>
   );

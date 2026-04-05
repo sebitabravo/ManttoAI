@@ -9,3 +9,8 @@ export async function createMantencion(payload) {
   const { data } = await client.post("/mantenciones", payload);
   return data;
 }
+
+export async function updateMantencion(id, payload) {
+  const { data } = await client.put(`/mantenciones/${id}`, payload);
+  return data;
+}

@@ -71,8 +71,7 @@ jobs:
         if: steps.backend_check.outputs.present == 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install black ruff pytest pytest-cov httpx pymysql
+          pip install -r requirements-dev.txt
 
       - name: Lint with Ruff
         if: steps.backend_check.outputs.present == 'true'

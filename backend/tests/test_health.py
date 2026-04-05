@@ -1,6 +1,6 @@
 """Tests del estado general del backend."""
 
-from app import models, routers, schemas, services
+from app import main, models, routers, schemas, services
 
 
 def test_health_endpoint(client):
@@ -8,7 +8,21 @@ def test_health_endpoint(client):
 
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json()["status"] == "ok"
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["database"]["connected"] is True
+
+
+def test_health_endpoint_reports_database_down(client, monkeypatch):
+    """Valida que /health informe error cuando falla la conectividad DB."""
+
+    monkeypatch.setattr(main, "check_database_connection", lambda: False)
+
+    response = client.get("/health")
+    assert response.status_code == 503
+    payload = response.json()
+    assert payload["status"] == "error"
+    assert payload["database"]["connected"] is False
 
 
 def test_dashboard_summary(client):

@@ -50,7 +50,11 @@ jobs:
 
       - name: Validate Docker Compose config
         if: steps.compose_check.outputs.file != ''
-        run: docker compose -f "${{ steps.compose_check.outputs.file }}" config --quiet
+        run: |
+          if [ ! -f backend/.env ] && [ -f backend/.env.example ]; then
+            cp backend/.env.example backend/.env
+          fi
+          docker compose -f "${{ steps.compose_check.outputs.file }}" config --quiet
 
       - name: Build services
         if: steps.compose_check.outputs.file != ''

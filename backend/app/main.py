@@ -1,9 +1,13 @@
 """Punto de entrada de FastAPI para ManttoAI."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import get_settings
+from app.database import check_database_connection, initialize_database_schema
 from app.routers import (
     alertas,
     auth,
@@ -17,7 +21,16 @@ from app.routers import (
 
 settings = get_settings()
 
-app = FastAPI(title=settings.app_name)
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Inicializa recursos de aplicación en el arranque."""
+
+    initialize_database_schema()
+    yield
+
+
+app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,11 +50,19 @@ app.include_router(dashboard.router)
 
 
 @app.get("/health", tags=["system"])
-def health_check() -> dict[str, str]:
-    """Entrega el estado mínimo de salud de la API."""
+def health_check() -> JSONResponse:
+    """Entrega estado de API y conectividad de base de datos."""
 
-    return {
-        "status": "ok",
-        "service": settings.app_name,
-        "environment": settings.app_env,
-    }
+    db_connected = check_database_connection()
+    status_code = 200 if db_connected else 503
+    status = "ok" if db_connected else "error"
+
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": status,
+            "service": settings.app_name,
+            "environment": settings.app_env,
+            "database": {"connected": db_connected},
+        },
+    )

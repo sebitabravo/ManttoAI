@@ -4,10 +4,12 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - ./backend/.env.example
+      - ./backend/.env
     depends_on:
-      - mysql
-      - mosquitto
+      mysql:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
 
   frontend:
     build: ./frontend

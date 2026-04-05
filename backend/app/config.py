@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from_email: str = ""
     smtp_to_email: str = ""
+    enable_prediction_scheduler: bool = True
+    prediction_interval_seconds: int = 300
 
 
 @lru_cache

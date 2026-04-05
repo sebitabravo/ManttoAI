@@ -9,6 +9,7 @@ from . import (
     lectura_service,
     mantencion_service,
     mqtt_service,
+    prediccion_scheduler_service,
     prediccion_service,
     umbral_service,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "prediccion_service",
     "email_service",
     "mqtt_service",
+    "prediccion_scheduler_service",
     "dashboard_service",
     "mantencion_service",
     "umbral_service",

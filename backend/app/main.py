@@ -19,6 +19,10 @@ from app.routers import (
     umbrales,
 )
 from app.services.mqtt_service import start_mqtt_subscriber, stop_mqtt_subscriber
+from app.services.prediccion_scheduler_service import (
+    start_prediction_scheduler,
+    stop_prediction_scheduler,
+)
 
 settings = get_settings()
 
@@ -33,9 +37,15 @@ async def lifespan(_: FastAPI):
     if settings.mqtt_enabled:
         start_mqtt_subscriber()
 
+    if settings.enable_prediction_scheduler:
+        start_prediction_scheduler()
+
     try:
         yield
     finally:
+        if settings.enable_prediction_scheduler:
+            stop_prediction_scheduler()
+
         if settings.mqtt_enabled:
             stop_mqtt_subscriber()
 

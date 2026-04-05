@@ -1,6 +1,7 @@
 """Schemas Pydantic del proyecto."""
 
 from app.schemas.alerta import AlertaResponse, AlertaUpdate
+from app.schemas.dashboard import DashboardEquipoResumen, DashboardResumenResponse
 from app.schemas.equipo import EquipoCreate, EquipoResponse, EquipoUpdate
 from app.schemas.lectura import LecturaCreate, LecturaResponse
 from app.schemas.mantencion import (
@@ -24,6 +25,8 @@ __all__ = [
     "LecturaResponse",
     "AlertaResponse",
     "AlertaUpdate",
+    "DashboardEquipoResumen",
+    "DashboardResumenResponse",
     "PrediccionResponse",
     "MantencionCreate",
     "MantencionUpdate",

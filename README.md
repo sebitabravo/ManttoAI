@@ -46,6 +46,10 @@ make simulate
 # 5b) (Opcional) validar escenario de 3 nodos en paralelo
 make verify-3-nodes
 
+# (Opcional) modo no interactivo para CI/scripts
+# export VERIFY_ADMIN_PASSWORD="<password_admin>"
+# make verify-3-nodes
+
 # 6) Verificar resumen del dashboard
 curl http://localhost:8000/dashboard/resumen
 
@@ -61,9 +65,10 @@ bash scripts/smoke_test.sh
 ### Credenciales demo del seed
 
 - Email: `admin@manttoai.local`
-- Password: `Admin123!`
+- Password: definida en `backend/.env.example` (default de desarrollo — no reutilizar en producción).
 
 > Si querés cambiar estas credenciales, modificá `SEED_ADMIN_*` en `backend/.env` antes de ejecutar `make seed`.
+> `make verify-3-nodes` usa prompt oculto para password de login. Para modo no interactivo, exportá `VERIFY_ADMIN_PASSWORD` o `VERIFY_ADMIN_TOKEN` en el entorno.
 > El seed valida `APP_ENV=development` por seguridad. Solo se puede forzar fuera de dev con `SEED_ALLOW_NON_DEV=true`.
 > No subas `.env` reales al repositorio; mantené credenciales sensibles fuera de git.
 

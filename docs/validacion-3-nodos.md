@@ -42,7 +42,7 @@ Esperado: mensajes intercalados para los topics:
 Desde la raíz del repo:
 
 ```bash
-python scripts/verify_three_nodes.py --api-url "http://localhost:8000" --equipos "1,2,3" --auth-email "admin@manttoai.local" --auth-password "Admin123!" --ventana-minutos 10 --max-desfase-segundos 120
+python scripts/verify_three_nodes.py --api-url "http://localhost:8000" --equipos "1,2,3" --auth-email "admin@manttoai.local" --ventana-minutos 10 --max-desfase-segundos 120
 ```
 
 También disponible como:
@@ -50,6 +50,9 @@ También disponible como:
 ```bash
 make verify-3-nodes
 ```
+
+> Si no definís `VERIFY_ADMIN_PASSWORD`, el script pedirá password en un prompt oculto.
+> Para ejecución no interactiva, exportá `VERIFY_ADMIN_PASSWORD` antes del comando.
 
 ## Paso 3 — Evidencia visual en dashboard
 

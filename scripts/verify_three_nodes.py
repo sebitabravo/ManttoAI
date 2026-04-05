@@ -4,11 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from os import getenv
 from pathlib import Path
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
@@ -34,11 +37,51 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--equipos", default="1,2,3")
     parser.add_argument("--ventana-minutos", type=int, default=10)
     parser.add_argument("--max-desfase-segundos", type=int, default=120)
-    parser.add_argument("--token", default="")
+    parser.add_argument(
+        "--token",
+        default="",
+        help=(
+            "JWT token directo. Preferir VERIFY_ADMIN_TOKEN en entorno (más seguro). "
+            "Usar '-' para leer el token desde un prompt oculto."
+        ),
+    )
     parser.add_argument("--auth-email", default="admin@manttoai.local")
-    parser.add_argument("--auth-password", default="Admin123!")
+    parser.add_argument(
+        "--allow-insecure",
+        action="store_true",
+        help="Permite HTTP hacia hosts remotos (solo para entornos controlados).",
+    )
     parser.add_argument("--output", default="")
     return parser.parse_args()
+
+
+def is_local_host(hostname: str | None) -> bool:
+    """Indica si el host corresponde a loopback/local."""
+
+    if not hostname:
+        return False
+    return hostname.lower() in {"localhost", "127.0.0.1", "::1"}
+
+
+def validate_api_url_security(api_url: str, allow_insecure: bool) -> None:
+    """Valida esquema/host para evitar credenciales en claro por error."""
+
+    parsed = urlparse(api_url)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("El --api-url debe usar http:// o https://")
+
+    if not parsed.netloc:
+        raise ValueError("El --api-url debe incluir host válido")
+
+    if parsed.scheme == "http" and not is_local_host(parsed.hostname):
+        warning = (
+            "HTTP sobre host remoto puede exponer credenciales en tránsito. "
+            "Preferí HTTPS"
+        )
+        if not allow_insecure:
+            raise ValueError(f"{warning}. Si entendés el riesgo, usá --allow-insecure")
+
+        print(f"ADVERTENCIA: {warning} (override activo por --allow-insecure)")
 
 
 def parse_equipos(raw: str) -> list[int]:
@@ -79,6 +122,44 @@ def fetch_json(
     with urlopen(request, timeout=10) as response:  # nosec B310 - URL controlada por operador
         payload = response.read().decode("utf-8")
     return json.loads(payload)
+
+
+def format_http_error(context: str, exc: HTTPError) -> str:
+    """Formatea errores HTTP con contexto y cuerpo resumido."""
+
+    body = ""
+    try:
+        body = exc.read().decode("utf-8").strip()
+    except Exception:
+        body = ""
+
+    body_suffix = f" Respuesta: {body[:220]}" if body else ""
+    return f"{context} (HTTP {exc.code} {exc.reason}).{body_suffix}"
+
+
+def resolve_auth_password() -> str:
+    """Obtiene password desde entorno o prompt seguro."""
+
+    env_password = (
+        getenv("VERIFY_ADMIN_PASSWORD") or getenv("SEED_ADMIN_PASSWORD") or ""
+    ).strip()
+    if env_password:
+        return env_password
+
+    try:
+        prompt = "Password de admin para /auth/login (input oculto): "
+        password = getpass.getpass(prompt=prompt).strip()
+    except (EOFError, KeyboardInterrupt) as exc:
+        raise ValueError(
+            "No se pudo leer password interactiva. Seteá VERIFY_ADMIN_PASSWORD."
+        ) from exc
+
+    if not password:
+        raise ValueError(
+            "Password vacía. Definí VERIFY_ADMIN_PASSWORD o ingresá una en el prompt."
+        )
+
+    return password
 
 
 def parse_timestamp(value: str | None) -> datetime | None:
@@ -245,11 +326,41 @@ def build_markdown_report(
     return "\n".join(lines) + "\n"
 
 
-def resolve_auth_token(api_url: str, token: str, email: str, password: str) -> str:
-    """Resuelve token JWT desde argumento directo o login API."""
+def resolve_auth_token(api_url: str, token: str, email: str) -> str:
+    """Resuelve token JWT desde variable de entorno, argumento o login API.
 
+    Orden de prioridad:
+    1. Variable de entorno VERIFY_ADMIN_TOKEN (recomendado para CI/scripts).
+    2. Argumento --token con valor '-': lee token desde prompt oculto.
+    3. Argumento --token con valor explícito (visible en ps; evitar en producción).
+    4. Login con email/password (prompt oculto o VERIFY_ADMIN_PASSWORD).
+    """
+
+    # 1) Variable de entorno: opción más segura para automatización
+    env_token = (getenv("VERIFY_ADMIN_TOKEN") or "").strip()
+    if env_token:
+        return env_token
+
+    # 2) Lectura oculta desde stdin cuando el usuario pasa '-'
+    if token.strip() == "-":
+        try:
+            t = getpass.getpass(prompt="JWT token (input oculto): ").strip()
+        except (EOFError, KeyboardInterrupt) as exc:
+            raise ValueError(
+                "No se pudo leer token interactivo. Seteá VERIFY_ADMIN_TOKEN."
+            ) from exc
+        if not t:
+            raise ValueError(
+                "Token vacío. Definí VERIFY_ADMIN_TOKEN o ingresá uno en el prompt."
+            )
+        return t
+
+    # 3) Token explícito en CLI (sigue funcionando; visible en ps, evitar si es posible)
     if token.strip():
         return token.strip()
+
+    # 4) Fallback: login con email/password
+    password = resolve_auth_password()
 
     login_payload = fetch_json(
         f"{api_url.rstrip('/')}/auth/login",
@@ -276,20 +387,35 @@ def main() -> int:
     cutoff = now - timedelta(minutes=args.ventana_minutos)
 
     try:
+        validate_api_url_security(args.api_url, allow_insecure=args.allow_insecure)
+    except ValueError as exc:
+        print(f"No se pudo validar --api-url: {exc}")
+        return 1
+
+    try:
         auth_token = resolve_auth_token(
             api_url=args.api_url,
             token=args.token,
             email=args.auth_email,
-            password=args.auth_password,
         )
-    except (HTTPError, URLError, ValueError) as exc:
+    except HTTPError as exc:
+        print(format_http_error("No se pudo obtener token desde /auth/login", exc))
+        print("Verificá --api-url, --auth-email y credenciales de autenticación.")
+        return 1
+    except URLError as exc:
+        print(f"No se pudo conectar al API durante login: {exc.reason}")
+        return 1
+    except ValueError as exc:
         print(f"No se pudo resolver token de autenticación: {exc}")
         return 1
 
     try:
         dashboard_map = build_dashboard_map(args.api_url, auth_token)
-    except (HTTPError, URLError) as exc:
-        print(f"No se pudo leer /dashboard/resumen: {exc}")
+    except HTTPError as exc:
+        print(format_http_error("No se pudo leer /dashboard/resumen", exc))
+        return 1
+    except URLError as exc:
+        print(f"No se pudo conectar al API para leer /dashboard/resumen: {exc.reason}")
         return 1
 
     checks = [

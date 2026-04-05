@@ -13,7 +13,9 @@ function formatProbability(value) {
     return "Sin predicción";
   }
 
-  return `${(parsed * 100).toFixed(1)} %`;
+  const normalized = parsed > 1 ? Math.min(parsed / 100, 1) : parsed;
+  const clamped = Math.min(Math.max(normalized, 0), 1);
+  return `${(clamped * 100).toFixed(1)} %`;
 }
 
 function resolveTelemetryStatus(equipo) {
@@ -47,7 +49,7 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
             {rows.map((equipo) => (
               <tr key={equipo.id}>
                 <td>{equipo.id}</td>
-                <td>{equipo.nombre}</td>
+                <td>{equipo.nombre || `Equipo ${equipo.id}`}</td>
                 <td>{formatTemperature(equipo.ultima_temperatura)}</td>
                 <td>{formatProbability(equipo.ultima_probabilidad)}</td>
                 <td>{Number(equipo.alertas_activas || 0)}</td>

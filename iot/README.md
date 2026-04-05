@@ -122,7 +122,7 @@ Resultado esperado: mensajes intercalados para `.../1/lecturas`, `.../2/lecturas
 Desde la raíz del repo:
 
 ```bash
-python scripts/verify_three_nodes.py --api-url "http://localhost:8000" --equipos "1,2,3" --auth-email "admin@manttoai.local" --auth-password "Admin123!" --ventana-minutos 10 --max-desfase-segundos 120
+python scripts/verify_three_nodes.py --api-url "http://localhost:8000" --equipos "1,2,3" --auth-email "admin@manttoai.local" --ventana-minutos 10 --max-desfase-segundos 120
 ```
 
 También disponible como atajo:
@@ -130,6 +130,9 @@ También disponible como atajo:
 ```bash
 make verify-3-nodes
 ```
+
+> Si no definís `VERIFY_ADMIN_PASSWORD`, el script pedirá password en un prompt oculto.
+> Para ejecución no interactiva, definir `VERIFY_ADMIN_PASSWORD` en el entorno antes de ejecutar.
 
 ### 4) Evidencia mínima recomendada
 

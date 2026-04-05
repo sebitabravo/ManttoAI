@@ -65,7 +65,7 @@ simulate:
 	docker compose exec backend python /simulator/mqtt_simulator.py --host mosquitto --port 1883 --username "$${MQTT_USERNAME:-manttoai_mqtt}" --password "$${MQTT_PASSWORD:-manttoai_mqtt_dev}" --devices 3 --count 8 --interval 1
 
 verify-3-nodes:
-	python scripts/verify_three_nodes.py --api-url "http://localhost:8000" --equipos "1,2,3" --auth-email "$${SEED_ADMIN_EMAIL:-admin@manttoai.local}" --auth-password "$${SEED_ADMIN_PASSWORD:-Admin123!}" --ventana-minutos 10 --max-desfase-segundos 120
+	python scripts/verify_three_nodes.py --api-url "http://localhost:8000" --equipos "1,2,3" --auth-email "$${SEED_ADMIN_EMAIL:-admin@manttoai.local}" --ventana-minutos 10 --max-desfase-segundos 120
 
 # === Base de datos ===
 backup:

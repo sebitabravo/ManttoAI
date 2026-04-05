@@ -12,6 +12,7 @@ void setup() {
 
 void loop() {
   maintainMqttConnection();
+  logSensorReadings();
   publishSensorReading();
   delay(5000);
 }

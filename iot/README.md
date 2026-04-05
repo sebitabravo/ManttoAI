@@ -2,10 +2,43 @@
 
 Este módulo concentra el firmware del ESP32, el pinout y un simulador MQTT para desarrollo sin hardware.
 
-## Objetivo del scaffold
+## Estado del firmware
 
-- dejar la estructura lista para firmware real
-- permitir pruebas con `iot/simulator/mqtt_simulator.py`
+- lectura real de **DHT22** (temperatura/humedad)
+- lectura real de **MPU-6050** (aceleración en ejes X/Y/Z)
+- publicación periódica MQTT (flujo MVP)
+- soporte de simulación con `iot/simulator/mqtt_simulator.py` cuando no hay hardware
+
+## Librerías Arduino requeridas
+
+- PubSubClient
+- DHT sensor library
+- Adafruit Unified Sensor
+
+Referencia: `iot/firmware/libraries.txt`
+
+## Pinout y armado
+
+- Ver detalle actualizado en `iot/wiring/pinout.md`
+- Resumen rápido:
+  - DHT22 DATA -> GPIO4
+  - MPU-6050 SDA -> GPIO21
+  - MPU-6050 SCL -> GPIO22
+  - 3V3 y GND compartidos
+
+## Verificación en Serial Monitor
+
+Con firmware cargado en ESP32 (115200 baudios), deberían verse líneas similares a:
+
+```text
+[sensors] temp=24.80 °C | hum=52.10 % | vib_x=0.012 g | vib_y=-0.004 g | vib_z=0.998 g
+```
+
+Checklist rápido:
+
+- temperatura/humedad cambian con el ambiente real
+- `vib_x`, `vib_y`, `vib_z` varían al mover el MPU-6050
+- no aparecen valores fijos hardcodeados
 
 ## Contrato MQTT del simulador
 

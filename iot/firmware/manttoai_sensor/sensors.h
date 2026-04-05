@@ -8,3 +8,4 @@ float readHumidity();
 float readVibrationX();
 float readVibrationY();
 float readVibrationZ();
+void logSensorReadings();

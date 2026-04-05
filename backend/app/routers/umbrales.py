@@ -1,41 +1,68 @@
 """Endpoints de umbrales."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Request, Response, status
+from sqlalchemy.orm import Session
 
+from app.dependencies import get_db
 from app.schemas.umbral import UmbralCreate, UmbralResponse, UmbralUpdate
+from app.services.umbral_service import (
+    create_umbral,
+    delete_umbral,
+    get_umbral_or_404,
+    list_umbrales,
+    update_umbral,
+)
 
 router = APIRouter(prefix="/umbrales", tags=["umbrales"])
 
 
 @router.get("", response_model=list[UmbralResponse])
-def get_umbrales() -> list[UmbralResponse]:
-    """Lista umbrales demo."""
+def get_umbrales(db: Session = Depends(get_db)) -> list[UmbralResponse]:
+    """Lista umbrales persistidos."""
 
-    return [
-        UmbralResponse(
-            id=1, equipo_id=1, variable="temperatura", valor_min=10.0, valor_max=50.0
-        )
-    ]
+    return list_umbrales(db)
 
 
-@router.post("", response_model=UmbralResponse)
-def post_umbral(payload: UmbralCreate) -> UmbralResponse:
-    """Crea un umbral demo."""
+@router.get("/{umbral_id}", response_model=UmbralResponse)
+def get_umbral_by_id(
+    umbral_id: int,
+    db: Session = Depends(get_db),
+) -> UmbralResponse:
+    """Obtiene un umbral por identificador."""
 
-    return UmbralResponse(id=2, **payload.model_dump())
+    return get_umbral_or_404(db, umbral_id)
+
+
+@router.post("", response_model=UmbralResponse, status_code=status.HTTP_201_CREATED)
+def post_umbral(
+    payload: UmbralCreate,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> UmbralResponse:
+    """Crea un umbral persistido."""
+
+    umbral = create_umbral(db, payload)
+    response.headers["Location"] = str(
+        request.url_for("get_umbral_by_id", umbral_id=str(umbral.id))
+    )
+    return umbral
 
 
 @router.put("/{umbral_id}", response_model=UmbralResponse)
-def put_umbral(umbral_id: int, payload: UmbralUpdate) -> UmbralResponse:
-    """Actualiza un umbral demo."""
+def put_umbral(
+    umbral_id: int,
+    payload: UmbralUpdate,
+    db: Session = Depends(get_db),
+) -> UmbralResponse:
+    """Actualiza un umbral persistido."""
 
-    data = {
-        "equipo_id": 1,
-        "variable": "temperatura",
-        "valor_min": 10.0,
-        "valor_max": 50.0,
-    }
-    data.update(
-        {key: value for key, value in payload.model_dump().items() if value is not None}
-    )
-    return UmbralResponse(id=umbral_id, **data)
+    return update_umbral(db, umbral_id, payload)
+
+
+@router.delete("/{umbral_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_umbral_by_id(umbral_id: int, db: Session = Depends(get_db)) -> Response:
+    """Elimina un umbral por identificador."""
+
+    delete_umbral(db, umbral_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

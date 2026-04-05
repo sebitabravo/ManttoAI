@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.ml.train import MODEL_PATH, load_model_artifact
 from app.models.prediccion import Prediccion
+from app.services.alerta_service import create_prediction_failure_alert
 from app.services.equipo_service import get_equipo_or_404
 from app.services.lectura_service import get_latest_lectura
 
@@ -201,4 +202,12 @@ def execute_prediction(db: Session, equipo_id: int) -> Prediccion:
         ) from exc
 
     db.refresh(prediction)
+
+    if classification == "falla":
+        create_prediction_failure_alert(
+            db,
+            equipo_id=equipo_id,
+            probabilidad=probability,
+        )
+
     return prediction

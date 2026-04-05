@@ -1,6 +1,6 @@
 """Tests de endpoints de predicciones."""
 
-from app.services import prediccion_service
+from app.services import alerta_service, prediccion_service
 
 
 def _build_equipo_payload(nombre: str) -> dict[str, str]:
@@ -73,11 +73,18 @@ def _mock_model_loader(probabilities: list[float]):
 def test_post_prediccion_ejecuta_inferencia_real_y_persiste(client, monkeypatch):
     """Valida POST /predicciones/ejecutar/{equipo_id} con inferencia real mockeada."""
 
+    email_calls: list[tuple[str, str]] = []
+
+    def fake_send_alert_email(subject: str, message: str) -> dict[str, str | bool]:
+        email_calls.append((subject, message))
+        return {"sent": True, "subject": subject, "message": message}
+
     monkeypatch.setattr(
         prediccion_service,
         "load_model_artifact",
         _mock_model_loader([0.82]),
     )
+    monkeypatch.setattr(alerta_service, "send_alert_email", fake_send_alert_email)
 
     equipo_id = _create_equipo(client)
     _create_lectura(client, equipo_id=equipo_id)
@@ -93,6 +100,121 @@ def test_post_prediccion_ejecuta_inferencia_real_y_persiste(client, monkeypatch)
     latest_response = client.get(f"/predicciones/{equipo_id}")
     assert latest_response.status_code == 200
     assert latest_response.json()["id"] == payload["id"]
+
+    alertas_response = client.get("/alertas", params={"equipo_id": equipo_id})
+    assert alertas_response.status_code == 200
+    alertas = alertas_response.json()
+    assert len(alertas) == 1
+    assert alertas[0]["tipo"] == "prediccion"
+    assert alertas[0]["nivel"] == "alto"
+    assert alertas[0]["leida"] is False
+    assert alertas[0]["email_enviado"] is True
+
+    dashboard_response = client.get("/dashboard/resumen")
+    assert dashboard_response.status_code == 200
+    assert dashboard_response.json()["alertas_activas"] >= 1
+
+    assert len(email_calls) == 1
+
+
+def test_post_prediccion_normal_no_crea_alerta_critica(client, monkeypatch):
+    """Valida que una predicción normal no cree alerta crítica ni email."""
+
+    email_calls: list[tuple[str, str]] = []
+
+    def fake_send_alert_email(subject: str, message: str) -> dict[str, str | bool]:
+        email_calls.append((subject, message))
+        return {"sent": True, "subject": subject, "message": message}
+
+    monkeypatch.setattr(
+        prediccion_service,
+        "load_model_artifact",
+        _mock_model_loader([0.22]),
+    )
+    monkeypatch.setattr(alerta_service, "send_alert_email", fake_send_alert_email)
+
+    equipo_id = _create_equipo(client)
+    _create_lectura(client, equipo_id=equipo_id)
+
+    execute_response = client.post(f"/predicciones/ejecutar/{equipo_id}")
+
+    assert execute_response.status_code == 201
+    assert execute_response.json()["clasificacion"] == "normal"
+
+    alertas_response = client.get("/alertas", params={"equipo_id": equipo_id})
+    assert alertas_response.status_code == 200
+    assert alertas_response.json() == []
+    assert email_calls == []
+
+
+def test_post_prediccion_falla_no_duplica_alerta_activa(client, monkeypatch):
+    """Valida que dos fallas consecutivas no dupliquen alerta crítica activa."""
+
+    email_calls: list[tuple[str, str]] = []
+
+    def fake_send_alert_email(subject: str, message: str) -> dict[str, str | bool]:
+        email_calls.append((subject, message))
+        return {"sent": True, "subject": subject, "message": message}
+
+    monkeypatch.setattr(
+        prediccion_service,
+        "load_model_artifact",
+        _mock_model_loader([0.82, 0.91]),
+    )
+    monkeypatch.setattr(alerta_service, "send_alert_email", fake_send_alert_email)
+
+    equipo_id = _create_equipo(client)
+    _create_lectura(client, equipo_id=equipo_id)
+
+    first_response = client.post(f"/predicciones/ejecutar/{equipo_id}")
+    second_response = client.post(f"/predicciones/ejecutar/{equipo_id}")
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 201
+
+    alertas_response = client.get(
+        "/alertas",
+        params={"equipo_id": equipo_id, "solo_no_leidas": True},
+    )
+    assert alertas_response.status_code == 200
+    alertas = alertas_response.json()
+    assert len(alertas) == 1
+    assert alertas[0]["tipo"] == "prediccion"
+
+    assert len(email_calls) == 1
+
+
+def test_post_prediccion_falla_con_error_email_no_rompe_alerta(client, monkeypatch):
+    """Valida que un error SMTP no rompa creación de alerta por predicción."""
+
+    def failing_send_alert_email(_subject: str, _message: str):
+        raise RuntimeError("smtp unavailable")
+
+    monkeypatch.setattr(
+        prediccion_service,
+        "load_model_artifact",
+        _mock_model_loader([0.88]),
+    )
+    monkeypatch.setattr(
+        alerta_service,
+        "send_alert_email",
+        failing_send_alert_email,
+    )
+
+    equipo_id = _create_equipo(client)
+    _create_lectura(client, equipo_id=equipo_id)
+
+    execute_response = client.post(f"/predicciones/ejecutar/{equipo_id}")
+
+    assert execute_response.status_code == 201
+    assert execute_response.json()["clasificacion"] == "falla"
+
+    alertas_response = client.get("/alertas", params={"equipo_id": equipo_id})
+    assert alertas_response.status_code == 200
+    alertas = alertas_response.json()
+    assert len(alertas) == 1
+    assert alertas[0]["tipo"] == "prediccion"
+    assert alertas[0]["email_enviado"] is False
 
 
 def test_get_prediccion_devuelve_ultima_persistida(client, monkeypatch):

@@ -1,9 +1,11 @@
+import { useMemo } from "react";
+
 import ResumenCards from "../components/dashboard/ResumenCards";
 import GraficoTemperatura from "../components/dashboard/GraficoTemperatura";
 import GraficoVibracion from "../components/dashboard/GraficoVibracion";
 import TablaUltimasLecturas from "../components/dashboard/TablaUltimasLecturas";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
-import { getDashboardResumen } from "../api/dashboard";
+import { getDashboardData } from "../api/dashboard";
 import usePolling from "../hooks/usePolling";
 
 const resumenInicial = {
@@ -12,10 +14,21 @@ const resumenInicial = {
   equipos_en_riesgo: 0,
   ultima_clasificacion: "sin datos",
   probabilidad_falla: 0,
+  equipos: [],
 };
 
 export default function DashboardPage() {
-  const { data, loading, error } = usePolling(getDashboardResumen, 15000, resumenInicial);
+  const { data, loading, error } = usePolling(getDashboardData, 15000, null);
+
+  const resumen = data?.resumen || resumenInicial;
+  const lecturas = useMemo(() => {
+    const fetchedLecturas = Array.isArray(data?.lecturas) ? data.lecturas : [];
+    return [...fetchedLecturas].sort((current, next) => {
+      return new Date(next.timestamp).getTime() - new Date(current.timestamp).getTime();
+    });
+  }, [data?.lecturas]);
+
+  const isInitialLoading = loading && !data;
 
   return (
     <section style={{ display: "grid", gap: 20 }}>
@@ -24,20 +37,34 @@ export default function DashboardPage() {
         <p style={{ marginTop: 0 }}>Resumen operativo del prototipo de mantenimiento predictivo.</p>
       </div>
 
-      {loading ? <LoadingSpinner label="Cargando resumen del dashboard..." /> : <ResumenCards resumen={data || resumenInicial} />}
+      {isInitialLoading ? <LoadingSpinner label="Cargando resumen del dashboard..." /> : <ResumenCards resumen={resumen} />}
+
+      {loading && data ? (
+        <div
+          style={{
+            padding: 10,
+            border: "1px solid #d1d5db",
+            borderRadius: 12,
+            background: "#f9fafb",
+            color: "#6b7280",
+          }}
+        >
+          Actualizando datos del dashboard...
+        </div>
+      ) : null}
 
       {error ? (
         <div style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 12, background: "#fffbeb" }}>
-          No se pudo consultar el backend. Se muestra la vista base del scaffold.
+          No se pudo actualizar el backend. Se mantienen los últimos datos disponibles.
         </div>
       ) : null}
 
       <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-        <GraficoTemperatura />
-        <GraficoVibracion />
+        <GraficoTemperatura lecturas={lecturas} />
+        <GraficoVibracion lecturas={lecturas} />
       </div>
 
-      <TablaUltimasLecturas />
+      <TablaUltimasLecturas lecturas={lecturas} equipos={resumen.equipos || []} />
     </section>
   );
 }

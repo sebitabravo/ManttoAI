@@ -26,7 +26,17 @@ def test_health_endpoint_reports_database_down(client, monkeypatch):
 
 
 def test_dashboard_summary(client):
-    """Valida el resumen demo usado por el dashboard."""
+    """Valida el resumen del dashboard con equipos persistidos."""
+
+    client.post(
+        "/equipos",
+        json={
+            "nombre": "Compresor dashboard",
+            "ubicacion": "Sala 1",
+            "tipo": "Compresor",
+            "estado": "operativo",
+        },
+    )
 
     response = client.get("/dashboard/resumen")
     assert response.status_code == 200

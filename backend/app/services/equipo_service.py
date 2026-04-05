@@ -1,50 +1,58 @@
-"""Servicios de equipos."""
+"""Servicios de equipos con persistencia en base de datos."""
 
-from app.schemas.equipo import EquipoCreate, EquipoResponse, EquipoUpdate
+from fastapi import HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-DEMO_EQUIPOS = [
-    EquipoResponse(
-        id=1,
-        nombre="Compresor principal",
-        ubicacion="Taller",
-        tipo="Compresor",
-        estado="operativo",
-    ),
-    EquipoResponse(
-        id=2,
-        nombre="Motor bomba",
-        ubicacion="Laboratorio",
-        tipo="Motor",
-        estado="monitoreo",
-    ),
-]
+from app.models.equipo import Equipo
+from app.schemas.equipo import EquipoCreate, EquipoUpdate
 
 
-def list_equipos() -> list[EquipoResponse]:
-    """Lista equipos demo del scaffold."""
+def list_equipos(db: Session) -> list[Equipo]:
+    """Lista equipos persistidos en la base de datos."""
 
-    return DEMO_EQUIPOS
-
-
-def get_equipo(equipo_id: int) -> EquipoResponse:
-    """Entrega un equipo demo por identificador."""
-
-    return next(
-        (equipo for equipo in DEMO_EQUIPOS if equipo.id == equipo_id), DEMO_EQUIPOS[0]
-    )
+    return list(db.scalars(select(Equipo).order_by(Equipo.id)))
 
 
-def create_equipo(payload: EquipoCreate) -> EquipoResponse:
-    """Crea una representación en memoria de un equipo."""
+def get_equipo_or_404(db: Session, equipo_id: int) -> Equipo:
+    """Obtiene un equipo o retorna 404 cuando no existe."""
 
-    return EquipoResponse(id=len(DEMO_EQUIPOS) + 1, **payload.model_dump())
+    equipo = db.get(Equipo, equipo_id)
+    if equipo is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Equipo no encontrado",
+        )
+    return equipo
 
 
-def update_equipo(equipo_id: int, payload: EquipoUpdate) -> EquipoResponse:
-    """Actualiza un equipo demo sin persistencia real."""
+def create_equipo(db: Session, payload: EquipoCreate) -> Equipo:
+    """Crea y persiste un equipo."""
 
-    actual = get_equipo(equipo_id).model_dump()
-    actual.update(
-        {key: value for key, value in payload.model_dump().items() if value is not None}
-    )
-    return EquipoResponse(**actual)
+    equipo = Equipo(**payload.model_dump())
+    db.add(equipo)
+    db.commit()
+    db.refresh(equipo)
+    return equipo
+
+
+def update_equipo(db: Session, equipo_id: int, payload: EquipoUpdate) -> Equipo:
+    """Actualiza un equipo existente en la base de datos."""
+
+    equipo = get_equipo_or_404(db, equipo_id)
+    cambios = payload.model_dump(exclude_unset=True)
+
+    for key, value in cambios.items():
+        setattr(equipo, key, value)
+
+    db.commit()
+    db.refresh(equipo)
+    return equipo
+
+
+def delete_equipo(db: Session, equipo_id: int) -> None:
+    """Elimina un equipo existente en la base de datos."""
+
+    equipo = get_equipo_or_404(db, equipo_id)
+    db.delete(equipo)
+    db.commit()

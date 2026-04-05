@@ -1,11 +1,15 @@
 # Makefile — Atajos para ManttoAI
 # Uso: make <comando>
 
-.PHONY: up down logs build test lint lint-fix seed backup db-shell simulate train evaluate dev-front lint-front build-front e2e-front mqtt-listen mqtt-test
+.PHONY: setup-env up down logs build config test lint lint-fix seed seed-run backup db-shell simulate train evaluate dev-front lint-front build-front e2e-front mqtt-listen mqtt-test
 
 # === Docker ===
-up:
-	docker compose up -d
+setup-env:
+	@test -f .env || cp .env.example .env
+	@test -f backend/.env || cp backend/.env.example backend/.env
+
+up: setup-env config
+	docker compose up --build -d
 
 down:
 	docker compose down
@@ -15,6 +19,9 @@ logs:
 
 build:
 	docker compose up --build -d
+
+config: setup-env
+	docker compose config --quiet
 
 # === Backend ===
 test:
@@ -27,7 +34,11 @@ lint-fix:
 	cd backend && ruff check app/ --fix && black app/
 
 seed:
-	python scripts/seed_db.py
+	# Requiere backend en ejecución y montaje de ./scripts en /scripts
+	docker compose exec -e APP_ENV=development backend python /scripts/seed_db.py
+
+seed-run:
+	docker compose run --rm -e APP_ENV=development backend python /scripts/seed_db.py
 
 # === Frontend ===
 dev-front:
@@ -44,7 +55,7 @@ e2e-front:
 
 # === IoT ===
 simulate:
-	cd iot/simulator && python mqtt_simulator.py
+	docker compose exec backend python /simulator/mqtt_simulator.py --host mosquitto --port 1883 --devices 3 --count 8 --interval 1
 
 # === Base de datos ===
 backup:

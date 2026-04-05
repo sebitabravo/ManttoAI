@@ -7,7 +7,6 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-import bcrypt
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -41,6 +40,7 @@ from app.database import SessionLocal, initialize_database_schema  # noqa: E402
 from app.models.equipo import Equipo  # noqa: E402
 from app.models.umbral import Umbral  # noqa: E402
 from app.models.usuario import Usuario  # noqa: E402
+from app.services.auth_service import hash_password  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -99,14 +99,6 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return raw_value.strip().lower() in {"1", "true", "t", "yes", "y", "si"}
 
 
-def _hash_password(password: str) -> str:
-    """Genera hash bcrypt compatible para usuario demo."""
-
-    password_bytes = password.encode("utf-8")
-    salt = bcrypt.gensalt(rounds=12)
-    return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
-
-
 def _assert_safe_seed_environment() -> None:
     """Evita ejecutar el seed fuera de entornos locales sin confirmación."""
 
@@ -147,7 +139,7 @@ def seed_admin_user(db: Session) -> tuple[str, bool]:
         usuario = Usuario(
             nombre=admin_name,
             email=admin_email,
-            password_hash=_hash_password(admin_password),
+            password_hash=hash_password(admin_password),
             rol="admin",
         )
         db.add(usuario)
@@ -156,7 +148,7 @@ def seed_admin_user(db: Session) -> tuple[str, bool]:
         usuario.rol = "admin"
 
         if reset_admin_password:
-            usuario.password_hash = _hash_password(admin_password)
+            usuario.password_hash = hash_password(admin_password)
 
     return admin_email, created
 

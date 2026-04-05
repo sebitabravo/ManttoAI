@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -36,6 +37,20 @@ class Settings(BaseSettings):
     smtp_to_email: str = ""
     enable_prediction_scheduler: bool = True
     prediction_interval_seconds: int = 300
+
+    @model_validator(mode="after")
+    def validate_security_settings(self) -> "Settings":
+        """Valida mínimos de seguridad según entorno configurado."""
+
+        non_dev_envs = {"staging", "stage", "production", "prod"}
+        app_env_normalized = self.app_env.strip().lower()
+        if (
+            app_env_normalized in non_dev_envs
+            and self.secret_key == "manttoai-dev-secret"
+        ):
+            raise ValueError("SECRET_KEY por defecto no permitido fuera de desarrollo")
+
+        return self
 
 
 @lru_cache

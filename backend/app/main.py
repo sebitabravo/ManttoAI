@@ -4,11 +4,12 @@ from contextlib import asynccontextmanager
 import asyncio
 import logging
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
+from app.dependencies import get_current_user
 from app.database import check_database_connection, initialize_database_schema
 from app.routers import (
     alertas,
@@ -86,13 +87,15 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-app.include_router(equipos.router)
-app.include_router(lecturas.router)
-app.include_router(alertas.router)
-app.include_router(predicciones.router)
-app.include_router(mantenciones.router)
-app.include_router(umbrales.router)
-app.include_router(dashboard.router)
+protected_dependencies = [Depends(get_current_user)]
+
+app.include_router(equipos.router, dependencies=protected_dependencies)
+app.include_router(lecturas.router, dependencies=protected_dependencies)
+app.include_router(alertas.router, dependencies=protected_dependencies)
+app.include_router(predicciones.router, dependencies=protected_dependencies)
+app.include_router(mantenciones.router, dependencies=protected_dependencies)
+app.include_router(umbrales.router, dependencies=protected_dependencies)
+app.include_router(dashboard.router, dependencies=protected_dependencies)
 
 
 @app.get("/health", tags=["system"])

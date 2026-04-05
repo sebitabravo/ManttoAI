@@ -18,6 +18,7 @@ from app.routers import (
     predicciones,
     umbrales,
 )
+from app.services.mqtt_service import start_mqtt_subscriber, stop_mqtt_subscriber
 
 settings = get_settings()
 
@@ -26,8 +27,17 @@ settings = get_settings()
 async def lifespan(_: FastAPI):
     """Inicializa recursos de aplicación en el arranque."""
 
-    initialize_database_schema()
-    yield
+    if settings.database_auto_init:
+        initialize_database_schema()
+
+    if settings.mqtt_enabled:
+        start_mqtt_subscriber()
+
+    try:
+        yield
+    finally:
+        if settings.mqtt_enabled:
+            stop_mqtt_subscriber()
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)

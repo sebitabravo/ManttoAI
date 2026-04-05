@@ -1,37 +1,64 @@
-"""Servicios de lecturas telemétricas."""
+"""Servicios de lecturas telemétricas con persistencia en base de datos."""
 
-from datetime import datetime, timezone
+from fastapi import HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-from app.schemas.lectura import LecturaCreate, LecturaResponse
+from app.models.lectura import Lectura
+from app.schemas.lectura import LecturaCreate, LecturaMqttPayload
+from app.services.equipo_service import get_equipo_or_404
 
 
-def list_lecturas(equipo_id: int | None = None) -> list[LecturaResponse]:
-    """Retorna lecturas demo para pruebas de integración."""
+def list_lecturas(db: Session, equipo_id: int | None = None) -> list[Lectura]:
+    """Lista lecturas persistidas, opcionalmente filtradas por equipo."""
 
-    target_id = equipo_id or 1
-    return [
-        LecturaResponse(
-            id=1,
-            equipo_id=target_id,
-            temperatura=42.5,
-            humedad=58.0,
-            vib_x=0.3,
-            vib_y=0.2,
-            vib_z=9.7,
-            timestamp=datetime.now(timezone.utc),
+    query = select(Lectura)
+    if equipo_id is not None:
+        query = query.where(Lectura.equipo_id == equipo_id)
+
+    query = query.order_by(Lectura.timestamp.desc(), Lectura.id.desc())
+    return list(db.scalars(query))
+
+
+def get_latest_lectura(db: Session, equipo_id: int) -> Lectura:
+    """Obtiene la última lectura persistida de un equipo."""
+
+    lectura = db.scalars(
+        select(Lectura)
+        .where(Lectura.equipo_id == equipo_id)
+        .order_by(Lectura.timestamp.desc(), Lectura.id.desc())
+        .limit(1)
+    ).first()
+
+    if lectura is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lectura no encontrada para el equipo",
         )
-    ]
+
+    return lectura
 
 
-def get_latest_lectura(equipo_id: int) -> LecturaResponse:
-    """Retorna la última lectura conocida del equipo."""
+def create_lectura(db: Session, payload: LecturaCreate) -> Lectura:
+    """Crea y persiste una lectura asociada a un equipo existente."""
 
-    return list_lecturas(equipo_id)[0]
+    get_equipo_or_404(db, payload.equipo_id)
+    lectura = Lectura(**payload.model_dump(exclude_none=True))
+    db.add(lectura)
+    db.commit()
+    db.refresh(lectura)
+    return lectura
 
 
-def create_lectura(payload: LecturaCreate) -> LecturaResponse:
-    """Crea una lectura demo en memoria."""
+def create_lectura_from_mqtt_payload(
+    db: Session,
+    equipo_id: int,
+    payload: LecturaMqttPayload,
+) -> Lectura:
+    """Persiste una lectura MQTT transformándola al schema de creación."""
 
-    return LecturaResponse(
-        id=99, timestamp=datetime.now(timezone.utc), **payload.model_dump()
+    lectura_create = LecturaCreate(
+        equipo_id=equipo_id,
+        **payload.model_dump(exclude_none=True),
     )
+    return create_lectura(db, lectura_create)

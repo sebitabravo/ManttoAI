@@ -4,7 +4,7 @@ Prototipo académico de mantenimiento predictivo con ESP32, MQTT, FastAPI, React
 
 ## Estado actual
 
-Este repositorio ya tiene un **scaffold funcional inicial** que respeta la arquitectura definida en `docs/arquitectura-manttoai.md`.
+Este repositorio tiene un MVP funcional para demo académica, respetando la arquitectura definida en `docs/arquitectura-manttoai.md`.
 
 ## Módulos principales
 
@@ -14,21 +14,74 @@ Este repositorio ya tiene un **scaffold funcional inicial** que respeta la arqui
 - `docs/`: arquitectura, ADRs y documentación funcional
 - `scripts/`: utilidades operativas
 
-## Primeros pasos
+## Flujo local reproducible (stack + seed + simulador)
+
+### Requisitos previos
+
+- Docker + Docker Compose
+- Docker Compose V2 (`docker compose`)
+- GNU Make
+- `curl` (opcional, para verificación rápida)
+
+> ⚠️ Este flujo es **solo para desarrollo local/demo**. No uses `make seed` contra bases productivas.
+
+### Paso a paso
 
 ```bash
-cp backend/.env.example backend/.env
-docker compose up --build -d
+# 1) Preparar archivos .env locales (idempotente)
+make setup-env
+
+# 2) Validar compose
+make config
+
+# 3) Levantar stack completo
+make up
+
+# 4) Poblar datos demo (usuario admin + equipos + umbrales)
+make seed
+
+# 5) Enviar lecturas demo por MQTT
+make simulate
+
+# 6) Verificar resumen del dashboard
+curl http://localhost:8000/dashboard/resumen
 ```
+
+### Credenciales demo del seed
+
+- Email: `admin@manttoai.local`
+- Password: `Admin123!`
+
+> Si querés cambiar estas credenciales, modificá `SEED_ADMIN_*` en `backend/.env` antes de ejecutar `make seed`.
+> El seed valida `APP_ENV=development` por seguridad. Solo se puede forzar fuera de dev con `SEED_ALLOW_NON_DEV=true`.
+> No subas `.env` reales al repositorio; mantené credenciales sensibles fuera de git.
+
+### Nota de red para desarrollo local
+
+- MySQL y Mosquitto están ligados a `127.0.0.1` por defecto para reducir exposición accidental.
+- Si necesitás recibir MQTT desde dispositivos externos (ej. ESP32 fuera del host), ajustá el puerto de `mosquitto` en `docker-compose.yml` y restringí acceso con firewall/autenticación.
 
 ## Comandos útiles
 
 ```bash
+# Infra
+make config
+make up
+make down
+make logs
+
+# Seed / simulación
+make seed
+make simulate
+
+# Backend
 make test
 make lint
+
+# Frontend
+make lint-front
 make build-front
 make e2e-front
-make simulate
 ```
 
 ## Convenciones

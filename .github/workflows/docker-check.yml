@@ -6,6 +6,7 @@ on:
       - develop
       - main
     paths:
+      - .github/workflows/docker-check.yml
       - backend/Dockerfile
       - frontend/Dockerfile
       - docker-compose.yml
@@ -51,6 +52,9 @@ jobs:
       - name: Validate Docker Compose config
         if: steps.compose_check.outputs.file != ''
         run: |
+          if [ ! -f .env ] && [ -f .env.example ]; then
+            cp .env.example .env
+          fi
           if [ ! -f backend/.env ] && [ -f backend/.env.example ]; then
             cp backend/.env.example backend/.env
           fi

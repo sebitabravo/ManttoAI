@@ -1,6 +1,8 @@
 """Punto de entrada de FastAPI para ManttoAI."""
 
 from contextlib import asynccontextmanager
+import asyncio
+import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,6 +27,30 @@ from app.services.prediccion_scheduler_service import (
 )
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
+
+
+async def initialize_schema_with_retry(
+    max_attempts: int = 12, delay_seconds: float = 2.0
+) -> None:
+    """Inicializa el esquema con reintentos para arranque en Compose."""
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            initialize_database_schema()
+            return
+        except Exception as exc:
+            if attempt >= max_attempts:
+                raise
+
+            logger.warning(
+                "Base de datos aún no lista para inicializar esquema "
+                "(intento %s/%s): %s",
+                attempt,
+                max_attempts,
+                exc,
+            )
+            await asyncio.sleep(delay_seconds)
 
 
 @asynccontextmanager
@@ -32,7 +58,7 @@ async def lifespan(_: FastAPI):
     """Inicializa recursos de aplicación en el arranque."""
 
     if settings.database_auto_init:
-        initialize_database_schema()
+        await initialize_schema_with_retry()
 
     if settings.mqtt_enabled:
         start_mqtt_subscriber()

@@ -27,6 +27,10 @@ function buildLinePoints(values) {
 }
 
 function formatMetric(value, unit) {
+  if (!Number.isFinite(value)) {
+    return "—";
+  }
+
   return `${value.toFixed(2)} ${unit}`;
 }
 

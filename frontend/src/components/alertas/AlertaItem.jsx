@@ -1,13 +1,27 @@
 import { formatDate } from "../../utils/formatDate";
+import Button from "../ui/Button";
 
-export default function AlertaItem({ alerta }) {
+export default function AlertaItem({ alerta, onMarkAsRead, marking = false }) {
+  const timestamp = alerta.created_at || alerta.fecha;
+  const isLeida = Boolean(alerta.leida);
+
   return (
     <article style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
       <strong>{alerta.tipo}</strong>
       <p style={{ margin: "8px 0" }}>{alerta.mensaje}</p>
       <small>
-        Nivel: {alerta.nivel} · {formatDate(alerta.fecha)}
+        Nivel: {alerta.nivel} · {timestamp ? formatDate(timestamp) : "Sin fecha"}
       </small>
+      <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 12, color: isLeida ? "#166534" : "#991b1b" }}>
+          {isLeida ? "Leída" : "No leída"}
+        </span>
+        {onMarkAsRead && !isLeida ? (
+          <Button type="button" variant="outline" onClick={() => onMarkAsRead(alerta.id)} disabled={marking}>
+            {marking ? "Marcando..." : "Marcar como leída"}
+          </Button>
+        ) : null}
+      </div>
     </article>
   );
 }

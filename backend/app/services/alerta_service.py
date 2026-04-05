@@ -1,5 +1,7 @@
 """Servicios de alertas y evaluación básica de umbrales."""
 
+import logging
+
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -8,6 +10,9 @@ from app.models.alerta import Alerta
 from app.models.lectura import Lectura
 from app.models.umbral import Umbral
 from app.services.email_service import send_alert_email
+
+PREDICTION_ALERT_TYPE = "prediccion"
+logger = logging.getLogger(__name__)
 
 
 def _is_out_of_range(value: float, valor_min: float, valor_max: float) -> bool:
@@ -42,7 +47,7 @@ def _resolve_threshold_target(
 
 
 def evaluate_thresholds(db: Session, lectura: Lectura) -> list[Alerta]:
-    """Evalúa umbrales del equipo y agrega alertas cuando hay breach."""
+    """Evalúa umbrales y agrega alertas en sesión; el caller realiza commit."""
 
     umbrales = list(
         db.scalars(select(Umbral).where(Umbral.equipo_id == lectura.equipo_id))
@@ -150,16 +155,70 @@ def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) ->
         if alerta.nivel != "alto":
             continue
 
-        email_result = send_alert_email(
-            subject="Alerta crítica ManttoAI",
-            message=(
-                f"Equipo {alerta.equipo_id}: {alerta.mensaje}. "
-                f"Tipo de alerta: {alerta.tipo}."
-            ),
-        )
-        alerta.email_enviado = bool(email_result.get("sent"))
+        try:
+            email_result = send_alert_email(
+                subject="Alerta crítica ManttoAI",
+                message=(
+                    f"Equipo {alerta.equipo_id}: {alerta.mensaje}. "
+                    f"Tipo de alerta: {alerta.tipo}."
+                ),
+            )
+
+            sent = False
+            if isinstance(email_result, dict):
+                sent = bool(email_result.get("sent"))
+            alerta.email_enviado = sent
+        except Exception:
+            logger.exception(
+                "No se pudo enviar email de alerta crítica (alerta_id=%s)",
+                getattr(alerta, "id", None),
+            )
+            alerta.email_enviado = False
 
     try:
         db.commit()
     except Exception:
         db.rollback()
+
+
+def create_prediction_failure_alert(
+    db: Session,
+    equipo_id: int,
+    probabilidad: float,
+) -> Alerta | None:
+    """Crea alerta crítica por predicción de falla evitando duplicados activos."""
+
+    alerta_activa = db.scalars(
+        select(Alerta)
+        .where(Alerta.equipo_id == equipo_id)
+        .where(Alerta.tipo == PREDICTION_ALERT_TYPE)
+        .where(Alerta.nivel == "alto")
+        .where(Alerta.leida.is_(False))
+        .limit(1)
+    ).first()
+
+    if alerta_activa is not None:
+        return None
+
+    alerta = Alerta(
+        equipo_id=equipo_id,
+        tipo=PREDICTION_ALERT_TYPE,
+        mensaje=(
+            "Predicción de falla detectada por modelo ML. "
+            f"Probabilidad estimada: {probabilidad:.2f}"
+        ),
+        nivel="alto",
+        email_enviado=False,
+        leida=False,
+    )
+    db.add(alerta)
+
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    db.refresh(alerta)
+    dispatch_critical_email_notifications(db, [alerta])
+    return alerta

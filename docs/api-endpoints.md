@@ -35,3 +35,27 @@
 ## Dashboard
 
 - `GET /dashboard/resumen`
+
+## Contrato MQTT (ingesta de lecturas)
+
+### Topic esperado
+
+- `manttoai/equipo/{equipo_id}/lecturas`
+
+### Payload JSON esperado
+
+```json
+{
+  "temperatura": 45.2,
+  "humedad": 60.0,
+  "vib_x": 0.3,
+  "vib_y": 0.1,
+  "vib_z": 9.8,
+  "timestamp": "2026-04-04T22:00:00Z"
+}
+```
+
+Notas:
+
+- `equipo_id` se obtiene desde el topic.
+- `timestamp` puede ser opcional para compatibilidad con fuentes legacy.

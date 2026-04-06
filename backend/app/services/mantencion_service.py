@@ -9,10 +9,27 @@ from app.schemas.mantencion import MantencionCreate, MantencionUpdate
 from app.services.equipo_service import get_equipo_or_404
 
 
-def list_mantenciones(db: Session) -> list[Mantencion]:
+def list_mantenciones(
+    db: Session,
+    equipo_id: int | None = None,
+    limit: int | None = None,
+    order: str = "asc",
+) -> list[Mantencion]:
     """Lista mantenciones persistidas en la base de datos."""
 
-    return list(db.scalars(select(Mantencion).order_by(Mantencion.id)))
+    query = select(Mantencion)
+    if equipo_id is not None:
+        query = query.where(Mantencion.equipo_id == equipo_id)
+
+    if order == "asc":
+        query = query.order_by(Mantencion.created_at.asc(), Mantencion.id.asc())
+    else:
+        query = query.order_by(Mantencion.created_at.desc(), Mantencion.id.desc())
+
+    if limit is not None:
+        query = query.limit(limit)
+
+    return list(db.scalars(query))
 
 
 def get_mantencion_or_404(db: Session, mantencion_id: int) -> Mantencion:

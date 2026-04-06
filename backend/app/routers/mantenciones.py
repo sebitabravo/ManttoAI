@@ -1,6 +1,8 @@
 """Endpoints de mantenciones."""
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from typing import Literal
+
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
@@ -21,10 +23,15 @@ router = APIRouter(prefix="/mantenciones", tags=["mantenciones"])
 
 
 @router.get("", response_model=list[MantencionResponse])
-def get_mantenciones(db: Session = Depends(get_db)) -> list[MantencionResponse]:
+def get_mantenciones(
+    equipo_id: int | None = Query(default=None),
+    limit: int | None = Query(default=None, ge=1, le=5000),
+    order: Literal["asc", "desc"] = Query(default="asc"),
+    db: Session = Depends(get_db),
+) -> list[MantencionResponse]:
     """Lista mantenciones persistidas."""
 
-    return list_mantenciones(db)
+    return list_mantenciones(db, equipo_id=equipo_id, limit=limit, order=order)
 
 
 @router.get("/{mantencion_id}", response_model=MantencionResponse)

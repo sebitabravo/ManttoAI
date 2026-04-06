@@ -17,11 +17,12 @@ router = APIRouter(prefix="/lecturas", tags=["lecturas"])
 @router.get("", response_model=list[LecturaResponse])
 def get_lecturas(
     equipo_id: int | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=5000),
     db: Session = Depends(get_db),
 ) -> list[LecturaResponse]:
-    """Entrega historial persistido de lecturas."""
+    """Entrega historial persistido de lecturas con límite por defecto."""
 
-    return list_lecturas(db, equipo_id)
+    return list_lecturas(db, equipo_id, limit)
 
 
 @router.get("/latest/{equipo_id}", response_model=LecturaResponse)

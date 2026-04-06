@@ -1,4 +1,5 @@
 import { formatDate } from "../../utils/formatDate";
+import { formatMetric, resolveMaxVibration } from "../../utils/metrics";
 
 function resolveEquipoName(equipoId, equiposById) {
   const resolvedName = equiposById.get(equipoId);
@@ -9,28 +10,9 @@ function resolveEquipoName(equipoId, equiposById) {
   return `Equipo #${equipoId}`;
 }
 
-function resolveMaxVibration(lectura) {
-  return Math.max(
-    Math.abs(Number(lectura.vib_x) || 0),
-    Math.abs(Number(lectura.vib_y) || 0),
-    Math.abs(Number(lectura.vib_z) || 0)
-  );
-}
-
-function formatMetric(value, unit) {
-  if (!Number.isFinite(value)) {
-    return "—";
-  }
-
-  return `${value.toFixed(2)} ${unit}`;
-}
-
 export default function TablaUltimasLecturas({ lecturas = [], equipos = [] }) {
   const equiposById = new Map(
-    equipos.map((equipo) => [
-      Number(equipo.id),
-      String(equipo.nombre),
-    ])
+    equipos.map((equipo) => [Number(equipo.id), equipo?.nombre ? String(equipo.nombre) : null])
   );
 
   const rows = lecturas.slice(0, 10);
@@ -46,10 +28,10 @@ export default function TablaUltimasLecturas({ lecturas = [], equipos = [] }) {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th align="left">Equipo</th>
-              <th align="left">Temperatura</th>
-              <th align="left">Vibración máx.</th>
-              <th align="left">Fecha</th>
+              <th scope="col" align="left">Equipo</th>
+              <th scope="col" align="left">Temperatura</th>
+              <th scope="col" align="left">Vibración máx.</th>
+              <th scope="col" align="left">Fecha</th>
             </tr>
           </thead>
           <tbody>

@@ -97,6 +97,50 @@ Checklist rápido:
 4. Confirmar persistencia en backend consultando lecturas del equipo.
 5. Confirmar visualización en dashboard (`/dashboard` y detalle de equipo).
 
+## Escenario físico objetivo: 3 nodos ESP32 simultáneos
+
+Para la defensa/demo oficial se espera validar 3 nodos en paralelo.
+
+### 1) Configurar cada nodo con `EQUIPO_ID` distinto
+
+Usar el mismo broker/credenciales y cambiar solo `EQUIPO_ID` en cada placa:
+
+- Nodo A -> `EQUIPO_ID=1`
+- Nodo B -> `EQUIPO_ID=2`
+- Nodo C -> `EQUIPO_ID=3`
+
+### 2) Verificar publicación simultánea en broker
+
+```bash
+mosquitto_sub -h <broker> -u <mqtt_user> -P <mqtt_pass> -t "manttoai/#" -v
+```
+
+Resultado esperado: mensajes intercalados para `.../1/lecturas`, `.../2/lecturas`, `.../3/lecturas`.
+
+### 3) Verificar persistencia y dashboard para los 3 equipos
+
+Desde la raíz del repo:
+
+```bash
+python scripts/verify_three_nodes.py --api-url "http://localhost:8000" --equipos "1,2,3" --auth-email "admin@manttoai.local" --ventana-minutos 10 --max-desfase-segundos 120
+```
+
+También disponible como atajo:
+
+```bash
+make verify-3-nodes
+```
+
+> Si no definís `VERIFY_ADMIN_PASSWORD`, el script pedirá password en un prompt oculto.
+> Para ejecución no interactiva, definir `VERIFY_ADMIN_PASSWORD` en el entorno antes de ejecutar.
+> Para HTTPS con CA privada/interna, usar `VERIFY_CA_BUNDLE` o `--ca-bundle /ruta/ca.pem`.
+
+### 4) Evidencia mínima recomendada
+
+- Captura de `mosquitto_sub` con los 3 topics activos.
+- Salida del script `verify_three_nodes.py` en verde.
+- Captura de Dashboard mostrando 3 equipos con telemetría activa.
+
 ## Contrato MQTT del simulador
 
 ### Topic

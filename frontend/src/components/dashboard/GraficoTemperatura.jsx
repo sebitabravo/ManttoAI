@@ -1,19 +1,18 @@
+import { useMemo } from "react";
+
 import GraficoLineaBase from "./GraficoLineaBase";
 
-function sortByTimestampAsc(lecturas) {
-  return [...lecturas].sort((current, next) => {
-    return new Date(current.timestamp).getTime() - new Date(next.timestamp).getTime();
-  });
-}
-
 export default function GraficoTemperatura({ lecturas = [] }) {
-  const temporalSeries = sortByTimestampAsc(lecturas)
-    .slice(-24)
-    .map((lectura) => ({
-      timestamp: lectura.timestamp,
-      value: Number(lectura.temperatura),
-    }))
-    .filter((point) => Number.isFinite(point.value));
+  const temporalSeries = useMemo(() => {
+    const recentLecturas = Array.isArray(lecturas) ? lecturas.slice(0, 24).reverse() : [];
+
+    return recentLecturas
+      .map((lectura) => ({
+        timestamp: lectura.timestamp,
+        value: Number(lectura.temperatura),
+      }))
+      .filter((point) => Number.isFinite(point.value));
+  }, [lecturas]);
 
   return (
     <GraficoLineaBase

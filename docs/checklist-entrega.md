@@ -13,6 +13,7 @@ Usar esta lista antes de grabar video o presentar defensa.
 
 - [ ] `make seed` ejecutado y con equipos/umbrales cargados
 - [ ] `make simulate` ejecutado y con lecturas persistidas
+- [ ] `make verify-3-nodes` en verde para equipos `1`, `2`, `3`
 - [ ] Endpoint `/alertas` devuelve al menos una alerta activa tras escenario de breach
 - [ ] Endpoint `/predicciones/ejecutar/{equipo_id}` responde `201`
 - [ ] Endpoint `/dashboard/resumen` refleja probabilidad y equipos en riesgo
@@ -26,6 +27,8 @@ Usar esta lista antes de grabar video o presentar defensa.
 ## D. Evidencia para entrega
 
 - [ ] Capturas o video del flujo completo (normal + alerta + riesgo)
+- [ ] Captura de `mosquitto_sub` mostrando topics de 3 equipos (`1`, `2`, `3`)
+- [ ] Captura de dashboard con 3 equipos activos en simultáneo
 - [ ] Enlaces de PR y commits relevantes listos para anexar en informe
 - [ ] README y docs (`docs/demo.md`, `docs/manual-usuario.md`) actualizados
 

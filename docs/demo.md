@@ -64,6 +64,18 @@ curl "http://localhost:8000/lecturas?equipo_id=1"
 
 Resultado esperado: lista de lecturas no vacía.
 
+### 2b) Escenario multi-equipo (3 nodos en paralelo)
+
+```bash
+make verify-3-nodes
+```
+
+Resultado esperado:
+
+- validación en verde para equipos `1`, `2`, `3`,
+- desfase dentro del umbral de simultaneidad,
+- dashboard mostrando telemetría para los 3 equipos.
+
 ### 3) Escenario de breach de umbral con alerta
 
 ```bash

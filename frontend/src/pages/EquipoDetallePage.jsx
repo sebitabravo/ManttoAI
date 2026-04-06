@@ -14,7 +14,7 @@ import Button from "../components/ui/Button";
 import { notifyEquiposRefresh } from "../utils/equiposEvents";
 import { notifyMantencionesRefresh } from "../utils/mantencionesEvents";
 import { formatDate } from "../utils/formatDate";
-import { formatMetric, resolveMaxVibration } from "../utils/metrics";
+import { formatMetric, formatProbability, resolveMaxVibration } from "../utils/metrics";
 
 function resolveRequestErrorMessage(error, fallbackMessage) {
   const backendDetail = error?.response?.data?.detail;
@@ -91,7 +91,7 @@ export default function EquipoDetallePage() {
     try {
       const [equipoData, lecturasData, prediccionData, mantencionesData] = await Promise.all([
         getEquipo(resolvedEquipoId),
-        getLecturas(resolvedEquipoId),
+        getLecturas(resolvedEquipoId, 10),
         getPredicciones(resolvedEquipoId).catch((fetchError) => {
           if (fetchError?.response?.status === 404) {
             return null;
@@ -99,16 +99,13 @@ export default function EquipoDetallePage() {
 
           throw fetchError;
         }),
-        getMantenciones(),
+        getMantenciones({ equipoId: resolvedEquipoId, limit: 10, order: "desc" }),
       ]);
 
       setEquipo(equipoData);
       setLecturas(Array.isArray(lecturasData) ? lecturasData : []);
       setPrediccion(prediccionData);
-      const mantencionesEquipo = Array.isArray(mantencionesData)
-        ? mantencionesData.filter((mantencion) => Number(mantencion.equipo_id) === resolvedEquipoId)
-        : [];
-      setMantenciones(mantencionesEquipo);
+      setMantenciones(Array.isArray(mantencionesData) ? mantencionesData : []);
       setError(null);
     } catch (fetchError) {
       setError(fetchError);
@@ -133,9 +130,9 @@ export default function EquipoDetallePage() {
 
     try {
       const umbralesData = await getUmbrales();
-      const umbralesEquipo = (Array.isArray(umbralesData) ? umbralesData : [])
-        .filter((umbral) => Number(umbral.equipo_id) === resolvedEquipoId)
-        .sort((current, next) => String(current.variable).localeCompare(String(next.variable)));
+      const umbralesEquipo = (Array.isArray(umbralesData) ? umbralesData : []).filter(
+        (umbral) => Number(umbral.equipo_id) === resolvedEquipoId
+      );
 
       setUmbrales(umbralesEquipo);
       setUmbralDrafts(buildUmbralDrafts(umbralesEquipo));
@@ -352,15 +349,11 @@ export default function EquipoDetallePage() {
   }
 
   const lecturasOrdenadas = useMemo(() => {
-    return [...lecturas]
-      .sort((current, next) => new Date(next.timestamp).getTime() - new Date(current.timestamp).getTime())
-      .slice(0, 10);
+    return lecturas.slice(0, 10);
   }, [lecturas]);
 
   const mantencionesRecientes = useMemo(() => {
-    return [...mantenciones]
-      .sort((current, next) => Number(next.id) - Number(current.id))
-      .slice(0, 10);
+    return mantenciones.slice(0, 10);
   }, [mantenciones]);
 
   const selectedMantencion = useMemo(() => {
@@ -554,7 +547,7 @@ export default function EquipoDetallePage() {
         {prediccion ? (
           <div>
             <p style={{ marginBottom: 8 }}>Clasificación: {prediccion.clasificacion}</p>
-            <strong>Probabilidad de falla: {(Number(prediccion.probabilidad || 0) * 100).toFixed(1)} %</strong>
+            <strong>Probabilidad de falla: {formatProbability(prediccion.probabilidad)}</strong>
           </div>
         ) : (
           <p style={{ marginBottom: 0, color: "#6b7280" }}>

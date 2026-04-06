@@ -39,8 +39,8 @@ export default function HistorialPage() {
     setLoading(true);
     try {
       const [lecturasData, mantencionesData, equiposData] = await Promise.all([
-        getLecturas(),
-        getMantenciones(),
+        getLecturas(null, 25),
+        getMantenciones({ limit: 25, order: "desc" }),
         getEquipos(),
       ]);
 
@@ -72,15 +72,11 @@ export default function HistorialPage() {
   }, [loadHistorial]);
 
   const lecturasRecientes = useMemo(() => {
-    return [...lecturas]
-      .sort((current, next) => new Date(next.timestamp).getTime() - new Date(current.timestamp).getTime())
-      .slice(0, 25);
+    return lecturas.slice(0, 25);
   }, [lecturas]);
 
   const mantencionesRecientes = useMemo(() => {
-    return [...mantenciones]
-      .sort((current, next) => Number(next.id) - Number(current.id))
-      .slice(0, 25);
+    return mantenciones.slice(0, 25);
   }, [mantenciones]);
 
   function resolveEquipoName(equipoId) {

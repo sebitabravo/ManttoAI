@@ -1,7 +1,7 @@
 # Makefile — Atajos para ManttoAI
 # Uso: make <comando>
 
-.PHONY: setup-env setup-mqtt-creds up down logs build config test lint lint-fix seed seed-run smoke-test backup db-shell simulate train evaluate dev-front lint-front build-front e2e-front mqtt-listen mqtt-test
+.PHONY: setup-env setup-mqtt-creds up down logs build config test lint lint-fix seed seed-run smoke-test backup db-shell simulate verify-3-nodes train evaluate dev-front lint-front build-front e2e-front mqtt-listen mqtt-test
 
 # === Docker ===
 setup-env:
@@ -63,6 +63,9 @@ e2e-front:
 # === IoT ===
 simulate:
 	docker compose exec backend python /simulator/mqtt_simulator.py --host mosquitto --port 1883 --username "$${MQTT_USERNAME:-manttoai_mqtt}" --password "$${MQTT_PASSWORD:-manttoai_mqtt_dev}" --devices 3 --count 8 --interval 1
+
+verify-3-nodes:
+	python scripts/verify_three_nodes.py --api-url "http://localhost:8000" --equipos "1,2,3" --auth-email "$${SEED_ADMIN_EMAIL:-admin@manttoai.local}" --ventana-minutos 10 --max-desfase-segundos 120
 
 # === Base de datos ===
 backup:

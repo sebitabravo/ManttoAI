@@ -105,7 +105,8 @@ test("dashboard consume API real y reemplaza placeholders", async ({ page }) => 
 
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   await expect(page.getByText("Probabilidad de falla")).toBeVisible();
-  await expect(page.getByText("68.0 %")).toBeVisible();
+  const probabilidadCard = page.locator("article").filter({ hasText: "Probabilidad de falla" });
+  await expect(probabilidadCard.getByText("68.0 %")).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "Temperatura" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Vibración" })).toBeVisible();
@@ -118,8 +119,8 @@ test("dashboard consume API real y reemplaza placeholders", async ({ page }) => 
 
   await expect(page.getByRole("cell", { name: "Compresor principal" }).first()).toBeVisible();
   await expect(page.getByRole("cell", { name: "Bomba respaldo" }).first()).toBeVisible();
-  await expect(page.getByRole("cell", { name: "51.20 °C" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "35.40 °C" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "51.20 °C" }).first()).toBeVisible();
+  await expect(page.getByRole("cell", { name: "35.40 °C" }).first()).toBeVisible();
 
   expect(pageErrors).toEqual([]);
 });

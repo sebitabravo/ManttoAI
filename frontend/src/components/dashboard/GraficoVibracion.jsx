@@ -1,27 +1,19 @@
+import { useMemo } from "react";
+
 import GraficoLineaBase from "./GraficoLineaBase";
-
-function sortByTimestampAsc(lecturas) {
-  return [...lecturas].sort((current, next) => {
-    return new Date(current.timestamp).getTime() - new Date(next.timestamp).getTime();
-  });
-}
-
-function resolveVibrationMagnitude(lectura) {
-  return Math.max(
-    Math.abs(Number(lectura.vib_x) || 0),
-    Math.abs(Number(lectura.vib_y) || 0),
-    Math.abs(Number(lectura.vib_z) || 0)
-  );
-}
+import { resolveMaxVibration } from "../../utils/metrics";
 
 export default function GraficoVibracion({ lecturas = [] }) {
-  const temporalSeries = sortByTimestampAsc(lecturas)
-    .slice(-24)
-    .map((lectura) => ({
-      timestamp: lectura.timestamp,
-      value: resolveVibrationMagnitude(lectura),
-    }))
-    .filter((point) => Number.isFinite(point.value));
+  const temporalSeries = useMemo(() => {
+    const recentLecturas = Array.isArray(lecturas) ? lecturas.slice(0, 24).reverse() : [];
+
+    return recentLecturas
+      .map((lectura) => ({
+        timestamp: lectura.timestamp,
+        value: resolveMaxVibration(lectura),
+      }))
+      .filter((point) => Number.isFinite(point.value));
+  }, [lecturas]);
 
   return (
     <GraficoLineaBase

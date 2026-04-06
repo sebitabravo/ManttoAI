@@ -2,7 +2,6 @@
 
 import logging
 
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError, SQLAlchemyError
 from sqlalchemy.orm import Session

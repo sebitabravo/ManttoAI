@@ -54,6 +54,9 @@ export default function EquiposPage() {
           ...equipo,
           dato: resolveLatestDataLabel(equipoResumen),
           alertas_activas: Number(equipoResumen?.alertas_activas || 0),
+          // Datos de predicción para el indicador visual en la card
+          ultima_clasificacion: equipoResumen?.ultima_clasificacion ?? null,
+          ultima_probabilidad: equipoResumen?.ultima_probabilidad ?? null,
         };
       });
 

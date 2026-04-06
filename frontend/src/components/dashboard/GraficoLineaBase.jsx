@@ -1,5 +1,3 @@
-import PropTypes from "prop-types";
-
 import { formatDate } from "../../utils/formatDate";
 import { formatMetric } from "../../utils/metrics";
 
@@ -124,17 +122,3 @@ export default function GraficoLineaBase({
     </section>
   );
 }
-
-GraficoLineaBase.propTypes = {
-  title: PropTypes.string.isRequired,
-  subtitle: PropTypes.string.isRequired,
-  series: PropTypes.arrayOf(
-    PropTypes.shape({
-      timestamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-    })
-  ).isRequired,
-  unit: PropTypes.string.isRequired,
-  color: PropTypes.string.isRequired,
-  emptyMessage: PropTypes.string.isRequired,
-};

@@ -1,7 +1,18 @@
 import client from "./client";
 
-export async function getMantenciones() {
-  const { data } = await client.get("/mantenciones");
+export async function getMantenciones({ equipoId = null, limit = null, order = "desc" } = {}) {
+  const params = {};
+  if (equipoId !== null && equipoId !== undefined) {
+    params.equipo_id = equipoId;
+  }
+  if (limit !== null && limit !== undefined) {
+    params.limit = limit;
+  }
+  if (order) {
+    params.order = order;
+  }
+
+  const { data } = await client.get("/mantenciones", { params });
   return data;
 }
 

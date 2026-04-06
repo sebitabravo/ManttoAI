@@ -8,7 +8,7 @@ import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import { notifyMantencionesRefresh, subscribeMantencionesRefresh } from "../utils/mantencionesEvents";
-import { compareByTimestampDesc, formatDate } from "../utils/formatDate";
+import { formatDate } from "../utils/formatDate";
 import { formatMetric, resolveMaxVibration } from "../utils/metrics";
 
 function resolveRequestErrorMessage(error, fallbackMessage) {
@@ -39,8 +39,8 @@ export default function HistorialPage() {
     setLoading(true);
     try {
       const [lecturasData, mantencionesData, equiposData] = await Promise.all([
-        getLecturas(),
-        getMantenciones(),
+        getLecturas(null, 25),
+        getMantenciones({ limit: 25, order: "desc" }),
         getEquipos(),
       ]);
 
@@ -72,13 +72,11 @@ export default function HistorialPage() {
   }, [loadHistorial]);
 
   const lecturasRecientes = useMemo(() => {
-    return [...lecturas].sort(compareByTimestampDesc).slice(0, 25);
+    return lecturas.slice(0, 25);
   }, [lecturas]);
 
   const mantencionesRecientes = useMemo(() => {
-    return [...mantenciones]
-      .sort((current, next) => Number(next.id) - Number(current.id))
-      .slice(0, 25);
+    return mantenciones.slice(0, 25);
   }, [mantenciones]);
 
   function resolveEquipoName(equipoId) {

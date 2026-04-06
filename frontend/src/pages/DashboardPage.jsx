@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import ResumenCards from "../components/dashboard/ResumenCards";
 import GraficoTemperatura from "../components/dashboard/GraficoTemperatura";
 import GraficoVibracion from "../components/dashboard/GraficoVibracion";
@@ -9,7 +7,6 @@ import LoadingSpinner from "../components/ui/LoadingSpinner";
 import { getDashboardData } from "../api/dashboard";
 import usePolling from "../hooks/usePolling";
 import { DASHBOARD_POLLING_INTERVAL_MS } from "../utils/constants";
-import { compareByTimestampDesc } from "../utils/formatDate";
 
 const resumenInicial = {
   total_equipos: 0,
@@ -24,10 +21,7 @@ export default function DashboardPage() {
   const { data, loading, error } = usePolling(getDashboardData, DASHBOARD_POLLING_INTERVAL_MS, null);
 
   const resumen = data?.resumen || resumenInicial;
-  const lecturas = useMemo(() => {
-    const fetchedLecturas = Array.isArray(data?.lecturas) ? data.lecturas : [];
-    return [...fetchedLecturas].sort(compareByTimestampDesc);
-  }, [data?.lecturas]);
+  const lecturas = Array.isArray(data?.lecturas) ? data.lecturas : [];
 
   const isInitialLoading = loading && !data;
 

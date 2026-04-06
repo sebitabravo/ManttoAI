@@ -1,6 +1,6 @@
 import client from "./client";
 
-export async function getLecturas(equipoId = null, limit = null) {
+export async function getLecturas(equipoId = null, limit = 100) {
   const params = {};
   if (equipoId !== null && equipoId !== undefined) {
     params.equipo_id = equipoId;

@@ -6,11 +6,20 @@ export function resolveMaxVibration(lectura) {
   );
 }
 
-export function formatMetric(value, unit) {
+export function formatMetric(value, unit, fallback = "—") {
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) {
-    return "—";
+    return fallback;
   }
 
   return `${numericValue.toFixed(2)} ${unit}`;
+}
+
+export function formatProbability(value, fallback = "Sin predicción") {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return `${(numericValue * 100).toFixed(1)} %`;
 }

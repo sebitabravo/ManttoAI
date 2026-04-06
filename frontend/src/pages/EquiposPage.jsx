@@ -8,6 +8,7 @@ import EmptyState from "../components/ui/EmptyState";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Button from "../components/ui/Button";
 import { subscribeEquiposRefresh } from "../utils/equiposEvents";
+import { formatMetric, formatProbability } from "../utils/metrics";
 
 function resolveRequestErrorMessage(error, fallbackMessage) {
   const backendDetail = error?.response?.data?.detail;
@@ -29,11 +30,11 @@ function resolveLatestDataLabel(equipoResumen) {
   }
 
   if (equipoResumen.ultima_temperatura !== null && equipoResumen.ultima_temperatura !== undefined) {
-    return `${Number(equipoResumen.ultima_temperatura).toFixed(2)} °C`;
+    return formatMetric(equipoResumen.ultima_temperatura, "°C", "Sin lecturas registradas");
   }
 
   if (equipoResumen.ultima_probabilidad !== null && equipoResumen.ultima_probabilidad !== undefined) {
-    return `${(Number(equipoResumen.ultima_probabilidad) * 100).toFixed(1)} % riesgo`;
+    return `${formatProbability(equipoResumen.ultima_probabilidad, "Sin lecturas registradas")} riesgo`;
   }
 
   return "Sin lecturas registradas";

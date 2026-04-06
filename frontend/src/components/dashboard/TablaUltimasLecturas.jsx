@@ -1,5 +1,3 @@
-import PropTypes from "prop-types";
-
 import { formatDate } from "../../utils/formatDate";
 import { formatMetric, resolveMaxVibration } from "../../utils/metrics";
 
@@ -51,23 +49,3 @@ export default function TablaUltimasLecturas({ lecturas = [], equipos = [] }) {
     </section>
   );
 }
-
-TablaUltimasLecturas.propTypes = {
-  lecturas: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-      equipo_id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-      temperatura: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-      vib_x: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-      vib_y: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-      vib_z: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-      timestamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    })
-  ),
-  equipos: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-      nombre: PropTypes.string,
-    })
-  ),
-};

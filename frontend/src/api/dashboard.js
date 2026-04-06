@@ -13,7 +13,7 @@ export async function getDashboardLecturas(limit = 60) {
     return [];
   }
 
-  return data.slice(0, limit);
+  return data;
 }
 
 export async function getDashboardData() {

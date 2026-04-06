@@ -1,15 +1,13 @@
 import { useMemo } from "react";
-import PropTypes from "prop-types";
 
 import GraficoLineaBase from "./GraficoLineaBase";
-import { compareByTimestampAsc } from "../../utils/formatDate";
 import { resolveMaxVibration } from "../../utils/metrics";
 
 export default function GraficoVibracion({ lecturas = [] }) {
   const temporalSeries = useMemo(() => {
-    return [...lecturas]
-      .sort(compareByTimestampAsc)
-      .slice(-24)
+    const recentLecturas = Array.isArray(lecturas) ? lecturas.slice(0, 24).reverse() : [];
+
+    return recentLecturas
       .map((lectura) => ({
         timestamp: lectura.timestamp,
         value: resolveMaxVibration(lectura),
@@ -28,14 +26,3 @@ export default function GraficoVibracion({ lecturas = [] }) {
     />
   );
 }
-
-GraficoVibracion.propTypes = {
-  lecturas: PropTypes.arrayOf(
-    PropTypes.shape({
-      timestamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      vib_x: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      vib_y: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      vib_z: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    })
-  ),
-};

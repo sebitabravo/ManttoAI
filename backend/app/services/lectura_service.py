@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 def list_lecturas(
     db: Session,
     equipo_id: int | None = None,
-    limit: int | None = None,
+    limit: int | None = 100,
 ) -> list[Lectura]:
-    """Lista lecturas persistidas, opcionalmente filtradas por equipo."""
+    """Lista lecturas persistidas con orden descendente y límite opcional."""
 
     query = select(Lectura)
     if equipo_id is not None:

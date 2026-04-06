@@ -270,7 +270,10 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/equipos\/1$/);
   await expect(page.getByRole("heading", { name: "Detalle del equipo 1" })).toBeVisible();
-  await expect(page.getByText("Probabilidad de falla: 68.0 %")).toBeVisible();
+  // El label y el porcentaje están en nodos hermanos dentro de la sección de predicción;
+  // se verifica cada parte por separado para ser robusto ante cambios de layout.
+  await expect(page.getByText("Probabilidad de falla")).toBeVisible();
+  await expect(page.getByText("68.0 %")).toBeVisible();
   await expect(page.getByRole("cell", { name: "Revisión de rodamientos" })).toBeVisible();
 
   await page.getByRole("link", { name: "Alertas" }).click();

@@ -1,0 +1,14 @@
+# Evita enviar archivos innecesarios al daemon de Docker durante builds.
+.git
+.github
+frontend/node_modules
+**/__pycache__
+*.pyc
+.pytest_cache
+.venv
+venv
+*.sql
+backups
+.env
+backend/.env
+backend/.venv

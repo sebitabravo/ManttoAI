@@ -1,6 +1,42 @@
+# docker-compose.override.yml — Solo desarrollo local
+#
+# Docker Compose carga este archivo automáticamente junto a docker-compose.yml.
+# Añade volúmenes para hot-reload y scripts de utilidad.
+#
+# NO se usa en Dokploy (en Dokploy solo se indica docker-compose.yml).
+
 services:
   backend:
+    env_file:
+      - ./backend/.env
     volumes:
       - ./backend:/app
       - ./scripts:/scripts:ro
       - ./iot/simulator:/simulator:ro
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    # Sobreescribir healthcheck para Vite dev server
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5173 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  mosquitto:
+    # El entrypoint genera el passwd desde variables de entorno si no existe.
+    # Para usar credenciales pre-generadas, ejecutar: make setup-mqtt-creds
+
+  # Deshabilitar nginx en desarrollo local: se accede directo a frontend:5173 y backend:8000
+  nginx:
+    profiles:
+      - production-only

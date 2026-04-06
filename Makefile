@@ -1,12 +1,14 @@
 # Makefile — Atajos para ManttoAI
 # Uso: make <comando>
+#
+# Desarrollo local: Docker Compose carga automáticamente docker-compose.yml + docker-compose.override.yml.
+# Producción (Dokploy): usar solo docker-compose.yml; ver docs/despliegue-dokploy.md.
 
 .PHONY: setup-env setup-mqtt-creds up down logs build config test lint lint-fix seed seed-run smoke-test backup db-shell simulate verify-3-nodes train evaluate dev-front lint-front build-front e2e-front mqtt-listen mqtt-test
 
 # === Docker ===
 setup-env:
 	bash scripts/setup_env.sh
-	@test -f mosquitto/passwd || bash scripts/generate_mosquitto_passwd.sh
 
 setup-mqtt-creds:
 	bash scripts/generate_mosquitto_passwd.sh

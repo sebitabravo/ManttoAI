@@ -5,7 +5,7 @@ set -euo pipefail
 # Prioriza valores exportados y usa defaults de demo si no están definidos.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PASSWD_FILE="$ROOT_DIR/mosquitto/passwd"
+PASSWD_FILE="$ROOT_DIR/mosquitto/config/passwd"
 TEMP_PASSWORD_FILE="$(mktemp)"
 
 cleanup_password_file() {

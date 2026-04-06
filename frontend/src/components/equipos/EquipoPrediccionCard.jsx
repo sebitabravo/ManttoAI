@@ -9,13 +9,17 @@ function BarraRiesgo({ probabilidad, config }) {
     ? Math.min(Math.max(Number(probabilidad) * 100, 0), 100)
     : 0;
 
+  // aria-valuetext combina porcentaje y clasificación para lectores de pantalla
+  const textoAccesible = `${formatPorcentajeRiesgo(probabilidad)} — ${config.label}`;
+
   return (
     <div
       role="progressbar"
       aria-valuenow={Math.round(porcentaje)}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-label={`Probabilidad de falla: ${porcentaje.toFixed(1)} %`}
+      aria-label="Probabilidad de falla"
+      aria-valuetext={textoAccesible}
       style={{
         width: "100%",
         height: 10,

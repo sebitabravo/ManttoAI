@@ -46,22 +46,27 @@ const CONFIG_DESCONOCIDA = {
 
 /**
  * Devuelve la configuración visual para una clasificación dada.
+ * Usa null/undefined explícito en vez de falsy para no descartar el string "0".
  * @param {string|null|undefined} clasificacion - Clasificación del modelo
  * @returns {object} Configuración con color, label, emoji, etc.
  */
 export function getConfigPrediccion(clasificacion) {
-  if (!clasificacion) return CONFIG_DESCONOCIDA;
-  const clave = clasificacion.toLowerCase().trim();
+  if (clasificacion === null || clasificacion === undefined) return CONFIG_DESCONOCIDA;
+  const clave = String(clasificacion).toLowerCase().trim();
   return CLASIFICACION_CONFIG[clave] ?? CONFIG_DESCONOCIDA;
 }
 
 /**
  * Convierte probabilidad (0-1) a porcentaje formateado.
+ * Clampa el valor al rango [0, 1] antes de formatear.
  * @param {number|null|undefined} probabilidad
  * @returns {string}
  */
 export function formatPorcentajeRiesgo(probabilidad) {
+  // null y undefined se descartan explícitamente antes de Number() porque Number(null) === 0
+  if (probabilidad === null || probabilidad === undefined) return "—";
   const num = Number(probabilidad);
   if (!Number.isFinite(num)) return "—";
-  return `${(num * 100).toFixed(1)} %`;
+  const clamped = Math.min(Math.max(num, 0), 1);
+  return `${(clamped * 100).toFixed(1)} %`;
 }

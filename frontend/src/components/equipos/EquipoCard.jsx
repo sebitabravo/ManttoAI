@@ -18,16 +18,18 @@ function PrediccionBadge({ clasificacion, probabilidad }) {
         borderRadius: 9999,
         fontSize: 12,
         fontWeight: 600,
-        color: config.color,
+        // Texto oscuro fijo para garantizar contraste WCAG AA sobre cualquier bgColor
+        color: "#1f2937",
         background: config.bgColor,
         border: `1px solid ${config.borderColor}`,
       }}
       title={probabilidad != null ? `Probabilidad de falla: ${formatPorcentajeRiesgo(probabilidad)}` : undefined}
     >
-      <span aria-hidden="true">{config.emoji}</span>
+      {/* El ícono mantiene el color semántico de riesgo */}
+      <span aria-hidden="true" style={{ color: config.color }}>{config.emoji}</span>
       {config.label}
       {probabilidad != null && (
-        <span style={{ fontWeight: 400, opacity: 0.85 }}>
+        <span style={{ fontWeight: 400, opacity: 0.75 }}>
           {" "}· {formatPorcentajeRiesgo(probabilidad)}
         </span>
       )}

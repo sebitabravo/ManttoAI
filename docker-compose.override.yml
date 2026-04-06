@@ -1,5 +1,14 @@
+# docker-compose.override.yml — Solo desarrollo local
+#
+# Docker Compose carga este archivo automáticamente junto a docker-compose.yml.
+# Añade volúmenes para hot-reload y scripts de utilidad.
+#
+# NO se usa en Dokploy (en Dokploy solo se indica docker-compose.yml).
+
 services:
   backend:
+    env_file:
+      - ./backend/.env
     volumes:
       - ./backend:/app
       - ./scripts:/scripts:ro

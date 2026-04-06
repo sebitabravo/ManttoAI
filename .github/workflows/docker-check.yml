@@ -11,10 +11,12 @@ on:
       - frontend/Dockerfile
       - docker-compose.yml
       - docker-compose.yaml
+      - docker-compose.override.yml
       - backend/requirements.txt
       - frontend/package.json
       - frontend/package-lock.json
       - mosquitto/**
+      - .dockerignore
 
 permissions:
   contents: read

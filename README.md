@@ -23,6 +23,8 @@ Este repositorio tiene un MVP funcional para demo académica, respetando la arqu
 - GNU Make
 - `curl` (opcional, para verificación rápida)
 
+> Docker Compose carga automáticamente `docker-compose.override.yml` junto a `docker-compose.yml` para desarrollo local (hot-reload del backend y scripts montados). No necesitás exportar variables ni usar `-f` explícito.
+
 > ⚠️ Este flujo es **solo para desarrollo local/demo**. No uses `make seed` contra bases productivas.
 > Recomendado: Docker Compose V2 reciente, porque el `docker-compose.yml` usa `depends_on.condition` + `healthcheck` para endurecer el arranque local.
 
@@ -112,6 +114,14 @@ make e2e-front
 - `CLAUDE.md` apunta a `AGENTS.md`
 - comentarios de código en español
 - cambios chicos y reversibles
+
+## Despliegue remoto (Dokploy)
+
+El proyecto usa **un solo `docker-compose.yml`** que funciona tanto en desarrollo local como en Dokploy.
+
+- Guía paso a paso: [`docs/despliegue-dokploy.md`](docs/despliegue-dokploy.md)
+- En Dokploy, configurar dominio en UI → Domains → servicio `nginx` puerto 80
+- Variables de entorno se configuran en UI → Environment
 
 ## Documentación clave
 

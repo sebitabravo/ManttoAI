@@ -45,14 +45,17 @@ def test_concurrent_execute_prediction_creates_single_active_alert(monkeypatch):
         },
     )
     # Mockear get_smtp_client para evitar intentos reales de conexión SMTP
+    from contextlib import contextmanager
     from unittest.mock import MagicMock
 
     mock_smtp = MagicMock()
-    monkeypatch.setattr(
-        email_service,
-        "get_smtp_client",
-        lambda: mock_smtp,
-    )
+
+    @contextmanager
+    def dummy_smtp_cm():
+        """Context manager mock que simula get_smtp_client."""
+        yield mock_smtp
+
+    monkeypatch.setattr(email_service, "get_smtp_client", dummy_smtp_cm)
 
     with SessionLocal() as db:
         db.execute(delete(Prediccion))

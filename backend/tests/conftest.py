@@ -59,10 +59,12 @@ def _build_client(authenticated: bool) -> Generator[TestClient, None, None]:
     previous_database_auto_init = main.settings.database_auto_init
     previous_mqtt_enabled = main.settings.mqtt_enabled
     previous_prediction_scheduler = main.settings.enable_prediction_scheduler
+    previous_database_url = main.settings.database_url
 
     main.settings.database_auto_init = False
     main.settings.mqtt_enabled = False
     main.settings.enable_prediction_scheduler = False
+    main.settings.database_url = "sqlite:///:memory:"
     main.app.dependency_overrides[get_db] = override_get_db
     main.app.state.testing_session_local = testing_session_local
 
@@ -79,6 +81,7 @@ def _build_client(authenticated: bool) -> Generator[TestClient, None, None]:
     main.settings.database_auto_init = previous_database_auto_init
     main.settings.mqtt_enabled = previous_mqtt_enabled
     main.settings.enable_prediction_scheduler = previous_prediction_scheduler
+    main.settings.database_url = previous_database_url
     Base.metadata.drop_all(bind=engine)
     engine.dispose()
 

@@ -12,6 +12,10 @@ def _build_smtp_settings(
     smtp_password: str = "super-secret",
     smtp_from_email: str = "bot@example.com",
     smtp_to_email: str = "alertas@example.com",
+    smtp_use_ssl: bool = False,
+    smtp_timeout: int = 10,
+    smtp_retry_attempts: int = 3,
+    smtp_retry_backoff: float = 2.0,
 ) -> SimpleNamespace:
     """Construye settings SMTP para pruebas unitarias."""
 
@@ -22,6 +26,10 @@ def _build_smtp_settings(
         smtp_password=smtp_password,
         smtp_from_email=smtp_from_email,
         smtp_to_email=smtp_to_email,
+        smtp_use_ssl=smtp_use_ssl,
+        smtp_timeout=smtp_timeout,
+        smtp_retry_attempts=smtp_retry_attempts,
+        smtp_retry_backoff=smtp_retry_backoff,
     )
 
 
@@ -47,7 +55,10 @@ def test_send_alert_email_uses_mocked_smtp_when_config_is_valid(monkeypatch):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-        def starttls(self):
+        def ehlo(self):
+            smtp_calls["ehlo"] = True
+
+        def starttls(self, context=None):
             smtp_calls["starttls"] = True
 
         def login(self, user, password):
@@ -57,6 +68,9 @@ def test_send_alert_email_uses_mocked_smtp_when_config_is_valid(monkeypatch):
             smtp_calls["subject"] = message["Subject"]
             smtp_calls["from"] = message["From"]
             smtp_calls["to"] = message["To"]
+
+        def quit(self):
+            smtp_calls["quit"] = True
 
     monkeypatch.setattr(email_service.smtplib, "SMTP", FakeSMTP)
 
@@ -91,13 +105,15 @@ def test_send_alert_email_returns_not_sent_when_config_is_incomplete(monkeypatch
 def test_send_alert_email_returns_not_sent_when_smtp_client_fails(monkeypatch):
     """Valida que un error SMTP quede registrado sin romper el flujo."""
 
+    import smtplib
+
     settings = _build_smtp_settings()
     monkeypatch.setattr(email_service, "get_settings", lambda: settings)
 
     class BrokenSMTP:
         """Mock SMTP que falla al iniciar TLS."""
 
-        def __init__(self, _host, _port, _timeout):
+        def __init__(self, _host, _port, timeout=None):
             pass
 
         def __enter__(self):
@@ -106,8 +122,14 @@ def test_send_alert_email_returns_not_sent_when_smtp_client_fails(monkeypatch):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-        def starttls(self):
-            raise RuntimeError("smtp unavailable")
+        def ehlo(self):
+            pass
+
+        def starttls(self, context=None):
+            raise smtplib.SMTPException("smtp unavailable")
+
+        def quit(self):
+            pass
 
     monkeypatch.setattr(email_service.smtplib, "SMTP", BrokenSMTP)
 
@@ -117,4 +139,4 @@ def test_send_alert_email_returns_not_sent_when_smtp_client_fails(monkeypatch):
     )
 
     assert result.sent is False
-    assert "smtp unavailable" in str(result.error)
+    assert "Error SMTP: SMTPException" in str(result.error)

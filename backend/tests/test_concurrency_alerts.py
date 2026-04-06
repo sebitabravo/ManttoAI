@@ -15,7 +15,7 @@ from app.models.alerta import Alerta
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.prediccion import Prediccion
-from app.services import alerta_service, prediccion_service
+from app.services import alerta_service, email_service, prediccion_service
 
 
 class _FixedProbabilityModel:
@@ -44,10 +44,14 @@ def test_concurrent_execute_prediction_creates_single_active_alert(monkeypatch):
             "model_params": {"n_estimators": 120, "random_state": 42},
         },
     )
+    # Mockear get_smtp_client para evitar intentos reales de conexión SMTP
+    from unittest.mock import MagicMock
+
+    mock_smtp = MagicMock()
     monkeypatch.setattr(
-        alerta_service,
-        "send_alert_email",
-        lambda _subject, _message: {"sent": True},
+        email_service,
+        "get_smtp_client",
+        lambda: mock_smtp,
     )
 
     with SessionLocal() as db:

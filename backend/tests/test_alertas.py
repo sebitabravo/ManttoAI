@@ -1,8 +1,11 @@
 """Tests de alertas."""
 
+from contextlib import contextmanager
+
 from sqlalchemy.exc import OperationalError
 
 from app.services import alerta_service
+from app.services import email_service
 
 
 def _build_equipo_payload(nombre: str) -> dict[str, str]:
@@ -98,11 +101,18 @@ def test_critical_alert_marks_email_enviado_when_send_succeeds(client, monkeypat
 
     calls: list[tuple[str, str]] = []
 
-    def fake_send_alert_email(subject: str, message: str) -> dict[str, str | bool]:
-        calls.append((subject, message))
-        return {"sent": True, "subject": subject, "message": message}
+    class FakeSMTPClient:
+        """Mock de cliente SMTP que registra llamadas."""
 
-    monkeypatch.setattr(alerta_service, "send_alert_email", fake_send_alert_email)
+        def send_message(self, message):
+            calls.append((message["Subject"], message["To"]))
+
+    @contextmanager
+    def fake_get_smtp_client():
+        yield FakeSMTPClient()
+
+    monkeypatch.setattr(email_service, "get_smtp_client", fake_get_smtp_client)
+    monkeypatch.setattr(alerta_service, "get_smtp_client", fake_get_smtp_client)
 
     equipo_id = _create_equipo(client)
     _create_umbral(
@@ -130,18 +140,13 @@ def test_critical_alert_marks_email_enviado_false_when_send_fails(
 ):
     """Valida que el fallo de envío deje email_enviado=False."""
 
-    calls: list[tuple[str, str]] = []
+    @contextmanager
+    def fake_get_smtp_client_failing():
+        raise RuntimeError("smtp unavailable")
+        yield  # noqa: unreachable — necesario para que sea generator
 
-    def fake_send_alert_email(subject: str, message: str) -> dict[str, str | bool]:
-        calls.append((subject, message))
-        return {
-            "sent": False,
-            "subject": subject,
-            "message": message,
-            "error": "smtp unavailable",
-        }
-
-    monkeypatch.setattr(alerta_service, "send_alert_email", fake_send_alert_email)
+    monkeypatch.setattr(email_service, "get_smtp_client", fake_get_smtp_client_failing)
+    monkeypatch.setattr(alerta_service, "get_smtp_client", fake_get_smtp_client_failing)
 
     equipo_id = _create_equipo(client)
     _create_umbral(
@@ -160,7 +165,6 @@ def test_critical_alert_marks_email_enviado_false_when_send_fails(
     alertas = response.json()
     assert len(alertas) == 1
     assert alertas[0]["email_enviado"] is False
-    assert len(calls) == 1
 
 
 def test_repeated_breach_does_not_duplicate_active_alert(client):

@@ -1,7 +1,9 @@
 """Servicios de alertas y evaluación básica de umbrales."""
 
 import logging
+import threading
 
+from collections.abc import Callable
 from sqlalchemy import select
 from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError, SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -10,8 +12,12 @@ from app.models.alerta import Alerta
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.umbral import Umbral
+from app.database import SessionLocal
 from app.services.common import get_entity_or_404
-from app.services.email_service import send_alert_email
+from app.services.email_service import (
+    get_smtp_client,
+    send_alert_email_with_client,
+)
 
 PREDICTION_ALERT_TYPE = "prediccion"
 logger = logging.getLogger(__name__)
@@ -169,42 +175,49 @@ def mark_as_read(db: Session, alerta_id: int) -> dict[str, int | bool]:
 
 
 def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) -> None:
-    """Intenta enviar email para alertas críticas ya persistidas."""
+    """
+    Intenta enviar email para alertas críticas ya persistidas reutilizando conexión.
 
-    if not alertas:
+    NOTA: Esta función ejecuta I/O bloqueante (SMTP) y debe ser llamada
+    desde un contexto apropiado (thread separado o worker externo).
+    """
+
+    if not isinstance(db, Session):
+        raise TypeError("db debe ser una instancia de SQLAlchemy Session")
+
+    alertas_a_enviar = [a for a in alertas if a.nivel == "alto"]
+    if not alertas_a_enviar:
         return
 
-    for alerta in alertas:
-        if alerta.nivel != "alto":
-            continue
-
-        try:
-            email_result = send_alert_email(
-                "Alerta crítica ManttoAI",
-                (
-                    f"Equipo {alerta.equipo_id}: {alerta.mensaje}. "
-                    f"Tipo de alerta: {alerta.tipo}."
-                ),
-            )
-        except Exception as exc:  # pragma: no cover - defensa ante mocks/integraciones
-            logger.warning(
-                "No se pudo invocar envío de email para alerta crítica alerta_id=%s error=%s",
-                getattr(alerta, "id", None),
-                exc,
-            )
+    try:
+        with get_smtp_client() as smtp_client:
+            for alerta in alertas_a_enviar:
+                try:
+                    email_result = send_alert_email_with_client(
+                        smtp_client,
+                        "Alerta crítica ManttoAI",
+                        (
+                            f"Equipo {alerta.equipo_id}: {alerta.mensaje}. "
+                            f"Tipo de alerta: {alerta.tipo}."
+                        ),
+                    )
+                    alerta.email_enviado = email_result.sent
+                    if email_result.error:
+                        logger.warning(
+                            "Error al enviar email para alerta_id=%s: %s",
+                            alerta.id,
+                            email_result.error,
+                        )
+                except Exception:
+                    logger.exception(
+                        "Falla inesperada en envío de email para alerta_id=%s",
+                        alerta.id,
+                    )
+                    alerta.email_enviado = False
+    except Exception:
+        logger.exception("No se pudo establecer conexión SMTP para notificaciones")
+        for alerta in alertas_a_enviar:
             alerta.email_enviado = False
-            continue
-
-        sent = False
-        if isinstance(email_result, dict):
-            sent = bool(email_result.get("sent"))
-            if email_result.get("error"):
-                logger.warning(
-                    "No se pudo enviar email de alerta crítica alerta_id=%s error=%s",
-                    getattr(alerta, "id", None),
-                    email_result.get("error"),
-                )
-        alerta.email_enviado = sent
 
     try:
         db.commit()
@@ -212,6 +225,70 @@ def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) ->
         db.rollback()
         logger.exception("No se pudo persistir estado de emails de alertas")
         raise
+
+
+def _dispatch_emails_in_thread(
+    alerta_ids: list[int], factory: Callable[[], Session]
+) -> None:
+    """
+    Worker que corre en hilo separado para enviar emails sin bloquear el worker ASGI.
+
+    Abre su propia sesión de BD y ejecuta el envío SMTP bloqueante de forma aislada.
+    """
+
+    db = factory()
+    try:
+        alertas = list(db.scalars(select(Alerta).where(Alerta.id.in_(alerta_ids))))
+        dispatch_critical_email_notifications(db, alertas)
+    except Exception:
+        logger.exception("Error en envío de emails en hilo de fondo")
+    finally:
+        db.close()
+
+
+def dispatch_critical_email_notifications_bg(
+    alerta_ids: list[int],
+    session_factory: Callable[[], Session] | None = None,
+) -> None:
+    """
+    Versión para BackgroundTasks que delega el envío a un hilo separado.
+
+    Evita bloquear el worker ASGI al ejecutar I/O SMTP bloqueante en un thread daemon.
+
+    En entornos de testing (SQLite en memoria), ejecuta sincrónicamente para evitar
+    race conditions en los tests.
+    """
+
+    if not alerta_ids:
+        return
+
+    if session_factory is not None and not callable(session_factory):
+        raise TypeError("session_factory debe ser callable que retorna una Session")
+
+    factory = session_factory or SessionLocal
+
+    # En modo test (SQLite en memoria), ejecutar sincrónicamente
+    # para evitar race conditions con threads daemon
+    from app.config import get_settings
+
+    settings = get_settings()
+    is_testing = (
+        "sqlite" in settings.database_url.lower()
+        and ":memory:" in settings.database_url.lower()
+    )
+
+    if is_testing:
+        # Ejecución síncrona en tests
+        _dispatch_emails_in_thread(alerta_ids, factory)
+    else:
+        # Ejecución async en producción
+        thread = threading.Thread(
+            target=_dispatch_emails_in_thread,
+            args=(alerta_ids, factory),
+            daemon=True,
+            name=f"smtp-worker-{alerta_ids[0] if alerta_ids else 'empty'}",
+        )
+        thread.start()
 
 
 def create_prediction_failure_alert(

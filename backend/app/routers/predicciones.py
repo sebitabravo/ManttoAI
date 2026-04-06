@@ -1,6 +1,6 @@
 """Endpoints de predicciones."""
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
@@ -27,8 +27,17 @@ def get_prediccion(
 )
 def post_prediccion(
     equipo_id: int,
+    background_tasks: BackgroundTasks,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> PrediccionResponse:
     """Ejecuta una predicción real para el equipo y la persiste."""
 
-    return execute_prediction(db, equipo_id)
+    # Permite inyectar session_factory en tests sin tocar la DB de producción
+    session_factory = getattr(request.app.state, "testing_session_local", None)
+    return execute_prediction(
+        db,
+        equipo_id,
+        background_tasks=background_tasks,
+        session_factory=session_factory,
+    )

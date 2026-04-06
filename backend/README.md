@@ -15,7 +15,7 @@ Backend FastAPI organizado con el patrón **router → service → model**.
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
-cp .env.example .env
+bash ../scripts/setup_env.sh
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -24,7 +24,7 @@ uvicorn app.main:app --reload --port 8000
 Desde la raíz del repo:
 
 ```bash
-cp backend/.env.example backend/.env
+bash scripts/setup_env.sh
 docker compose up -d mysql backend
 curl http://localhost:8000/health
 ```

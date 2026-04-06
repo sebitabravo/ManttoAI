@@ -7,6 +7,20 @@ EQUIPO_ID="${EQUIPO_ID:-1}"
 SMOKE_WAIT_SECONDS="${SMOKE_WAIT_SECONDS:-90}"
 SMOKE_ALLOW_REMOTE="${SMOKE_ALLOW_REMOTE:-false}"
 TMP_FILES=()
+AUTH_COOKIE_FILE="$(mktemp)"
+SMOKE_CSRF_TOKEN=""
+
+TMP_FILES+=("$AUTH_COOKIE_FILE")
+
+if [ -f "backend/.env" ]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "backend/.env"
+  set +a
+fi
+
+SMOKE_AUTH_EMAIL="${SMOKE_AUTH_EMAIL:-${SEED_ADMIN_EMAIL:-admin@manttoai.local}}"
+SMOKE_AUTH_PASSWORD="${SMOKE_AUTH_PASSWORD:-${SEED_ADMIN_PASSWORD:-}}"
 
 cleanup_tmp_files() {
   local temp_file
@@ -26,6 +40,10 @@ log() {
 
 error() {
   printf "\n[smoke][error] %s\n" "$1" >&2
+  if command -v docker >/dev/null 2>&1; then
+    printf "\n[smoke] Últimos logs relevantes:\n" >&2
+    docker compose logs --tail=40 backend mysql mosquitto >&2 || true
+  fi
   exit 1
 }
 
@@ -65,6 +83,58 @@ wait_for_backend() {
   done
 }
 
+login_backend() {
+  local response_file
+  local status_code
+
+  if [ -z "$SMOKE_AUTH_PASSWORD" ]; then
+    error "Falta SMOKE_AUTH_PASSWORD o SEED_ADMIN_PASSWORD para autenticación del smoke test"
+  fi
+
+  response_file="$(mktemp)"
+  TMP_FILES+=("$response_file")
+
+  status_code="$({
+    curl \
+      --silent \
+      --show-error \
+      --output "$response_file" \
+      --write-out "%{http_code}" \
+      --cookie-jar "$AUTH_COOKIE_FILE" \
+      -X POST "${API_URL}/auth/login" \
+      -H "Content-Type: application/json" \
+      -d "{\"email\":\"${SMOKE_AUTH_EMAIL}\",\"password\":\"${SMOKE_AUTH_PASSWORD}\"}"
+  })"
+
+  if [ "$status_code" != "200" ]; then
+    cat "$response_file" >&2
+    error "No se pudo autenticar smoke test (HTTP ${status_code})"
+  fi
+
+  SMOKE_CSRF_TOKEN="$(python3 - <<'PY' "$AUTH_COOKIE_FILE"
+import sys
+
+cookie_file = sys.argv[1]
+token = ""
+
+with open(cookie_file, encoding="utf-8") as handle:
+    for raw_line in handle:
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+
+        parts = line.split("\t")
+        if len(parts) >= 7 and parts[5] == "manttoai_csrf":
+            token = parts[6]
+
+print(token)
+PY
+  )"
+  if [ -z "$SMOKE_CSRF_TOKEN" ]; then
+    error "No se pudo resolver cookie CSRF para smoke test"
+  fi
+}
+
 execute_prediction() {
   local response_file
   local status_code
@@ -77,13 +147,15 @@ execute_prediction() {
       --show-error \
       --output "$response_file" \
       --write-out "%{http_code}" \
+      --cookie "$AUTH_COOKIE_FILE" \
+      -H "X-CSRF-Token: ${SMOKE_CSRF_TOKEN}" \
       -X POST "${API_URL}/predicciones/ejecutar/${EQUIPO_ID}"
   })"
 
   if [ "$status_code" = "503" ]; then
     log "Modelo no disponible, entrenando artefacto ML..."
 
-    if ! docker compose exec backend python /app/app/ml/train.py; then
+    if ! docker compose exec backend python -m app.ml.train; then
       error "Entrenamiento ML falló. Revisá logs con: docker compose logs backend"
     fi
 
@@ -93,6 +165,8 @@ execute_prediction() {
         --show-error \
         --output "$response_file" \
         --write-out "%{http_code}" \
+        --cookie "$AUTH_COOKIE_FILE" \
+        -H "X-CSRF-Token: ${SMOKE_CSRF_TOKEN}" \
         -X POST "${API_URL}/predicciones/ejecutar/${EQUIPO_ID}"
     })"
   fi
@@ -114,21 +188,22 @@ require_command python3
 assert_safe_target
 
 log "Preparando entorno local"
-make setup-env >/dev/null
-make config >/dev/null
-make up >/dev/null
+make setup-env
+make config
+make up
 wait_for_backend
+login_backend
 
 log "Verificando frontend disponible"
 curl --silent --show-error --fail "${FRONTEND_URL}" >/dev/null
 
 log "Cargando datos base de demo"
-make seed >/dev/null
+make seed
 
 log "Escenario 1/3: operación normal (simulador -> persistencia)"
-make simulate >/dev/null
+make simulate
 
-LECTURAS_JSON="$(curl --silent --show-error --fail "${API_URL}/lecturas?equipo_id=${EQUIPO_ID}")"
+LECTURAS_JSON="$(curl --silent --show-error --fail --cookie "$AUTH_COOKIE_FILE" "${API_URL}/lecturas?equipo_id=${EQUIPO_ID}")"
 export LECTURAS_JSON
 python3 - <<'PY'
 import json
@@ -151,12 +226,14 @@ curl \
   --silent \
   --show-error \
   --fail \
+  --cookie "$AUTH_COOKIE_FILE" \
+  -H "X-CSRF-Token: ${SMOKE_CSRF_TOKEN}" \
   -X POST "${API_URL}/lecturas" \
   -H "Content-Type: application/json" \
   -d "{\"equipo_id\":${EQUIPO_ID},\"temperatura\":95.0,\"humedad\":30.0,\"vib_x\":2.5,\"vib_y\":2.5,\"vib_z\":25.0}" \
   >/dev/null
 
-ALERTAS_JSON="$(curl --silent --show-error --fail "${API_URL}/alertas?equipo_id=${EQUIPO_ID}&solo_no_leidas=true&limite=100")"
+ALERTAS_JSON="$(curl --silent --show-error --fail --cookie "$AUTH_COOKIE_FILE" "${API_URL}/alertas?equipo_id=${EQUIPO_ID}&solo_no_leidas=true&limite=100")"
 export ALERTAS_JSON
 python3 - <<'PY'
 import json
@@ -199,6 +276,8 @@ if [ "$IS_RISK" != "1" ]; then
     --silent \
     --show-error \
     --fail \
+    --cookie "$AUTH_COOKIE_FILE" \
+    -H "X-CSRF-Token: ${SMOKE_CSRF_TOKEN}" \
     -X POST "${API_URL}/lecturas" \
     -H "Content-Type: application/json" \
     -d "{\"equipo_id\":${EQUIPO_ID},\"temperatura\":110.0,\"humedad\":20.0,\"vib_x\":3.5,\"vib_y\":3.5,\"vib_z\":30.0}" \
@@ -208,7 +287,7 @@ if [ "$IS_RISK" != "1" ]; then
   export PREDICCION_JSON
 fi
 
-SUMMARY_JSON="$(curl --silent --show-error --fail "${API_URL}/dashboard/resumen")"
+SUMMARY_JSON="$(curl --silent --show-error --fail --cookie "$AUTH_COOKIE_FILE" "${API_URL}/dashboard/resumen")"
 export SUMMARY_JSON
 export EQUIPO_ID
 python3 - <<'PY'

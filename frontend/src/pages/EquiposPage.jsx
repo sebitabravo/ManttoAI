@@ -7,22 +7,8 @@ import EquipoForm from "../components/equipos/EquipoForm";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Button from "../components/ui/Button";
-import { subscribeEquiposRefresh } from "../utils/equiposEvents";
+import { getApiErrorMessage } from "../utils/errorHandling";
 import { formatMetric, formatProbability } from "../utils/metrics";
-
-function resolveRequestErrorMessage(error, fallbackMessage) {
-  const backendDetail = error?.response?.data?.detail;
-
-  if (typeof backendDetail === "string" && backendDetail.trim()) {
-    return backendDetail;
-  }
-
-  if (typeof error?.message === "string" && error.message.trim()) {
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
 
 function resolveLatestDataLabel(equipoResumen) {
   if (!equipoResumen) {
@@ -82,12 +68,6 @@ export default function EquiposPage() {
 
   useEffect(() => {
     loadEquipos();
-
-    const unsubscribe = subscribeEquiposRefresh(() => {
-      loadEquipos();
-    });
-
-    return unsubscribe;
   }, [loadEquipos]);
 
   async function handleCreateEquipo(payload) {
@@ -100,7 +80,7 @@ export default function EquiposPage() {
       setShowCreateForm(false);
     } catch (createError) {
       setCreateErrorMessage(
-        resolveRequestErrorMessage(createError, "No pudimos crear el equipo. Revisá los datos ingresados.")
+        getApiErrorMessage(createError, "No pudimos crear el equipo. Revisá los datos ingresados.")
       );
     } finally {
       setIsCreating(false);

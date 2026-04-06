@@ -34,8 +34,15 @@ def generate_synthetic_dataset(
         + 0.35 * (vib_z - 9.72)
         + 0.04 * (humedad - 58)
     )
-    prob_riesgo = 1.0 / (1.0 + np.exp(-puntaje_riesgo))
-    riesgo = (rng.uniform(0, 1, size) < prob_riesgo).astype(int)
+    riesgo = (
+        puntaje_riesgo
+        + 0.4 * (temperatura > 52)
+        + 0.5 * (vib_x > 0.42)
+        + 0.5 * (vib_y > 0.28)
+        + 0.3 * (vib_z > 10.1)
+        + rng.normal(0, 0.25, size)
+        > 0.6
+    ).astype(int)
 
     return pd.DataFrame(
         {

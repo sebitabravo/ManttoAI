@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.umbral import Umbral
 from app.schemas.umbral import UmbralCreate, UmbralUpdate
+from app.services.common import get_entity_or_404
 from app.services.equipo_service import get_equipo_or_404
 
 
@@ -28,13 +29,7 @@ def list_umbrales(db: Session) -> list[Umbral]:
 def get_umbral_or_404(db: Session, umbral_id: int) -> Umbral:
     """Obtiene un umbral o retorna 404 cuando no existe."""
 
-    umbral = db.get(Umbral, umbral_id)
-    if umbral is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Umbral no encontrado",
-        )
-    return umbral
+    return get_entity_or_404(db, Umbral, umbral_id, "Umbral no encontrado")
 
 
 def create_umbral(db: Session, payload: UmbralCreate) -> Umbral:

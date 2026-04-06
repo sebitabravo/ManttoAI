@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold, cross_validate, train_test_split
 
 try:
     from app.ml.generate_dataset import (
@@ -79,14 +79,52 @@ def evaluate_model(
     model = RandomForestClassifier(**DEFAULT_MODEL_PARAMS)
     model.fit(x_train, y_train)
     predictions = model.predict(x_test)
+    precision = float(precision_score(y_test, predictions, zero_division=0))
+    recall = float(recall_score(y_test, predictions, zero_division=0))
+    f1 = float(f1_score(y_test, predictions, zero_division=0))
+
+    cv_metrics = {
+        "cv_f1_mean": f1,
+        "cv_f1_std": 0.0,
+        "cv_precision_mean": precision,
+        "cv_recall_mean": recall,
+        "cv_folds": 1,
+    }
+
+    if target_data.nunique() > 1 and int(target_data.value_counts().min()) >= 2:
+        cv_splits = max(2, min(5, int(target_data.value_counts().min())))
+        cross_validation = cross_validate(
+            RandomForestClassifier(**DEFAULT_MODEL_PARAMS),
+            features_data,
+            target_data,
+            cv=StratifiedKFold(
+                n_splits=cv_splits,
+                shuffle=True,
+                random_state=random_state,
+            ),
+            scoring={
+                "precision": "precision",
+                "recall": "recall",
+                "f1": "f1",
+            },
+            n_jobs=1,
+        )
+        cv_metrics = {
+            "cv_f1_mean": float(cross_validation["test_f1"].mean()),
+            "cv_f1_std": float(cross_validation["test_f1"].std()),
+            "cv_precision_mean": float(cross_validation["test_precision"].mean()),
+            "cv_recall_mean": float(cross_validation["test_recall"].mean()),
+            "cv_folds": int(cv_splits),
+        }
 
     return {
         "accuracy": float(accuracy_score(y_test, predictions)),
-        "precision": float(precision_score(y_test, predictions, zero_division=0)),
-        "recall": float(recall_score(y_test, predictions, zero_division=0)),
-        "f1": float(f1_score(y_test, predictions, zero_division=0)),
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
         "train_samples": int(len(x_train)),
         "test_samples": int(len(x_test)),
+        **cv_metrics,
     }
 
 

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import os
+import time
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from sqlalchemy.exc import OperationalError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -217,11 +219,30 @@ def seed_umbrales(db: Session, equipos: list[Equipo]) -> tuple[int, int]:
     return created_count, updated_count
 
 
+def initialize_database_with_retry(
+    max_attempts: int = 8, delay_seconds: float = 2.0
+) -> None:
+    """Inicializa esquema con reintentos frente a arranque tardío de MySQL."""
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            initialize_database_schema()
+            return
+        except OperationalError:
+            if attempt >= max_attempts:
+                raise
+
+            print(
+                f"⏳ Base de datos aún no lista para seed (intento {attempt}/{max_attempts}). Reintentando..."
+            )
+            time.sleep(delay_seconds)
+
+
 def main() -> None:
     """Ejecuta el seed mínimo requerido para la demo local."""
 
     _assert_safe_seed_environment()
-    initialize_database_schema()
+    initialize_database_with_retry()
 
     with SessionLocal() as db:
         admin_email, admin_created = seed_admin_user(db)

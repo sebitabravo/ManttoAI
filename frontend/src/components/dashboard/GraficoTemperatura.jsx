@@ -1,18 +1,14 @@
-import { useMemo } from "react";
-
 import GraficoLineaBase from "./GraficoLineaBase";
+import { sortByTimestampAsc } from "../../utils/time";
 
 export default function GraficoTemperatura({ lecturas = [] }) {
-  const temporalSeries = useMemo(() => {
-    const recentLecturas = Array.isArray(lecturas) ? lecturas.slice(0, 24).reverse() : [];
-
-    return recentLecturas
-      .map((lectura) => ({
-        timestamp: lectura.timestamp,
-        value: Number(lectura.temperatura),
-      }))
-      .filter((point) => Number.isFinite(point.value));
-  }, [lecturas]);
+  const temporalSeries = sortByTimestampAsc(Array.isArray(lecturas) ? lecturas : [])
+    .slice(-24)
+    .map((lectura) => ({
+      timestamp: lectura.timestamp,
+      value: Number(lectura.temperatura),
+    }))
+    .filter((point) => Number.isFinite(point.value));
 
   return (
     <GraficoLineaBase

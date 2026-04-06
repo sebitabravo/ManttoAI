@@ -66,6 +66,7 @@ export default function GraficoLineaBase({
         role="img"
         aria-label={`Serie temporal de ${title.toLowerCase()}`}
       >
+        <title>{`Serie temporal de ${title.toLowerCase()}`}</title>
         <line
           x1={CHART_PADDING}
           y1={CHART_HEIGHT - CHART_PADDING}

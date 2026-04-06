@@ -1,15 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-function createFakeJwtToken() {
-  const nowInSeconds = Math.floor(Date.now() / 1000);
-  const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
-  const payload = Buffer.from(
-    JSON.stringify({ sub: "demo@example.com", exp: nowInSeconds + 3600 })
-  ).toString("base64url");
-
-  return `${header}.${payload}.signature`;
-}
-
 test("equipos, alertas e historial consumen backend real", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", (error) => {
@@ -110,16 +100,29 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
     },
   ];
 
-  await page.addInitScript((args) => {
-    window.localStorage.setItem("manttoai_token", args.token);
-    window.localStorage.setItem("manttoai_user", JSON.stringify(args.user));
-  }, {
-    token: createFakeJwtToken(),
-    user: {
-      nombre: "demo",
-      email: "demo@example.com",
-      rol: "visualizador",
+  // Establecer cookie de sesión antes de navegar
+  await page.context().addCookies([
+    {
+      name: "manttoai_token",
+      value: "mock-session-token",
+      domain: "127.0.0.1",
+      path: "/",
+      httpOnly: true,
+      sameSite: "Lax",
     },
+  ]);
+
+  await page.route("**/api/auth/me", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: 1,
+        nombre: "demo",
+        email: "demo@example.com",
+        rol: "visualizador",
+      }),
+    });
   });
 
   await page.route("**/api/dashboard/resumen", async (route) => {

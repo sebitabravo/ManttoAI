@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 import threading
 from collections.abc import Callable
@@ -59,39 +60,76 @@ def run_periodic_predictions(
     if not callable(resolved_session_factory):
         raise ValueError("session_factory debe ser invocable")
 
-    db = resolved_session_factory()
-    if db is None or not hasattr(db, "close"):
+    listing_session = resolved_session_factory()
+    if listing_session is None or not hasattr(listing_session, "close"):
         raise ValueError("session_factory debe retornar una sesión válida")
 
-    equipos_activos = 0
+    active_equipo_ids: list[int] = []
+    dialect_name = ""
+
+    try:
+        dialect_name = getattr(getattr(listing_session, "bind", None), "dialect", None)
+        dialect_name = getattr(dialect_name, "name", "")
+
+        for equipo in list_equipos(listing_session):
+            if _is_equipo_activo(getattr(equipo, "estado", None)):
+                active_equipo_ids.append(int(equipo.id))
+    finally:
+        if listing_session is not None and hasattr(listing_session, "close"):
+            listing_session.close()
+
+    equipos_activos = len(active_equipo_ids)
     predicciones_ok = 0
     predicciones_error = 0
 
-    try:
-        for equipo in list_equipos(db):
-            if not _is_equipo_activo(getattr(equipo, "estado", None)):
-                continue
+    def _execute_prediction_for_equipo(equipo_id: int) -> bool:
+        equipo_session = resolved_session_factory()
+        if equipo_session is None or not hasattr(equipo_session, "close"):
+            raise ValueError("session_factory debe retornar una sesión válida")
 
-            equipos_activos += 1
-            try:
-                execute_prediction(db, equipo.id)
+        try:
+            execute_prediction(equipo_session, equipo_id)
+            return True
+        except HTTPException as exc:
+            logger.warning(
+                "Predicción periódica omitida equipo_id=%s detalle=%s",
+                equipo_id,
+                exc.detail,
+            )
+            return False
+        except Exception:
+            logger.exception(
+                "Error inesperado ejecutando predicción periódica equipo_id=%s",
+                equipo_id,
+            )
+            return False
+        finally:
+            equipo_session.close()
+
+    scheduler_settings = get_settings()
+    configured_workers = getattr(
+        scheduler_settings, "prediction_scheduler_max_workers", 4
+    )
+    max_workers = (
+        1
+        if dialect_name == "sqlite"
+        else max(
+            1,
+            min(configured_workers, equipos_activos or 1),
+        )
+    )
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(_execute_prediction_for_equipo, equipo_id): equipo_id
+            for equipo_id in active_equipo_ids
+        }
+
+        for future in as_completed(futures):
+            if future.result():
                 predicciones_ok += 1
-            except HTTPException as exc:
+            else:
                 predicciones_error += 1
-                logger.warning(
-                    "Predicción periódica omitida equipo_id=%s detalle=%s",
-                    equipo.id,
-                    exc.detail,
-                )
-            except Exception:
-                predicciones_error += 1
-                logger.exception(
-                    "Error inesperado ejecutando predicción periódica equipo_id=%s",
-                    equipo.id,
-                )
-    finally:
-        if db is not None and hasattr(db, "close"):
-            db.close()
 
     logger.info(
         "Ejecución periódica de predicciones finalizada activos=%d ok=%d error=%d",

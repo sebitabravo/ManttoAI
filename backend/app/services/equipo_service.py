@@ -1,11 +1,11 @@
 """Servicios de equipos con persistencia en base de datos."""
 
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.equipo import Equipo
 from app.schemas.equipo import EquipoCreate, EquipoUpdate
+from app.services.common import get_entity_or_404
 
 
 def list_equipos(db: Session) -> list[Equipo]:
@@ -17,13 +17,7 @@ def list_equipos(db: Session) -> list[Equipo]:
 def get_equipo_or_404(db: Session, equipo_id: int) -> Equipo:
     """Obtiene un equipo o retorna 404 cuando no existe."""
 
-    equipo = db.get(Equipo, equipo_id)
-    if equipo is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Equipo no encontrado",
-        )
-    return equipo
+    return get_entity_or_404(db, Equipo, equipo_id, "Equipo no encontrado")
 
 
 def create_equipo(db: Session, payload: EquipoCreate) -> Equipo:

@@ -26,6 +26,9 @@ export default function TablaUltimasLecturas({ lecturas = [], equipos = [] }) {
         </p>
       ) : (
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <caption style={{ textAlign: "left", paddingBottom: 8, color: "#6b7280" }}>
+            Lecturas más recientes recibidas desde los equipos monitoreados.
+          </caption>
           <thead>
             <tr>
               <th scope="col" align="left">Equipo</th>

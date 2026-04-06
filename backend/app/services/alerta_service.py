@@ -2,13 +2,15 @@
 
 import logging
 
-from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.alerta import Alerta
+from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.umbral import Umbral
+from app.services.common import get_entity_or_404
 from app.services.email_service import send_alert_email
 
 PREDICTION_ALERT_TYPE = "prediccion"
@@ -118,16 +120,37 @@ def list_alertas(
     return list(db.scalars(query))
 
 
+def get_active_prediction_failure_alert(db: Session, equipo_id: int) -> Alerta | None:
+    """Obtiene alerta activa de predicción para un equipo, si existe."""
+
+    return db.scalars(
+        select(Alerta)
+        .where(Alerta.equipo_id == equipo_id)
+        .where(Alerta.tipo == PREDICTION_ALERT_TYPE)
+        .where(Alerta.nivel == "alto")
+        .where(Alerta.leida.is_(False))
+        .limit(1)
+    ).first()
+
+
+def _lock_equipo_alert_scope(db: Session, equipo_id: int) -> None:
+    """Bloquea fila del equipo para deduplicar alertas concurrentes cuando el motor lo soporta."""
+
+    try:
+        db.execute(
+            select(Equipo.id).where(Equipo.id == equipo_id).with_for_update()
+        ).first()
+    except (OperationalError, DBAPIError) as exc:
+        logger.debug(
+            "FOR UPDATE no soportado por el motor actual; se usará fallback por constraint. detalle=%s",
+            exc,
+        )
+
+
 def get_alerta_or_404(db: Session, alerta_id: int) -> Alerta:
     """Obtiene una alerta por id o retorna 404 si no existe."""
 
-    alerta = db.get(Alerta, alerta_id)
-    if alerta is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Alerta no encontrada",
-        )
-    return alerta
+    return get_entity_or_404(db, Alerta, alerta_id, "Alerta no encontrada")
 
 
 def mark_as_read(db: Session, alerta_id: int) -> dict[str, int | bool]:
@@ -137,7 +160,7 @@ def mark_as_read(db: Session, alerta_id: int) -> dict[str, int | bool]:
     alerta.leida = True
     try:
         db.commit()
-    except Exception:
+    except SQLAlchemyError:
         db.rollback()
         raise
 
@@ -157,45 +180,50 @@ def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) ->
 
         try:
             email_result = send_alert_email(
-                subject="Alerta crítica ManttoAI",
-                message=(
+                "Alerta crítica ManttoAI",
+                (
                     f"Equipo {alerta.equipo_id}: {alerta.mensaje}. "
                     f"Tipo de alerta: {alerta.tipo}."
                 ),
             )
-
-            sent = False
-            if isinstance(email_result, dict):
-                sent = bool(email_result.get("sent"))
-            alerta.email_enviado = sent
-        except Exception:
-            logger.exception(
-                "No se pudo enviar email de alerta crítica (alerta_id=%s)",
+        except Exception as exc:  # pragma: no cover - defensa ante mocks/integraciones
+            logger.warning(
+                "No se pudo invocar envío de email para alerta crítica alerta_id=%s error=%s",
                 getattr(alerta, "id", None),
+                exc,
             )
             alerta.email_enviado = False
+            continue
+
+        sent = False
+        if isinstance(email_result, dict):
+            sent = bool(email_result.get("sent"))
+            if email_result.get("error"):
+                logger.warning(
+                    "No se pudo enviar email de alerta crítica alerta_id=%s error=%s",
+                    getattr(alerta, "id", None),
+                    email_result.get("error"),
+                )
+        alerta.email_enviado = sent
 
     try:
         db.commit()
-    except Exception:
+    except SQLAlchemyError:
         db.rollback()
+        logger.exception("No se pudo persistir estado de emails de alertas")
+        raise
 
 
 def create_prediction_failure_alert(
     db: Session,
     equipo_id: int,
     probabilidad: float,
+    auto_commit: bool = True,
 ) -> Alerta | None:
     """Crea alerta crítica por predicción de falla evitando duplicados activos."""
 
-    alerta_activa = db.scalars(
-        select(Alerta)
-        .where(Alerta.equipo_id == equipo_id)
-        .where(Alerta.tipo == PREDICTION_ALERT_TYPE)
-        .where(Alerta.nivel == "alto")
-        .where(Alerta.leida.is_(False))
-        .limit(1)
-    ).first()
+    _lock_equipo_alert_scope(db, equipo_id)
+    alerta_activa = get_active_prediction_failure_alert(db, equipo_id)
 
     if alerta_activa is not None:
         return None
@@ -213,9 +241,15 @@ def create_prediction_failure_alert(
     )
     db.add(alerta)
 
+    if not auto_commit:
+        return alerta
+
     try:
         db.commit()
-    except Exception:
+    except IntegrityError:
+        db.rollback()
+        return get_active_prediction_failure_alert(db, equipo_id)
+    except SQLAlchemyError:
         db.rollback()
         raise
 

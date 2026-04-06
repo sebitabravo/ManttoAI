@@ -20,6 +20,7 @@ La generación es reproducible con semilla fija para facilitar repetición en in
 - Script: `backend/app/ml/train.py`
 - Modelo: `RandomForestClassifier`
 - Artefacto: `backend/app/ml/modelo.joblib` (ignorado por git)
+- Checksum sidecar: `backend/app/ml/modelo.joblib.sha256`
 
 Comando:
 
@@ -39,6 +40,7 @@ cd backend/app/ml
   - f1
   - train_samples
   - test_samples
+- Gate académico mínimo: `f1 >= 0.80` en tests automatizados
 
 Comando:
 
@@ -65,4 +67,13 @@ cd backend/app/ml
 El artefacto `.joblib` debe tratarse como archivo confiable local.
 
 - No cargar modelos descargados de orígenes no verificados.
+- El loader verifica integridad con checksum SHA-256 sidecar antes de cargar el artefacto.
 - Ante dudas, regenerar dataset y modelo con `generate_dataset.py` y `train.py`.
+
+## Runbook operativo breve
+
+1. Regenerar dataset si hace falta: `python generate_dataset.py`
+2. Reentrenar modelo: `python train.py`
+3. Evaluar métricas: `python evaluate.py`
+4. Verificar que el test automatizado de `f1 >= 0.80` siga pasando
+5. Si una versión nueva falla, regenerar el artefacto previo conocido y su checksum sidecar

@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "sensors.h"
+
 void setupMqttClient();
 void maintainMqttConnection();
-void publishSensorReading();
+void publishSensorReading(const SensorSnapshot& snapshot);

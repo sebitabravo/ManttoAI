@@ -27,7 +27,7 @@ jobs:
         working-directory: backend
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:8.0.41
         env:
           MYSQL_ROOT_PASSWORD: test_password
           MYSQL_DATABASE: manttoai_test
@@ -88,6 +88,7 @@ jobs:
           SECRET_KEY: test-secret-key-ci
           MQTT_BROKER_HOST: localhost
           MQTT_BROKER_PORT: "1883"
+          RUN_DB_CONCURRENCY_TESTS: "1"
           SMTP_HOST: ""
           SMTP_PORT: "587"
           SMTP_USER: ""
@@ -139,6 +140,12 @@ jobs:
         env:
           CI: "true"
         run: npm run lint
+
+      - name: Run frontend unit tests
+        if: steps.frontend_check.outputs.present == 'true'
+        env:
+          CI: "true"
+        run: npm run test:unit
 
       - name: Build production bundle
         if: steps.frontend_check.outputs.present == 'true'

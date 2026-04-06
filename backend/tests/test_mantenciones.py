@@ -1,5 +1,9 @@
 """Tests de mantenciones."""
 
+from datetime import datetime, timedelta, timezone
+
+from app.models.mantencion import Mantencion
+
 
 def _build_equipo_payload(nombre: str) -> dict[str, str]:
     """Construye un payload válido para crear equipos."""
@@ -64,6 +68,62 @@ def test_list_mantenciones_returns_persisted_records(client):
     assert len(mantenciones) >= 2
     tipos = {mantencion["tipo"] for mantencion in mantenciones}
     assert {"preventiva", "correctiva"}.issubset(tipos)
+
+
+def test_list_mantenciones_order_usa_created_at(client):
+    """Valida que el ordenamiento se base en created_at y no en id."""
+
+    equipo_id = _create_equipo(client, "Equipo orden mantenciones")
+    first_response = client.post(
+        "/mantenciones",
+        json=_build_mantencion_payload(
+            equipo_id=equipo_id,
+            tipo="preventiva",
+            descripcion="Primera mantención",
+        ),
+    )
+    second_response = client.post(
+        "/mantenciones",
+        json=_build_mantencion_payload(
+            equipo_id=equipo_id,
+            tipo="correctiva",
+            descripcion="Segunda mantención",
+        ),
+    )
+
+    first_id = first_response.json()["id"]
+    second_id = second_response.json()["id"]
+
+    older_created_at = datetime.now(timezone.utc) - timedelta(days=2)
+    newer_created_at = datetime.now(timezone.utc)
+
+    with client.app.state.testing_session_local() as db:
+        first_mantencion = db.get(Mantencion, first_id)
+        second_mantencion = db.get(Mantencion, second_id)
+        assert first_mantencion is not None
+        assert second_mantencion is not None
+
+        first_mantencion.created_at = newer_created_at
+        second_mantencion.created_at = older_created_at
+        db.commit()
+
+    asc_response = client.get(
+        "/mantenciones",
+        params={"equipo_id": equipo_id, "order": "asc", "limit": 2},
+    )
+    desc_response = client.get(
+        "/mantenciones",
+        params={"equipo_id": equipo_id, "order": "desc", "limit": 2},
+    )
+
+    assert asc_response.status_code == 200
+    assert desc_response.status_code == 200
+
+    asc_ids = [mantencion["id"] for mantencion in asc_response.json()]
+    desc_ids = [mantencion["id"] for mantencion in desc_response.json()]
+
+    assert asc_ids == [second_id, first_id]
+    assert desc_ids == [first_id, second_id]
 
 
 def test_create_mantencion_rejects_unknown_equipo(client):

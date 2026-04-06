@@ -10,6 +10,7 @@ export default function ResumenCards({ resumen }) {
   ];
 
   return (
+    // Nota: auto-fit + minmax no tiene utilitario nativo exacto en Tailwind.
     <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
       {cards.map((card) => (
         <article key={card.label} className="rounded-2xl border border-gray-200 p-4">

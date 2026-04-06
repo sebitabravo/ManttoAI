@@ -22,9 +22,9 @@ def list_mantenciones(
         query = query.where(Mantencion.equipo_id == equipo_id)
 
     if order == "asc":
-        query = query.order_by(Mantencion.id.asc())
+        query = query.order_by(Mantencion.created_at.asc(), Mantencion.id.asc())
     else:
-        query = query.order_by(Mantencion.id.desc())
+        query = query.order_by(Mantencion.created_at.desc(), Mantencion.id.desc())
 
     if limit is not None:
         query = query.limit(limit)

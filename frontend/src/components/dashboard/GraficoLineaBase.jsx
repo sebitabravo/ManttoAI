@@ -39,10 +39,10 @@ export default function GraficoLineaBase({
 
   if (isEmpty) {
     return (
-      <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-        <h2 style={{ marginTop: 0 }}>{title}</h2>
-        <p style={{ marginTop: 0, color: "#6b7280" }}>{subtitle}</p>
-        <p style={{ marginBottom: 0 }}>{emptyMessage}</p>
+      <section className="rounded-2xl border border-gray-200 p-4">
+        <h2 className="mt-0">{title}</h2>
+        <p className="mt-0 text-gray-500">{subtitle}</p>
+        <p className="mb-0">{emptyMessage}</p>
       </section>
     );
   }
@@ -56,9 +56,9 @@ export default function GraficoLineaBase({
   const lastTimestamp = series[series.length - 1].timestamp;
 
   return (
-    <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-      <h2 style={{ marginTop: 0 }}>{title}</h2>
-      <p style={{ marginTop: 0, color: "#6b7280" }}>{subtitle}</p>
+    <section className="rounded-2xl border border-gray-200 p-4">
+      <h2 className="mt-0">{title}</h2>
+      <p className="mt-0 text-gray-500">{subtitle}</p>
 
       <svg
         width="100%"
@@ -85,37 +85,22 @@ export default function GraficoLineaBase({
         <polyline fill="none" stroke={color} strokeWidth="3" points={points} />
       </svg>
 
-      <div
-        style={{
-          marginTop: 12,
-          display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          gap: 8,
-        }}
-      >
+      <div className="mt-3 grid grid-cols-3 gap-2">
         <div>
-          <div style={{ fontSize: 12, color: "#6b7280" }}>Último</div>
+          <div className="text-xs text-gray-500">Último</div>
           <strong>{formatMetric(latestValue, unit)}</strong>
         </div>
         <div>
-          <div style={{ fontSize: 12, color: "#6b7280" }}>Mínimo</div>
+          <div className="text-xs text-gray-500">Mínimo</div>
           <strong>{formatMetric(minValue, unit)}</strong>
         </div>
         <div>
-          <div style={{ fontSize: 12, color: "#6b7280" }}>Máximo</div>
+          <div className="text-xs text-gray-500">Máximo</div>
           <strong>{formatMetric(maxValue, unit)}</strong>
         </div>
       </div>
 
-      <div
-        style={{
-          marginTop: 8,
-          display: "flex",
-          justifyContent: "space-between",
-          color: "#6b7280",
-          fontSize: 12,
-        }}
-      >
+      <div className="mt-2 flex justify-between text-xs text-gray-500">
         <span>{formatDate(firstTimestamp)}</span>
         <span>{formatDate(lastTimestamp)}</span>
       </div>

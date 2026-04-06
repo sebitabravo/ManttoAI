@@ -1,6 +1,5 @@
 """Script para validar envío real de email SMTP."""
 
-import os
 import sys
 from pathlib import Path
 
@@ -35,10 +34,10 @@ def test_real_smtp():
         message="Esta es una prueba de integración con SMTP real para validar el canal de notificaciones.",
     )
 
-    if result["sent"]:
+    if result.sent:
         print("\nSUCCESS: Email enviado correctamente.")
     else:
-        print(f"\nFAILED: No se pudo enviar el email. Error: {result.get('error')}")
+        print(f"\nFAILED: No se pudo enviar el email. Error: {result.error}")
 
 
 if __name__ == "__main__":

@@ -99,7 +99,9 @@ def process_mqtt_message(
 
     db = session_factory()
     try:
-        create_lectura_from_mqtt_payload(db, equipo_id, lectura_payload)
+        create_lectura_from_mqtt_payload(
+            db, equipo_id, lectura_payload, background_tasks=None
+        )
         return True
     except HTTPException as exc:
         logger.warning(

@@ -1,9 +1,12 @@
 """Servicios de envío de correo."""
 
 import smtplib
+from contextlib import contextmanager
 from email.message import EmailMessage
+from typing import Generator
 
 from app.config import get_settings
+from app.schemas.email import EmailResponse
 
 
 def can_send_email() -> bool:
@@ -22,19 +25,24 @@ def can_send_email() -> bool:
     )
 
 
-def send_alert_email(subject: str, message: str) -> dict[str, str | bool | None]:
-    """Intenta enviar un correo de alerta usando SMTP configurado."""
+@contextmanager
+def get_smtp_client() -> Generator[smtplib.SMTP, None, None]:
+    """Context manager para obtener un cliente SMTP autenticado."""
 
-    response: dict[str, str | bool | None] = {
-        "sent": False,
-        "subject": subject,
-        "message": message,
-        "error": None,
-    }
-
+    settings = get_settings()
     if not can_send_email():
-        response["error"] = "Configuración SMTP incompleta"
-        return response
+        raise RuntimeError("Configuración SMTP incompleta")
+
+    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, 10) as smtp_client:
+        smtp_client.starttls()
+        smtp_client.login(settings.smtp_user, settings.smtp_password)
+        yield smtp_client
+
+
+def send_alert_email_with_client(
+    smtp_client: smtplib.SMTP, subject: str, message: str
+) -> EmailResponse:
+    """Envía un correo de alerta reutilizando un cliente SMTP existente."""
 
     settings = get_settings()
     sender = settings.smtp_from_email or settings.smtp_user
@@ -47,13 +55,29 @@ def send_alert_email(subject: str, message: str) -> dict[str, str | bool | None]
     email_message.set_content(message)
 
     try:
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, 10) as smtp_client:
-            smtp_client.starttls()
-            smtp_client.login(settings.smtp_user, settings.smtp_password)
-            smtp_client.send_message(email_message)
+        smtp_client.send_message(email_message)
+        return EmailResponse(sent=True, subject=subject, message=message)
     except Exception as exc:
-        response["error"] = str(exc)
-        return response
+        return EmailResponse(
+            sent=False, subject=subject, message=message, error=str(exc)
+        )
 
-    response["sent"] = True
-    return response
+
+def send_alert_email(subject: str, message: str) -> EmailResponse:
+    """Intenta enviar un correo de alerta usando SMTP configurado."""
+
+    if not can_send_email():
+        return EmailResponse(
+            sent=False,
+            subject=subject,
+            message=message,
+            error="Configuración SMTP incompleta",
+        )
+
+    try:
+        with get_smtp_client() as smtp_client:
+            return send_alert_email_with_client(smtp_client, subject, message)
+    except Exception as exc:
+        return EmailResponse(
+            sent=False, subject=subject, message=message, error=str(exc)
+        )

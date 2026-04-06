@@ -2,7 +2,9 @@
 
 import logging
 
-from fastapi import HTTPException, status
+from collections.abc import Callable
+
+from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -12,6 +14,7 @@ from app.models.prediccion import Prediccion
 from app.services.alerta_service import (
     create_prediction_failure_alert,
     dispatch_critical_email_notifications,
+    dispatch_critical_email_notifications_bg,
     get_active_prediction_failure_alert,
 )
 from app.services.equipo_service import get_equipo_or_404
@@ -189,6 +192,8 @@ def _persist_prediction_result(
     probability: float,
     classification: str,
     artifact: dict[str, object],
+    background_tasks: BackgroundTasks | None = None,
+    session_factory: Callable | None = None,
 ) -> Prediccion:
     """Persiste resultado de inferencia y coordina alerta posterior."""
 
@@ -262,7 +267,14 @@ def _persist_prediction_result(
 
     if prediction_failure_alert is not None:
         db.refresh(prediction_failure_alert)
-        dispatch_critical_email_notifications(db, [prediction_failure_alert])
+        if background_tasks:
+            background_tasks.add_task(
+                dispatch_critical_email_notifications_bg,
+                [prediction_failure_alert.id],
+                session_factory,
+            )
+        else:
+            dispatch_critical_email_notifications(db, [prediction_failure_alert])
 
     return prediction
 
@@ -300,7 +312,12 @@ def get_prediction(db: Session, equipo_id: int) -> Prediccion:
     return prediction
 
 
-def execute_prediction(db: Session, equipo_id: int) -> Prediccion:
+def execute_prediction(
+    db: Session,
+    equipo_id: int,
+    background_tasks: BackgroundTasks | None = None,
+    session_factory: Callable | None = None,
+) -> Prediccion:
     """Ejecuta inferencia real para un equipo y persiste el resultado."""
 
     get_equipo_or_404(db, equipo_id)
@@ -313,4 +330,6 @@ def execute_prediction(db: Session, equipo_id: int) -> Prediccion:
         probability=probability,
         classification=classification,
         artifact=artifact,
+        background_tasks=background_tasks,
+        session_factory=session_factory,
     )

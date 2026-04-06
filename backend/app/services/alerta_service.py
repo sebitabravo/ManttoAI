@@ -10,8 +10,12 @@ from app.models.alerta import Alerta
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.umbral import Umbral
+from app.database import SessionLocal
 from app.services.common import get_entity_or_404
-from app.services.email_service import send_alert_email
+from app.services.email_service import (
+    get_smtp_client,
+    send_alert_email_with_client,
+)
 
 PREDICTION_ALERT_TYPE = "prediccion"
 logger = logging.getLogger(__name__)
@@ -169,42 +173,42 @@ def mark_as_read(db: Session, alerta_id: int) -> dict[str, int | bool]:
 
 
 def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) -> None:
-    """Intenta enviar email para alertas críticas ya persistidas."""
+    """Intenta enviar email para alertas críticas ya persistidas reutilizando conexión."""
 
-    if not alertas:
+    alertas_a_enviar = [a for a in alertas if a.nivel == "alto"]
+    if not alertas_a_enviar:
         return
 
-    for alerta in alertas:
-        if alerta.nivel != "alto":
-            continue
-
-        try:
-            email_result = send_alert_email(
-                "Alerta crítica ManttoAI",
-                (
-                    f"Equipo {alerta.equipo_id}: {alerta.mensaje}. "
-                    f"Tipo de alerta: {alerta.tipo}."
-                ),
-            )
-        except Exception as exc:  # pragma: no cover - defensa ante mocks/integraciones
-            logger.warning(
-                "No se pudo invocar envío de email para alerta crítica alerta_id=%s error=%s",
-                getattr(alerta, "id", None),
-                exc,
-            )
+    try:
+        with get_smtp_client() as smtp_client:
+            for alerta in alertas_a_enviar:
+                try:
+                    email_result = send_alert_email_with_client(
+                        smtp_client,
+                        "Alerta crítica ManttoAI",
+                        (
+                            f"Equipo {alerta.equipo_id}: {alerta.mensaje}. "
+                            f"Tipo de alerta: {alerta.tipo}."
+                        ),
+                    )
+                    alerta.email_enviado = email_result.sent
+                    if email_result.error:
+                        logger.warning(
+                            "Error al enviar email para alerta_id=%s: %s",
+                            alerta.id,
+                            email_result.error,
+                        )
+                except Exception as exc:
+                    logger.warning(
+                        "Falla inesperada en envío de email para alerta_id=%s: %s",
+                        alerta.id,
+                        exc,
+                    )
+                    alerta.email_enviado = False
+    except Exception as exc:
+        logger.error("No se pudo establecer conexión SMTP para notificaciones: %s", exc)
+        for alerta in alertas_a_enviar:
             alerta.email_enviado = False
-            continue
-
-        sent = False
-        if isinstance(email_result, dict):
-            sent = bool(email_result.get("sent"))
-            if email_result.get("error"):
-                logger.warning(
-                    "No se pudo enviar email de alerta crítica alerta_id=%s error=%s",
-                    getattr(alerta, "id", None),
-                    email_result.get("error"),
-                )
-        alerta.email_enviado = sent
 
     try:
         db.commit()
@@ -212,6 +216,26 @@ def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) ->
         db.rollback()
         logger.exception("No se pudo persistir estado de emails de alertas")
         raise
+
+
+def dispatch_critical_email_notifications_bg(
+    alerta_ids: list[int],
+    session_factory=None,
+) -> None:
+    """Versión para BackgroundTasks que abre su propia sesión y envía emails."""
+
+    if not alerta_ids:
+        return
+
+    factory = session_factory or SessionLocal
+    db = factory()
+    try:
+        alertas = list(db.scalars(select(Alerta).where(Alerta.id.in_(alerta_ids))))
+        dispatch_critical_email_notifications(db, alertas)
+    except Exception:
+        logger.exception("Error en background task de envío de emails")
+    finally:
+        db.close()
 
 
 def create_prediction_failure_alert(

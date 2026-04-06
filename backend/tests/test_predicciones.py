@@ -1,6 +1,9 @@
 """Tests de endpoints de predicciones."""
 
+from contextlib import contextmanager
+
 from app.services import alerta_service, prediccion_service
+from app.services import email_service
 
 
 def _build_equipo_payload(nombre: str) -> dict[str, str]:
@@ -70,21 +73,35 @@ def _mock_model_loader(probabilities: list[float]):
     }
 
 
+def _make_fake_smtp_client(calls: list):
+    """Construye un context manager SMTP falso que registra envíos."""
+
+    class FakeSMTPClient:
+        """Mock de cliente SMTP que registra llamadas."""
+
+        def send_message(self, message):
+            calls.append((message["Subject"], message["To"]))
+
+    @contextmanager
+    def fake_get_smtp_client():
+        yield FakeSMTPClient()
+
+    return fake_get_smtp_client
+
+
 def test_post_prediccion_ejecuta_inferencia_real_y_persiste(client, monkeypatch):
     """Valida POST /predicciones/ejecutar/{equipo_id} con inferencia real mockeada."""
 
     email_calls: list[tuple[str, str]] = []
-
-    def fake_send_alert_email(subject: str, message: str) -> dict[str, str | bool]:
-        email_calls.append((subject, message))
-        return {"sent": True, "subject": subject, "message": message}
+    fake_smtp = _make_fake_smtp_client(email_calls)
 
     monkeypatch.setattr(
         prediccion_service,
         "load_model_artifact",
         _mock_model_loader([0.82]),
     )
-    monkeypatch.setattr(alerta_service, "send_alert_email", fake_send_alert_email)
+    monkeypatch.setattr(email_service, "get_smtp_client", fake_smtp)
+    monkeypatch.setattr(alerta_service, "get_smtp_client", fake_smtp)
 
     equipo_id = _create_equipo(client)
     _create_lectura(client, equipo_id=equipo_id)
@@ -121,17 +138,15 @@ def test_post_prediccion_normal_no_crea_alerta_critica(client, monkeypatch):
     """Valida que una predicción normal no cree alerta crítica ni email."""
 
     email_calls: list[tuple[str, str]] = []
-
-    def fake_send_alert_email(subject: str, message: str) -> dict[str, str | bool]:
-        email_calls.append((subject, message))
-        return {"sent": True, "subject": subject, "message": message}
+    fake_smtp = _make_fake_smtp_client(email_calls)
 
     monkeypatch.setattr(
         prediccion_service,
         "load_model_artifact",
         _mock_model_loader([0.22]),
     )
-    monkeypatch.setattr(alerta_service, "send_alert_email", fake_send_alert_email)
+    monkeypatch.setattr(email_service, "get_smtp_client", fake_smtp)
+    monkeypatch.setattr(alerta_service, "get_smtp_client", fake_smtp)
 
     equipo_id = _create_equipo(client)
     _create_lectura(client, equipo_id=equipo_id)
@@ -151,17 +166,15 @@ def test_post_prediccion_falla_no_duplica_alerta_activa(client, monkeypatch):
     """Valida que dos fallas consecutivas no dupliquen alerta crítica activa."""
 
     email_calls: list[tuple[str, str]] = []
-
-    def fake_send_alert_email(subject: str, message: str) -> dict[str, str | bool]:
-        email_calls.append((subject, message))
-        return {"sent": True, "subject": subject, "message": message}
+    fake_smtp = _make_fake_smtp_client(email_calls)
 
     monkeypatch.setattr(
         prediccion_service,
         "load_model_artifact",
         _mock_model_loader([0.82, 0.91]),
     )
-    monkeypatch.setattr(alerta_service, "send_alert_email", fake_send_alert_email)
+    monkeypatch.setattr(email_service, "get_smtp_client", fake_smtp)
+    monkeypatch.setattr(alerta_service, "get_smtp_client", fake_smtp)
 
     equipo_id = _create_equipo(client)
     _create_lectura(client, equipo_id=equipo_id)
@@ -187,19 +200,18 @@ def test_post_prediccion_falla_no_duplica_alerta_activa(client, monkeypatch):
 def test_post_prediccion_falla_con_error_email_no_rompe_alerta(client, monkeypatch):
     """Valida que un error SMTP no rompa creación de alerta por predicción."""
 
-    def failing_send_alert_email(_subject: str, _message: str):
+    @contextmanager
+    def failing_smtp_client():
         raise RuntimeError("smtp unavailable")
+        yield  # noqa: unreachable — necesario para que sea generator
 
     monkeypatch.setattr(
         prediccion_service,
         "load_model_artifact",
         _mock_model_loader([0.88]),
     )
-    monkeypatch.setattr(
-        alerta_service,
-        "send_alert_email",
-        failing_send_alert_email,
-    )
+    monkeypatch.setattr(email_service, "get_smtp_client", failing_smtp_client)
+    monkeypatch.setattr(alerta_service, "get_smtp_client", failing_smtp_client)
 
     equipo_id = _create_equipo(client)
     _create_lectura(client, equipo_id=equipo_id)

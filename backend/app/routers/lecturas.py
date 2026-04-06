@@ -1,6 +1,6 @@
 """Endpoints de lecturas."""
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
@@ -35,8 +35,14 @@ def get_latest(equipo_id: int, db: Session = Depends(get_db)) -> LecturaResponse
 @router.post("", response_model=LecturaResponse, status_code=status.HTTP_201_CREATED)
 def post_lectura(
     payload: LecturaCreate,
+    background_tasks: BackgroundTasks,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> LecturaResponse:
     """Crea una lectura persistida."""
 
-    return create_lectura(db, payload)
+    # Permite inyectar session_factory en tests sin tocar la DB de producción
+    session_factory = getattr(request.app.state, "testing_session_local", None)
+    return create_lectura(
+        db, payload, background_tasks=background_tasks, session_factory=session_factory
+    )

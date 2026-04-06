@@ -65,7 +65,7 @@ def test_send_alert_email_uses_mocked_smtp_when_config_is_valid(monkeypatch):
         message="Temperatura fuera de rango",
     )
 
-    assert result["sent"] is True
+    assert result.sent is True
     assert smtp_calls["host"] == "smtp.example.com"
     assert smtp_calls["port"] == 587
     assert smtp_calls["starttls"] is True
@@ -84,8 +84,8 @@ def test_send_alert_email_returns_not_sent_when_config_is_incomplete(monkeypatch
         message="Vibración fuera de rango",
     )
 
-    assert result["sent"] is False
-    assert "error" in result
+    assert result.sent is False
+    assert result.error is not None
 
 
 def test_send_alert_email_returns_not_sent_when_smtp_client_fails(monkeypatch):
@@ -116,5 +116,5 @@ def test_send_alert_email_returns_not_sent_when_smtp_client_fails(monkeypatch):
         message="Temperatura fuera de rango",
     )
 
-    assert result["sent"] is False
-    assert "smtp unavailable" in str(result.get("error"))
+    assert result.sent is False
+    assert "smtp unavailable" in str(result.error)

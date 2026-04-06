@@ -20,7 +20,7 @@ def test_real_smtp():
     print("--- Validación de Configuración SMTP ---")
     print(f"Host: {settings.smtp_host}")
     print(f"Port: {settings.smtp_port}")
-    print(f"User: {settings.smtp_user}")
+    # No imprimimos el usuario por seguridad
     print(f"From: {settings.smtp_from_email or settings.smtp_user}")
     print(f"To: {settings.smtp_to_email or settings.smtp_user}")
 

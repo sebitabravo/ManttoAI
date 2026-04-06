@@ -228,6 +228,9 @@ def _persist_prediction_result(
                 detail="Error de integridad al persistir predicción",
             ) from exc
 
+        # Reset alert reference: ya existe alerta activa, no creamos duplicado
+        prediction_failure_alert = None
+
         prediction = Prediccion(
             equipo_id=equipo_id,
             clasificacion=classification,

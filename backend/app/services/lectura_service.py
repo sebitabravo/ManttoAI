@@ -1,7 +1,6 @@
 """Servicios de lecturas telemétricas con persistencia en base de datos."""
 
 import logging
-
 from collections.abc import Callable
 
 from fastapi import BackgroundTasks, HTTPException, status
@@ -16,6 +15,8 @@ from app.services.alerta_service import (
     evaluate_thresholds,
 )
 from app.services.equipo_service import get_equipo_or_404
+
+logger = logging.getLogger(__name__)
 
 
 def list_lecturas(

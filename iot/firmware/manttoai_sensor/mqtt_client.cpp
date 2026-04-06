@@ -117,21 +117,8 @@ void syncMqttConnectionLogs() {
   mqtt_was_connected = mqtt_connected;
 }
 
-bool buildPayload(char* payload, size_t payload_size) {
-  const float temperatura = readTemperature();
-  const float humedad = readHumidity();
-  const float vib_x = readVibrationX();
-  const float vib_y = readVibrationY();
-  const float vib_z = readVibrationZ();
-
-  const bool has_nan =
-      std::isnan(temperatura) ||
-      std::isnan(humedad) ||
-      std::isnan(vib_x) ||
-      std::isnan(vib_y) ||
-      std::isnan(vib_z);
-
-  if (has_nan) {
+bool buildPayload(const SensorSnapshot& snapshot, char* payload, size_t payload_size) {
+  if (!isSensorSnapshotValid(snapshot)) {
     Serial.println("[mqtt] Lectura inválida de sensores. Se omite publicación.");
     return false;
   }
@@ -140,11 +127,11 @@ bool buildPayload(char* payload, size_t payload_size) {
       payload,
       payload_size,
       "{\"temperatura\":%.2f,\"humedad\":%.2f,\"vib_x\":%.3f,\"vib_y\":%.3f,\"vib_z\":%.3f}",
-      temperatura,
-      humedad,
-      vib_x,
-      vib_y,
-      vib_z);
+      snapshot.temperatura,
+      snapshot.humedad,
+      snapshot.vib_x,
+      snapshot.vib_y,
+      snapshot.vib_z);
 
   if (written <= 0 || static_cast<size_t>(written) >= payload_size) {
     Serial.println("[mqtt] Payload inválido por tamaño insuficiente.");
@@ -199,7 +186,7 @@ void maintainMqttConnection() {
   syncMqttConnectionLogs();
 }
 
-void publishSensorReading() {
+void publishSensorReading(const SensorSnapshot& snapshot) {
   if (mqtt_topic[0] == '\0' || !mqtt_client.connected()) {
     return;
   }
@@ -211,7 +198,7 @@ void publishSensorReading() {
 
   last_publish_ms = now;
   char payload[192] = {0};
-  if (!buildPayload(payload, sizeof(payload))) {
+  if (!buildPayload(snapshot, payload, sizeof(payload))) {
     return;
   }
 
@@ -236,7 +223,7 @@ void setupMqttClient() {
 
 void maintainMqttConnection() {}
 
-void publishSensorReading() {
+void publishSensorReading(const SensorSnapshot& /*snapshot*/) {
   std::puts("Publicando lectura MQTT (modo no-ARDUINO)...");
 }
 

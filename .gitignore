@@ -35,6 +35,7 @@ frontend/test-results/
 
 # === Modelos / datasets ===
 backend/app/ml/modelo.joblib
+backend/app/ml/modelo.joblib.sha256
 backend/app/ml/data/*
 !backend/app/ml/data/.gitkeep
 !backend/app/ml/data/README.md

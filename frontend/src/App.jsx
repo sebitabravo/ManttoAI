@@ -11,8 +11,16 @@ import HistorialPage from "./pages/HistorialPage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
+function AuthBootstrapFallback() {
+  return <div style={{ padding: "2rem" }}>Validando sesión...</div>;
+}
+
 function ProtectedLayout() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAuthResolved } = useAuth();
+
+  if (!isAuthResolved) {
+    return <AuthBootstrapFallback />;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -22,7 +30,11 @@ function ProtectedLayout() {
 }
 
 function LoginRoute() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAuthResolved } = useAuth();
+
+  if (!isAuthResolved) {
+    return <AuthBootstrapFallback />;
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;

@@ -1,11 +1,11 @@
 """Servicios de mantenciones con persistencia en base de datos."""
 
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.mantencion import Mantencion
 from app.schemas.mantencion import MantencionCreate, MantencionUpdate
+from app.services.common import get_entity_or_404
 from app.services.equipo_service import get_equipo_or_404
 
 
@@ -35,13 +35,7 @@ def list_mantenciones(
 def get_mantencion_or_404(db: Session, mantencion_id: int) -> Mantencion:
     """Obtiene una mantención o retorna 404 cuando no existe."""
 
-    mantencion = db.get(Mantencion, mantencion_id)
-    if mantencion is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Mantención no encontrada",
-        )
-    return mantencion
+    return get_entity_or_404(db, Mantencion, mantencion_id, "Mantención no encontrada")
 
 
 def create_mantencion(db: Session, payload: MantencionCreate) -> Mantencion:

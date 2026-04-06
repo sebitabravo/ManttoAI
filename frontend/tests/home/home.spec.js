@@ -1,15 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-function createFakeJwtToken() {
-  const nowInSeconds = Math.floor(Date.now() / 1000);
-  const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
-  const payload = Buffer.from(
-    JSON.stringify({ sub: "demo@example.com", exp: nowInSeconds + 3600 })
-  ).toString("base64url");
-
-  return `${header}.${payload}.signature`;
-}
-
 test("sin token no se puede acceder al dashboard", async ({ page }) => {
   await page.goto("/dashboard");
 
@@ -26,10 +16,27 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        access_token: createFakeJwtToken(),
+        access_token: "cookie-session-token",
         token_type: "bearer",
       }),
     });
+  });
+
+  await page.route("**/api/auth/me", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: 1,
+        nombre: "demo",
+        email: "demo@example.com",
+        rol: "visualizador",
+      }),
+    });
+  });
+
+  await page.route("**/api/auth/logout", async (route) => {
+    await route.fulfill({ status: 204, body: "" });
   });
 
   await page.goto("/login");
@@ -41,16 +48,8 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   await expect
     .poll(() =>
-      page.evaluate(() => {
-        const storedToken = window.localStorage.getItem("manttoai_token") || "";
-        return storedToken.split(".").length;
-      })
-    )
-    .toBe(3);
-  await expect
-    .poll(() =>
       page.evaluate(
-        () => JSON.parse(window.localStorage.getItem("manttoai_user") || "null")?.email
+        () => JSON.parse(window.sessionStorage.getItem("manttoai_user") || "null")?.email
       )
     )
     .toBe("demo@example.com");
@@ -63,6 +62,5 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
   await page.getByRole("button", { name: "Salir" }).click();
 
   await expect(page).toHaveURL(/\/login$/);
-  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("manttoai_token"))).toBeNull();
-  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("manttoai_user"))).toBeNull();
+  await expect.poll(() => page.evaluate(() => window.sessionStorage.getItem("manttoai_user"))).toBeNull();
 });

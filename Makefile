@@ -5,8 +5,7 @@
 
 # === Docker ===
 setup-env:
-	@test -f .env || cp .env.example .env
-	@test -f backend/.env || cp backend/.env.example backend/.env
+	bash scripts/setup_env.sh
 	@test -f mosquitto/passwd || bash scripts/generate_mosquitto_passwd.sh
 
 setup-mqtt-creds:

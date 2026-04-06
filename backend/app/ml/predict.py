@@ -2,30 +2,33 @@
 
 from pathlib import Path
 
-import joblib
-
 try:
-    from app.ml.train import FEATURES, MODEL_PATH, train_and_save_model
+    from app.ml.train import (
+        FEATURES,
+        MODEL_PATH,
+        load_model_artifact_cached,
+        train_and_save_model,
+    )
 except ModuleNotFoundError:  # pragma: no cover - soporte ejecución directa
-    from train import FEATURES, MODEL_PATH, train_and_save_model  # type: ignore
+    from train import (  # type: ignore
+        FEATURES,
+        MODEL_PATH,
+        load_model_artifact_cached,
+        train_and_save_model,
+    )
 
 
 def _load_model_and_features(model_path: Path = MODEL_PATH):
     """Carga artefacto de modelo soportando formato nuevo y legado."""
 
     try:
-        artifact = joblib.load(model_path)
+        artifact = load_model_artifact_cached(model_path)
     except Exception as exc:
         raise RuntimeError(
             f"No se pudo cargar artefacto ML desde {model_path}: {exc}"
         ) from exc
 
     if isinstance(artifact, dict) and "model" in artifact:
-        required_keys = {"model", "features", "target", "model_params"}
-        if not required_keys.issubset(artifact.keys()):
-            raise RuntimeError(
-                f"Artefacto ML inválido en {model_path}: faltan llaves {required_keys}"
-            )
         return artifact["model"], artifact.get("features", FEATURES)
 
     if not hasattr(artifact, "predict"):
@@ -49,16 +52,16 @@ def load_or_train_model(model_path: Path = MODEL_PATH):
 def predict_from_record(record: dict[str, float]) -> int:
     """Predice riesgo usando un registro con las features esperadas."""
 
-    if not MODEL_PATH.exists():
-        train_and_save_model(model_path=MODEL_PATH)
-
-    model, features = _load_model_and_features(MODEL_PATH)
-
-    missing_features = [feature for feature in features if feature not in record]
+    missing_features = [feature for feature in FEATURES if feature not in record]
     if missing_features:
         raise KeyError(
             f"Faltan features requeridas para la predicción: {missing_features}"
         )
+
+    if not MODEL_PATH.exists():
+        train_and_save_model(model_path=MODEL_PATH)
+
+    model, features = _load_model_and_features(MODEL_PATH)
 
     try:
         row = [[float(record[feature]) for feature in features]]

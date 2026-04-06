@@ -1,9 +1,14 @@
 """Entrenamiento del modelo base de ManttoAI."""
 
+from copy import deepcopy
+from datetime import datetime, timezone
+import hashlib
+from threading import Lock
 from pathlib import Path
 
 import joblib
 import pandas as pd
+from sklearn import __version__ as sklearn_version
 from sklearn.ensemble import RandomForestClassifier
 
 try:
@@ -36,6 +41,48 @@ DEFAULT_MODEL_PARAMS = {
     "min_samples_leaf": 2,
     "random_state": 42,
 }
+_MODEL_ARTIFACT_CACHE_LOCK = Lock()
+_MODEL_ARTIFACT_CACHE: dict[Path, tuple[int, dict[str, object]]] = {}
+
+
+def resolve_artifact_checksum_path(model_path: Path) -> Path:
+    """Retorna path del checksum sidecar para un artefacto ML."""
+
+    return model_path.with_suffix(f"{model_path.suffix}.sha256")
+
+
+def calculate_file_sha256(file_path: Path) -> str:
+    """Calcula hash SHA-256 del archivo indicado."""
+
+    digest = hashlib.sha256()
+    with file_path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(8192), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def write_artifact_checksum(model_path: Path) -> None:
+    """Escribe checksum sidecar para verificación de integridad."""
+
+    checksum_path = resolve_artifact_checksum_path(model_path)
+    checksum_path.write_text(f"{calculate_file_sha256(model_path)}\n", encoding="utf-8")
+
+
+def verify_artifact_integrity(model_path: Path) -> None:
+    """Valida checksum sidecar del artefacto antes de cargarlo."""
+
+    checksum_path = resolve_artifact_checksum_path(model_path)
+    if not checksum_path.exists():
+        raise RuntimeError(
+            f"Falta checksum de integridad para artefacto ML: {checksum_path}"
+        )
+
+    expected_checksum = checksum_path.read_text(encoding="utf-8").strip()
+    current_checksum = calculate_file_sha256(model_path)
+    if expected_checksum != current_checksum:
+        raise RuntimeError(
+            f"Checksum inválido para artefacto ML en {model_path}: integridad comprometida"
+        )
 
 
 def validate_dataset_schema(dataframe: pd.DataFrame) -> None:
@@ -83,16 +130,34 @@ def train_model(dataframe: pd.DataFrame | None = None) -> RandomForestClassifier
 def save_model_artifact(
     model: RandomForestClassifier,
     output_path: Path = MODEL_PATH,
+    dataset: pd.DataFrame | None = None,
+    dataset_path: Path | None = None,
 ) -> Path:
     """Serializa modelo y metadata para reutilización en inferencia."""
+
+    metadata = {
+        "artifact_schema_version": 2,
+        "training_library": "scikit-learn",
+        "sklearn_version": sklearn_version,
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+        "model_type": type(model).__name__,
+        "feature_count": len(FEATURES),
+        "dataset_path": str(dataset_path) if dataset_path is not None else None,
+        "dataset_rows": int(len(dataset)) if dataset is not None else None,
+        "target_positive_ratio": (
+            float(dataset[TARGET_COLUMN].mean()) if dataset is not None else None
+        ),
+    }
 
     artifact = {
         "model": model,
         "features": FEATURES,
         "target": TARGET_COLUMN,
         "model_params": DEFAULT_MODEL_PARAMS,
+        "metadata": metadata,
     }
     joblib.dump(artifact, output_path)
+    write_artifact_checksum(output_path)
     return output_path
 
 
@@ -110,7 +175,12 @@ def train_and_save_model(
 
     dataset = load_or_generate_dataset(dataset_path=dataset_path)
     model = train_model(dataset)
-    save_model_artifact(model, output_path=model_path)
+    save_model_artifact(
+        model,
+        output_path=model_path,
+        dataset=dataset,
+        dataset_path=dataset_path,
+    )
     return model_path
 
 
@@ -127,6 +197,7 @@ def load_model_artifact(model_path: Path = MODEL_PATH) -> dict[str, object]:
     """Carga artefacto serializado del modelo entrenado."""
 
     try:
+        verify_artifact_integrity(model_path)
         artifact = joblib.load(model_path)
     except Exception as exc:
         raise RuntimeError(
@@ -152,6 +223,37 @@ def load_model_artifact(model_path: Path = MODEL_PATH) -> dict[str, object]:
         "target": TARGET_COLUMN,
         "model_params": DEFAULT_MODEL_PARAMS,
     }
+
+
+def load_model_artifact_cached(model_path: Path = MODEL_PATH) -> dict[str, object]:
+    """Carga artefacto ML con cache por archivo para evitar I/O repetido."""
+
+    resolved_path = model_path.resolve()
+    try:
+        current_mtime_ns = resolved_path.stat().st_mtime_ns
+    except FileNotFoundError:
+        clear_model_artifact_cache(resolved_path)
+        raise
+
+    with _MODEL_ARTIFACT_CACHE_LOCK:
+        cached_entry = _MODEL_ARTIFACT_CACHE.get(resolved_path)
+        if cached_entry and cached_entry[0] == current_mtime_ns:
+            return deepcopy(cached_entry[1])
+
+        artifact = load_model_artifact(resolved_path)
+        _MODEL_ARTIFACT_CACHE[resolved_path] = (current_mtime_ns, artifact)
+        return deepcopy(artifact)
+
+
+def clear_model_artifact_cache(model_path: Path | None = None) -> None:
+    """Limpia cache del artefacto ML global o de un archivo específico."""
+
+    with _MODEL_ARTIFACT_CACHE_LOCK:
+        if model_path is None:
+            _MODEL_ARTIFACT_CACHE.clear()
+            return
+
+        _MODEL_ARTIFACT_CACHE.pop(model_path.resolve(), None)
 
 
 if __name__ == "__main__":

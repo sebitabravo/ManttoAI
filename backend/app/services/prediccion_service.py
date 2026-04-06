@@ -4,16 +4,27 @@ import logging
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.ml.train import MODEL_PATH, load_model_artifact
+from app.ml.train import MODEL_PATH, load_model_artifact_cached
 from app.models.prediccion import Prediccion
-from app.services.alerta_service import create_prediction_failure_alert
+from app.services.alerta_service import (
+    create_prediction_failure_alert,
+    dispatch_critical_email_notifications,
+    get_active_prediction_failure_alert,
+)
 from app.services.equipo_service import get_equipo_or_404
 from app.services.lectura_service import get_latest_lectura
 
 
 logger = logging.getLogger(__name__)
+
+
+def load_model_artifact(model_path=MODEL_PATH):
+    """Wrapper para permitir monkeypatch flexible en tests y runtime."""
+
+    return load_model_artifact_cached(model_path)
 
 
 def classify_probability(probability: float) -> str:
@@ -79,8 +90,37 @@ def _build_feature_row_from_lectura(
     return feature_values
 
 
+def _load_prediction_artifact_or_503() -> dict[str, object]:
+    """Carga artefacto de inferencia o retorna 503 controlado."""
+
+    try:
+        return load_model_artifact(MODEL_PATH)
+    except Exception as exc:
+        logger.exception("No se pudo cargar el artefacto de predicción")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Modelo de predicción no disponible",
+        ) from exc
+
+
 def _predict_failure_probability(model, feature_row: list[float]) -> float:
     """Obtiene probabilidad de clase positiva (riesgo/falla)."""
+
+    if not hasattr(model, "predict_proba"):
+        if not hasattr(model, "predict"):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="El modelo no soporta inferencia válida",
+            )
+
+        prediction = model.predict([feature_row])
+        if len(prediction) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="El modelo no devolvió predicción válida",
+            )
+
+        return 1.0 if int(prediction[0]) == 1 else 0.0
 
     probabilities = model.predict_proba([feature_row])[0]
     classes = getattr(model, "classes_", None)
@@ -124,6 +164,106 @@ def _predict_failure_probability(model, feature_row: list[float]) -> float:
     return float(max(0.0, min(1.0, round(probability, 6))))
 
 
+def _run_prediction_inference(
+    artifact: dict[str, object],
+    latest_reading,
+) -> tuple[float, str]:
+    """Ejecuta inferencia pura sobre la última lectura disponible."""
+
+    model = artifact["model"]
+    features = artifact.get("features")
+    if not isinstance(features, list) or not features:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Artefacto de modelo inválido: features ausentes",
+        )
+
+    feature_row = _build_feature_row_from_lectura(latest_reading, features)
+    probability = _predict_failure_probability(model, feature_row)
+    return probability, classify_probability(probability)
+
+
+def _persist_prediction_result(
+    db: Session,
+    equipo_id: int,
+    probability: float,
+    classification: str,
+    artifact: dict[str, object],
+) -> Prediccion:
+    """Persiste resultado de inferencia y coordina alerta posterior."""
+
+    prediction = Prediccion(
+        equipo_id=equipo_id,
+        clasificacion=classification,
+        probabilidad=probability,
+        modelo_version=_resolve_model_version(artifact),
+    )
+    db.add(prediction)
+
+    prediction_failure_alert = None
+    if classification == "falla":
+        prediction_failure_alert = create_prediction_failure_alert(
+            db,
+            equipo_id=equipo_id,
+            probabilidad=probability,
+            auto_commit=False,
+        )
+
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+
+        if classification != "falla":
+            logger.exception("Conflicto de integridad persisitiendo predicción")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error de integridad al persistir predicción",
+            ) from exc
+
+        if get_active_prediction_failure_alert(db, equipo_id) is None:
+            logger.exception("Conflicto de integridad sin alerta activa detectable")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error de integridad al persistir predicción",
+            ) from exc
+
+        prediction = Prediccion(
+            equipo_id=equipo_id,
+            clasificacion=classification,
+            probabilidad=probability,
+            modelo_version=_resolve_model_version(artifact),
+        )
+        db.add(prediction)
+
+        try:
+            db.commit()
+        except SQLAlchemyError as retry_exc:
+            db.rollback()
+            logger.exception(
+                "No se pudo persistir la predicción tras deduplicar alerta"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error al persistir predicción",
+            ) from retry_exc
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("No se pudo persistir la predicción")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al persistir predicción",
+        ) from exc
+
+    db.refresh(prediction)
+
+    if prediction_failure_alert is not None:
+        db.refresh(prediction_failure_alert)
+        dispatch_critical_email_notifications(db, [prediction_failure_alert])
+
+    return prediction
+
+
 def get_latest_prediction(db: Session, equipo_id: int) -> Prediccion | None:
     """Obtiene la última predicción persistida de un equipo."""
 
@@ -162,52 +302,12 @@ def execute_prediction(db: Session, equipo_id: int) -> Prediccion:
 
     get_equipo_or_404(db, equipo_id)
     latest_reading = get_latest_lectura(db, equipo_id)
-
-    try:
-        artifact = load_model_artifact(MODEL_PATH)
-    except Exception as exc:
-        logger.exception("No se pudo cargar el artefacto de predicción")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Modelo de predicción no disponible",
-        ) from exc
-
-    model = artifact["model"]
-    features = artifact.get("features")
-    if not isinstance(features, list) or not features:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Artefacto de modelo inválido: features ausentes",
-        )
-
-    feature_row = _build_feature_row_from_lectura(latest_reading, features)
-    probability = _predict_failure_probability(model, feature_row)
-    classification = classify_probability(probability)
-
-    prediction = Prediccion(
+    artifact = _load_prediction_artifact_or_503()
+    probability, classification = _run_prediction_inference(artifact, latest_reading)
+    return _persist_prediction_result(
+        db,
         equipo_id=equipo_id,
-        clasificacion=classification,
-        probabilidad=probability,
-        modelo_version=_resolve_model_version(artifact),
+        probability=probability,
+        classification=classification,
+        artifact=artifact,
     )
-    db.add(prediction)
-    try:
-        db.commit()
-    except Exception as exc:
-        db.rollback()
-        logger.exception("No se pudo persistir la predicción")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error al persistir predicción",
-        ) from exc
-
-    db.refresh(prediction)
-
-    if classification == "falla":
-        create_prediction_failure_alert(
-            db,
-            equipo_id=equipo_id,
-            probabilidad=probability,
-        )
-
-    return prediction

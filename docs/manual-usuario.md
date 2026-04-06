@@ -7,7 +7,7 @@ Manual operativo para usar el MVP web de ManttoAI durante demo académica.
 1. Abrir navegador en `http://localhost:5173`.
 2. Iniciar sesión con usuario demo:
    - email (demo): `admin@manttoai.local`
-   - password (demo): `Admin123!`
+   - password (demo): la definida en `backend/.env` como `SEED_ADMIN_PASSWORD`
 
 > Si las credenciales cambiaron en seed, usar las definidas en `backend/.env` (`SEED_ADMIN_*`).
 > Estas credenciales son solo para entorno académico/demo.

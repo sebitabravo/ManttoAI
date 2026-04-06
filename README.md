@@ -24,6 +24,7 @@ Este repositorio tiene un MVP funcional para demo académica, respetando la arqu
 - `curl` (opcional, para verificación rápida)
 
 > ⚠️ Este flujo es **solo para desarrollo local/demo**. No uses `make seed` contra bases productivas.
+> Recomendado: Docker Compose V2 reciente, porque el `docker-compose.yml` usa `depends_on.condition` + `healthcheck` para endurecer el arranque local.
 
 ### Paso a paso
 
@@ -59,19 +60,21 @@ bash scripts/smoke_test.sh
 
 > El smoke test modifica datos. Ejecutalo en local; para forzar API remota usá `SMOKE_ALLOW_REMOTE=true` de forma explícita.
 
-> `make setup-env` también genera `mosquitto/passwd` (archivo local no versionado) usando `MQTT_USERNAME`/`MQTT_PASSWORD` de `.env` o defaults demo.
+> `make setup-env` genera `.env` y `backend/.env` locales para demo y también crea `mosquitto/passwd` como archivo no versionado.
 > Si cambiás credenciales MQTT después, regenerá con `make setup-mqtt-creds` y reiniciá `mosquitto`.
 
 ### Credenciales demo del seed
 
 - Email: `admin@manttoai.local`
-- Password: definida en `backend/.env.example` (default de desarrollo — no reutilizar en producción).
+- Password: definida en `backend/.env` local a través de `SEED_ADMIN_PASSWORD`.
 
 > Si querés cambiar estas credenciales, modificá `SEED_ADMIN_*` en `backend/.env` antes de ejecutar `make seed`.
 > `make verify-3-nodes` usa prompt oculto para password de login. Para modo no interactivo, exportá `VERIFY_ADMIN_PASSWORD` o `VERIFY_ADMIN_TOKEN` en el entorno.
 > Si el API está sobre HTTPS con CA interna, podés usar `VERIFY_CA_BUNDLE` (o `--ca-bundle`) para validación TLS explícita.
 > El seed valida `APP_ENV=development` por seguridad. Solo se puede forzar fuera de dev con `SEED_ALLOW_NON_DEV=true`.
 > No subas `.env` reales al repositorio; mantené credenciales sensibles fuera de git.
+> Si ya tenías una base local previa a la deduplicación de alertas, recreá el esquema local o limpiá duplicados antes de reutilizar la tabla `alertas`.
+> Para instalaciones ya existentes, ejecutá `python scripts/migrate_alerta_uniqueness.py` una vez antes de levantar el stack definitivo.
 
 ### Nota de red para desarrollo local
 

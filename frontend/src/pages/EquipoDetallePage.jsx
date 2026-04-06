@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
+import EquipoLecturasSection from "../components/equipos/EquipoLecturasSection";
 import { getEquipo, updateEquipo } from "../api/equipos";
 import EquipoForm from "../components/equipos/EquipoForm";
-import MantencionForm from "../components/mantenciones/MantencionForm";
+import EquipoMantencionesSection from "../components/equipos/EquipoMantencionesSection";
+import EquipoPrediccionCard from "../components/equipos/EquipoPrediccionCard";
+import EquipoResumenCard from "../components/equipos/EquipoResumenCard";
+import EquipoUmbralesSection from "../components/equipos/EquipoUmbralesSection";
 import { getLecturas } from "../api/lecturas";
 import { createMantencion, getMantenciones, updateMantencion } from "../api/mantenciones";
 import { getPredicciones } from "../api/predicciones";
@@ -11,23 +15,11 @@ import { getUmbrales, updateUmbral } from "../api/umbrales";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Button from "../components/ui/Button";
-import { notifyEquiposRefresh } from "../utils/equiposEvents";
-import { notifyMantencionesRefresh } from "../utils/mantencionesEvents";
-import { formatDate } from "../utils/formatDate";
-import { formatMetric, formatProbability, resolveMaxVibration } from "../utils/metrics";
+import { getApiErrorMessage } from "../utils/errorHandling";
+import { sortByTimestampDesc } from "../utils/time";
 
-function resolveRequestErrorMessage(error, fallbackMessage) {
-  const backendDetail = error?.response?.data?.detail;
-
-  if (typeof backendDetail === "string" && backendDetail.trim()) {
-    return backendDetail;
-  }
-
-  if (typeof error?.message === "string" && error.message.trim()) {
-    return error.message;
-  }
-
-  return fallbackMessage;
+function normalizeDecimalInput(value) {
+  return String(value ?? "").trim().replace(",", ".");
 }
 
 function buildUmbralDrafts(umbrales) {
@@ -141,7 +133,7 @@ export default function EquipoDetallePage() {
       setUmbralSuccessById({});
     } catch (fetchError) {
       setUmbralesErrorMessage(
-        resolveRequestErrorMessage(
+        getApiErrorMessage(
           fetchError,
           "No pudimos cargar umbrales del equipo. Revisá conexión y permisos de acceso."
         )
@@ -176,11 +168,10 @@ export default function EquipoDetallePage() {
     try {
       await updateEquipo(resolvedEquipoId, payload);
       await loadEquipoDetalle();
-      notifyEquiposRefresh();
       setShowEditForm(false);
     } catch (updateError) {
       setUpdateErrorMessage(
-        resolveRequestErrorMessage(updateError, "No pudimos actualizar el equipo. Revisá los datos ingresados.")
+        getApiErrorMessage(updateError, "No pudimos actualizar el equipo. Revisá los datos ingresados.")
       );
     } finally {
       setIsUpdating(false);
@@ -234,12 +225,11 @@ export default function EquipoDetallePage() {
         ...payload,
       });
       await loadEquipoDetalle();
-      notifyMantencionesRefresh();
       setEditingMantencionId(null);
       setShowCreateMantencionForm(false);
     } catch (createError) {
       setCreateMantencionErrorMessage(
-        resolveRequestErrorMessage(createError, "No pudimos crear la mantención. Revisá los datos ingresados.")
+        getApiErrorMessage(createError, "No pudimos crear la mantención. Revisá los datos ingresados.")
       );
     } finally {
       setIsCreatingMantencion(false);
@@ -259,11 +249,10 @@ export default function EquipoDetallePage() {
     try {
       await updateMantencion(resolvedMantencionId, payload);
       await loadEquipoDetalle();
-      notifyMantencionesRefresh();
       setEditingMantencionId(null);
     } catch (updateError) {
       setUpdateMantencionErrorMessage(
-        resolveRequestErrorMessage(updateError, "No pudimos actualizar la mantención. Revisá los datos ingresados.")
+        getApiErrorMessage(updateError, "No pudimos actualizar la mantención. Revisá los datos ingresados.")
       );
     } finally {
       setIsSavingMantencion(false);
@@ -293,8 +282,8 @@ export default function EquipoDetallePage() {
       return;
     }
 
-    const valorMin = Number.parseFloat(draft.valor_min);
-    const valorMax = Number.parseFloat(draft.valor_max);
+    const valorMin = Number.parseFloat(normalizeDecimalInput(draft.valor_min));
+    const valorMax = Number.parseFloat(normalizeDecimalInput(draft.valor_max));
 
     if (!Number.isFinite(valorMin) || !Number.isFinite(valorMax)) {
       setUmbralErrorById((current) => ({
@@ -341,7 +330,7 @@ export default function EquipoDetallePage() {
     } catch (saveError) {
       setUmbralErrorById((current) => ({
         ...current,
-        [resolvedUmbralId]: resolveRequestErrorMessage(saveError, "No pudimos guardar este umbral."),
+        [resolvedUmbralId]: getApiErrorMessage(saveError, "No pudimos guardar este umbral."),
       }));
     } finally {
       setSavingUmbralById((current) => ({ ...current, [resolvedUmbralId]: false }));
@@ -349,11 +338,11 @@ export default function EquipoDetallePage() {
   }
 
   const lecturasOrdenadas = useMemo(() => {
-    return lecturas.slice(0, 10);
+    return sortByTimestampDesc(lecturas).slice(0, 10);
   }, [lecturas]);
 
   const mantencionesRecientes = useMemo(() => {
-    return mantenciones.slice(0, 10);
+    return sortByTimestampDesc(mantenciones).slice(0, 10);
   }, [mantenciones]);
 
   const selectedMantencion = useMemo(() => {
@@ -406,14 +395,7 @@ export default function EquipoDetallePage() {
         />
       ) : null}
 
-      {equipo ? (
-        <article style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-          <h2 style={{ marginTop: 0 }}>{equipo.nombre}</h2>
-          <p>Estado: {equipo.estado}</p>
-          <p>Ubicación: {equipo.ubicacion}</p>
-          <p>Tipo: {equipo.tipo}</p>
-        </article>
-      ) : null}
+      <EquipoResumenCard equipo={equipo} />
 
       {equipo && showEditForm ? (
         <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
@@ -434,244 +416,41 @@ export default function EquipoDetallePage() {
         </section>
       ) : null}
 
-      <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-          <h2 style={{ marginTop: 0, marginBottom: 0 }}>Umbrales operativos</h2>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={loadUmbrales}
-            disabled={umbralesLoading || isSavingAnyUmbral}
-          >
-            {umbralesLoading ? "Cargando..." : "Recargar umbrales"}
-          </Button>
-        </div>
-        <p style={{ marginTop: 8, color: "#6b7280" }}>
-          Los cambios impactan en la evaluación de alertas para próximas lecturas de este equipo.
-        </p>
+      <EquipoUmbralesSection
+        loadUmbrales={loadUmbrales}
+        umbralesLoading={umbralesLoading}
+        isSavingAnyUmbral={isSavingAnyUmbral}
+        umbralesErrorMessage={umbralesErrorMessage}
+        umbrales={umbrales}
+        umbralDrafts={umbralDrafts}
+        savingUmbralById={savingUmbralById}
+        umbralErrorById={umbralErrorById}
+        umbralSuccessById={umbralSuccessById}
+        handleUmbralDraftChange={handleUmbralDraftChange}
+        handleSaveUmbral={handleSaveUmbral}
+        formatVariableLabel={formatVariableLabel}
+      />
 
-        {umbralesLoading ? <LoadingSpinner label="Cargando umbrales del equipo..." /> : null}
+      <EquipoPrediccionCard prediccion={prediccion} />
 
-        {umbralesErrorMessage ? (
-          <div style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 12, background: "#fffbeb" }}>
-            {umbralesErrorMessage}
-          </div>
-        ) : null}
+      <EquipoLecturasSection lecturas={lecturasOrdenadas} />
 
-        {!umbralesLoading && !umbralesErrorMessage && umbrales.length === 0 ? (
-          <p style={{ marginBottom: 0, color: "#6b7280" }}>
-            Este equipo no tiene umbrales configurados para editar desde la interfaz.
-          </p>
-        ) : null}
-
-        {!umbralesLoading && umbrales.length > 0 ? (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th align="left">Variable</th>
-                <th align="left">Valor mínimo</th>
-                <th align="left">Valor máximo</th>
-                <th align="left">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {umbrales.map((umbral) => {
-                const resolvedUmbralId = Number(umbral.id);
-                const draft = umbralDrafts[resolvedUmbralId] || {
-                  valor_min: String(umbral.valor_min),
-                  valor_max: String(umbral.valor_max),
-                };
-                const isSaving = Boolean(savingUmbralById[resolvedUmbralId]);
-                const umbralErrorMessage = umbralErrorById[resolvedUmbralId];
-                const umbralSuccessMessage = umbralSuccessById[resolvedUmbralId];
-
-                return (
-                  <tr key={umbral.id}>
-                    <td>{formatVariableLabel(umbral.variable)}</td>
-                    <td>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={draft.valor_min}
-                        onChange={(event) =>
-                          handleUmbralDraftChange(resolvedUmbralId, "valor_min", event.target.value)
-                        }
-                        disabled={isSaving}
-                        aria-label={`Valor mínimo para ${umbral.variable}`}
-                        style={{ padding: 8, borderRadius: 8, border: "1px solid #d1d5db", width: "100%" }}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={draft.valor_max}
-                        onChange={(event) =>
-                          handleUmbralDraftChange(resolvedUmbralId, "valor_max", event.target.value)
-                        }
-                        disabled={isSaving}
-                        aria-label={`Valor máximo para ${umbral.variable}`}
-                        style={{ padding: 8, borderRadius: 8, border: "1px solid #d1d5db", width: "100%" }}
-                      />
-                    </td>
-                    <td>
-                      <div style={{ display: "grid", gap: 6 }}>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleSaveUmbral(resolvedUmbralId)}
-                          disabled={isSaving}
-                        >
-                          {isSaving ? "Guardando..." : "Guardar"}
-                        </Button>
-                        {umbralErrorMessage ? (
-                          <small style={{ color: "#dc2626" }} role="alert">
-                            {umbralErrorMessage}
-                          </small>
-                        ) : null}
-                        {umbralSuccessMessage ? (
-                          <small style={{ color: "#15803d" }}>{umbralSuccessMessage}</small>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        ) : null}
-      </section>
-
-      <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-        <h2 style={{ marginTop: 0 }}>Última predicción</h2>
-        {prediccion ? (
-          <div>
-            <p style={{ marginBottom: 8 }}>Clasificación: {prediccion.clasificacion}</p>
-            <strong>Probabilidad de falla: {formatProbability(prediccion.probabilidad)}</strong>
-          </div>
-        ) : (
-          <p style={{ marginBottom: 0, color: "#6b7280" }}>
-            Todavía no hay una predicción persistida para este equipo.
-          </p>
-        )}
-      </section>
-
-      <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-        <h2 style={{ marginTop: 0 }}>Últimas lecturas</h2>
-        {lecturasOrdenadas.length === 0 ? (
-          <p style={{ marginBottom: 0, color: "#6b7280" }}>
-            No hay lecturas registradas para este equipo.
-          </p>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th align="left">Fecha</th>
-                <th align="left">Temperatura</th>
-                <th align="left">Humedad</th>
-                <th align="left">Vibración máx.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lecturasOrdenadas.map((lectura) => (
-                <tr key={lectura.id || lectura.timestamp}>
-                  <td>{formatDate(lectura.timestamp)}</td>
-                  <td>{formatMetric(lectura.temperatura, "°C")}</td>
-                  <td>{formatMetric(lectura.humedad, "%")}</td>
-                  <td>{formatMetric(resolveMaxVibration(lectura), "g")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-
-      <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16, display: "grid", gap: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-          <h2 style={{ marginTop: 0, marginBottom: 0 }}>Mantenciones recientes</h2>
-          <Button
-            type="button"
-            variant={showCreateMantencionForm ? "primary" : "outline"}
-            onClick={showCreateMantencionForm ? closeCreateMantencionForm : openCreateMantencionForm}
-            disabled={isCreatingMantencion || isSavingMantencion}
-          >
-            {showCreateMantencionForm ? "Cerrar formulario" : "Nueva mantención"}
-          </Button>
-        </div>
-
-        {showCreateMantencionForm ? (
-          <section style={{ padding: 12, border: "1px solid #e5e7eb", borderRadius: 12 }}>
-            <h3 style={{ marginTop: 0 }}>Registrar mantención</h3>
-            <MantencionForm
-              onSubmit={handleCreateMantencion}
-              onCancel={closeCreateMantencionForm}
-              submitLabel="Registrar mantención"
-              isSubmitting={isCreatingMantencion}
-              errorMessage={createMantencionErrorMessage}
-            />
-          </section>
-        ) : null}
-
-        {mantencionesRecientes.length === 0 ? (
-          <p style={{ marginBottom: 0, color: "#6b7280" }}>
-            No hay mantenciones registradas para este equipo.
-          </p>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th align="left">ID</th>
-                <th align="left">Tipo</th>
-                <th align="left">Descripción</th>
-                <th align="left">Estado</th>
-                <th align="left">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mantencionesRecientes.map((mantencion) => {
-                const isEditing = Number(editingMantencionId) === Number(mantencion.id);
-
-                return (
-                  <tr key={mantencion.id}>
-                    <td>{mantencion.id}</td>
-                    <td>{mantencion.tipo}</td>
-                    <td>{mantencion.descripcion}</td>
-                    <td>{mantencion.estado}</td>
-                    <td>
-                      <Button
-                        type="button"
-                        variant={isEditing ? "primary" : "outline"}
-                        onClick={() => (isEditing ? closeMantencionEdit() : openMantencionEdit(mantencion.id))}
-                        disabled={isCreatingMantencion || isSavingMantencion}
-                      >
-                        {isEditing ? "Cancelar" : "Editar"}
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-
-        {selectedMantencion ? (
-          <section style={{ padding: 12, border: "1px solid #e5e7eb", borderRadius: 12 }}>
-            <h3 style={{ marginTop: 0 }}>Editar mantención #{selectedMantencion.id}</h3>
-            <MantencionForm
-              initialValues={{
-                tipo: selectedMantencion.tipo,
-                descripcion: selectedMantencion.descripcion,
-                estado: selectedMantencion.estado,
-              }}
-              onSubmit={handleUpdateMantencion}
-              onCancel={closeMantencionEdit}
-              submitLabel="Guardar actualización"
-              isSubmitting={isSavingMantencion}
-              errorMessage={updateMantencionErrorMessage}
-            />
-          </section>
-        ) : null}
-      </section>
+      <EquipoMantencionesSection
+        showCreateMantencionForm={showCreateMantencionForm}
+        isCreatingMantencion={isCreatingMantencion}
+        isSavingMantencion={isSavingMantencion}
+        openCreateMantencionForm={openCreateMantencionForm}
+        closeCreateMantencionForm={closeCreateMantencionForm}
+        handleCreateMantencion={handleCreateMantencion}
+        createMantencionErrorMessage={createMantencionErrorMessage}
+        mantencionesRecientes={mantencionesRecientes}
+        editingMantencionId={editingMantencionId}
+        openMantencionEdit={openMantencionEdit}
+        closeMantencionEdit={closeMantencionEdit}
+        selectedMantencion={selectedMantencion}
+        handleUpdateMantencion={handleUpdateMantencion}
+        updateMantencionErrorMessage={updateMantencionErrorMessage}
+      />
     </section>
   );
 }

@@ -2,7 +2,15 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -12,6 +20,15 @@ class Alerta(Base):
     """Representa una alerta generada por umbrales o predicción."""
 
     __tablename__ = "alertas"
+    __table_args__ = (
+        UniqueConstraint(
+            "equipo_id",
+            "tipo",
+            "mensaje",
+            "leida",
+            name="uq_alerta_activa_por_equipo_tipo_mensaje",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     equipo_id: Mapped[int] = mapped_column(ForeignKey("equipos.id"), index=True)

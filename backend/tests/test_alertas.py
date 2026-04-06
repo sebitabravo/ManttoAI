@@ -1,5 +1,7 @@
 """Tests de alertas."""
 
+from sqlalchemy.exc import OperationalError
+
 from app.services import alerta_service
 
 
@@ -205,6 +207,16 @@ def test_normal_reading_does_not_create_new_alert(client):
 
     assert response.status_code == 200
     assert response.json() == []
+
+
+def test_lock_equipo_alert_scope_ignores_unsupported_for_update():
+    """Valida fallback seguro cuando el motor no soporta FOR UPDATE."""
+
+    class _FailingSession:
+        def execute(self, _statement):
+            raise OperationalError("SELECT 1", {}, Exception("for update unsupported"))
+
+    alerta_service._lock_equipo_alert_scope(_FailingSession(), equipo_id=1)
 
 
 def test_breach_vibracion_creates_persisted_alert(client):

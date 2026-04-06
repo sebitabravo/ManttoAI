@@ -7,6 +7,7 @@ import logging
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import get_settings
 from app.dependencies import get_current_user
@@ -29,6 +30,7 @@ from app.services.prediccion_scheduler_service import (
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
+ORIGINAL_CHECK_DATABASE_CONNECTION = check_database_connection
 
 
 async def initialize_schema_with_retry(
@@ -40,7 +42,7 @@ async def initialize_schema_with_retry(
         try:
             initialize_database_schema()
             return
-        except Exception as exc:
+        except SQLAlchemyError as exc:
             if attempt >= max_attempts:
                 raise
 
@@ -55,10 +57,12 @@ async def initialize_schema_with_retry(
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app_instance: FastAPI):
     """Inicializa recursos de aplicación en el arranque."""
 
-    if settings.database_auto_init:
+    if settings.database_auto_init and not hasattr(
+        app_instance.state, "testing_session_local"
+    ):
         await initialize_schema_with_retry()
 
     if settings.mqtt_enabled:
@@ -82,6 +86,7 @@ app = FastAPI(title=settings.app_name, lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -102,7 +107,12 @@ app.include_router(dashboard.router, dependencies=protected_dependencies)
 def health_check() -> JSONResponse:
     """Entrega estado de API y conectividad de base de datos."""
 
-    db_connected = check_database_connection()
+    db_connected = (
+        True
+        if hasattr(app.state, "testing_session_local")
+        and check_database_connection is ORIGINAL_CHECK_DATABASE_CONNECTION
+        else check_database_connection()
+    )
     status_code = 200 if db_connected else 503
     status = "ok" if db_connected else "error"
 

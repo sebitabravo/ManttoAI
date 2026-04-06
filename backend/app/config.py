@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     smtp_to_email: str = ""
     enable_prediction_scheduler: bool = True
     prediction_interval_seconds: int = 300
+    prediction_scheduler_max_workers: int = 4
+    auth_cookie_name: str = "manttoai_token"
+    auth_csrf_cookie_name: str = "manttoai_csrf"
+    auth_csrf_header_name: str = "X-CSRF-Token"
 
     @model_validator(mode="after")
     def validate_security_settings(self) -> "Settings":

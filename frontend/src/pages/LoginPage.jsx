@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { login as loginRequest } from "../api/auth";
+import { getCurrentUser, login as loginRequest } from "../api/auth";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import useAuth from "../hooks/useAuth";
+import { getApiErrorMessage } from "../utils/errorHandling";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -33,24 +34,13 @@ export default function LoginPage() {
         throw new Error("Respuesta de autenticación inválida");
       }
 
-      const nombreUsuario = normalizedEmail.split("@")[0] || "usuario";
-      login(result.access_token, {
-        nombre: nombreUsuario,
-        email: normalizedEmail,
-        rol: "visualizador",
-      });
+      const currentUser = await getCurrentUser();
+      await login(currentUser);
       navigate("/dashboard", { replace: true });
     } catch (error) {
-      const backendDetail = error?.response?.data?.detail;
-      if (typeof backendDetail === "string" && backendDetail.trim()) {
-        setErrorMessage(backendDetail);
-      } else if (Array.isArray(backendDetail) && backendDetail.length > 0) {
-        setErrorMessage("Credenciales inválidas. Revisá email y contraseña.");
-      } else if (typeof error?.message === "string" && error.message.trim()) {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage("No pudimos iniciar sesión. Revisá tus credenciales y el backend.");
-      }
+      setErrorMessage(
+        getApiErrorMessage(error, "No pudimos iniciar sesión. Revisá tus credenciales y el backend.")
+      );
     } finally {
       setIsSubmitting(false);
     }

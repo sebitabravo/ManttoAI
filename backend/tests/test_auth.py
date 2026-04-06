@@ -46,6 +46,100 @@ def test_login_endpoint_returns_token_for_valid_credentials(unauthenticated_clie
     assert data["access_token"]
 
 
+def test_login_endpoint_sets_http_only_cookie_for_valid_credentials(
+    unauthenticated_client,
+):
+    """Valida que login además entregue cookie HttpOnly para auth web."""
+
+    response = unauthenticated_client.post(
+        "/auth/login",
+        json={"email": "admin@manttoai.local", "password": "Admin123!"},
+    )
+
+    assert response.status_code == 200
+    set_cookie = response.headers.get("set-cookie", "")
+    assert "manttoai_token=" in set_cookie
+    assert "HttpOnly" in set_cookie
+    assert "manttoai_csrf=" in set_cookie
+
+
+def test_auth_me_returns_current_user_from_cookie(unauthenticated_client):
+    """Valida restauración de sesión usando cookie HttpOnly."""
+
+    login_response = unauthenticated_client.post(
+        "/auth/login",
+        json={"email": "admin@manttoai.local", "password": "Admin123!"},
+    )
+    assert login_response.status_code == 200
+
+    response = unauthenticated_client.get("/auth/me")
+
+    assert response.status_code == 200
+    assert response.json()["email"] == "admin@manttoai.local"
+
+
+def test_protected_endpoint_accepts_http_only_cookie_authentication(
+    unauthenticated_client,
+):
+    """Valida acceso autenticado aun sin header Authorization explícito."""
+
+    login_response = unauthenticated_client.post(
+        "/auth/login",
+        json={"email": "admin@manttoai.local", "password": "Admin123!"},
+    )
+    assert login_response.status_code == 200
+
+    response = unauthenticated_client.get("/equipos")
+
+    assert response.status_code == 200
+
+
+def test_cookie_auth_requires_csrf_header_for_mutations(unauthenticated_client):
+    """Valida protección CSRF cuando la sesión web usa cookie HttpOnly."""
+
+    login_response = unauthenticated_client.post(
+        "/auth/login",
+        json={"email": "admin@manttoai.local", "password": "Admin123!"},
+    )
+    assert login_response.status_code == 200
+
+    payload = {
+        "nombre": "Equipo demo",
+        "ubicacion": "Laboratorio",
+        "tipo": "Motor",
+        "estado": "operativo",
+    }
+
+    blocked_response = unauthenticated_client.post("/equipos", json=payload)
+    assert blocked_response.status_code == 403
+
+    csrf_token = unauthenticated_client.cookies.get("manttoai_csrf")
+    allowed_response = unauthenticated_client.post(
+        "/equipos",
+        json=payload,
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    assert allowed_response.status_code == 201
+
+
+def test_logout_endpoint_clears_auth_cookie(unauthenticated_client):
+    """Valida cierre de sesión borrando cookie y bloqueando acceso posterior."""
+
+    login_response = unauthenticated_client.post(
+        "/auth/login",
+        json={"email": "admin@manttoai.local", "password": "Admin123!"},
+    )
+    assert login_response.status_code == 200
+
+    logout_response = unauthenticated_client.post("/auth/logout")
+
+    assert logout_response.status_code == 204
+    assert "manttoai_token=" in logout_response.headers.get("set-cookie", "")
+
+    protected_response = unauthenticated_client.get("/equipos")
+    assert protected_response.status_code == 401
+
+
 def test_login_endpoint_rejects_invalid_credentials(unauthenticated_client):
     """Valida que login rechace credenciales inválidas."""
 

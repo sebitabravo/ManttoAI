@@ -297,3 +297,37 @@ def test_execute_prediction_rejects_multiclass_models(db_session, monkeypatch):
 
     assert exc_info.value.status_code == 500
     assert exc_info.value.detail == "Modelo de inferencia no binario no soportado"
+
+
+def test_execute_prediction_falls_back_to_predict_when_model_has_no_predict_proba(
+    db_session, monkeypatch
+):
+    """Valida compatibilidad con modelos que sólo implementan predict."""
+
+    equipo_id = _create_equipo(db_session)
+    _create_lectura(
+        db_session,
+        equipo_id=equipo_id,
+        temperatura=49.0,
+        timestamp=datetime.now(timezone.utc),
+    )
+
+    class _PredictOnlyModel:
+        def predict(self, _rows):
+            return np.array([1])
+
+    monkeypatch.setattr(
+        prediccion_service,
+        "load_model_artifact_cached",
+        lambda _model_path=None: {
+            "model": _PredictOnlyModel(),
+            "features": ["temperatura", "humedad", "vib_x", "vib_y", "vib_z"],
+            "target": "riesgo",
+            "model_params": {"n_estimators": 120, "random_state": 42},
+        },
+    )
+
+    result = prediccion_service.execute_prediction(db_session, equipo_id)
+
+    assert result.probabilidad == 1.0
+    assert result.clasificacion == "falla"

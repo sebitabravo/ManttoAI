@@ -51,13 +51,15 @@ jobs:
 
       - name: Validate Docker Compose config
         if: steps.compose_check.outputs.file != ''
+        env:
+          MYSQL_ROOT_PASSWORD: ci_mysql_root_password
+          MYSQL_DATABASE: manttoai_db
+          SECRET_KEY: ci_secret_key_for_compose_validation
+          MQTT_USERNAME: ci_mqtt_user
+          MQTT_PASSWORD: ci_mqtt_password
+          SEED_ADMIN_PASSWORD: ci_admin_password
         run: |
-          if [ ! -f .env ] && [ -f .env.example ]; then
-            cp .env.example .env
-          fi
-          if [ ! -f backend/.env ] && [ -f backend/.env.example ]; then
-            cp backend/.env.example backend/.env
-          fi
+          bash scripts/setup_env.sh
           docker compose -f "${{ steps.compose_check.outputs.file }}" config --quiet
 
       - name: Build services

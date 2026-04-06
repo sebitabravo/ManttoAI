@@ -1,0 +1,6 @@
+services:
+  backend:
+    volumes:
+      - ./backend:/app
+      - ./scripts:/scripts:ro
+      - ./iot/simulator:/simulator:ro

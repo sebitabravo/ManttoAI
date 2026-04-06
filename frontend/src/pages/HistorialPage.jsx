@@ -7,23 +7,10 @@ import MantencionForm from "../components/mantenciones/MantencionForm";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
-import { notifyMantencionesRefresh, subscribeMantencionesRefresh } from "../utils/mantencionesEvents";
+import { getApiErrorMessage } from "../utils/errorHandling";
 import { formatDate } from "../utils/formatDate";
 import { formatMetric, resolveMaxVibration } from "../utils/metrics";
-
-function resolveRequestErrorMessage(error, fallbackMessage) {
-  const backendDetail = error?.response?.data?.detail;
-
-  if (typeof backendDetail === "string" && backendDetail.trim()) {
-    return backendDetail;
-  }
-
-  if (typeof error?.message === "string" && error.message.trim()) {
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
+import { sortByTimestampDesc } from "../utils/time";
 
 export default function HistorialPage() {
   const [lecturas, setLecturas] = useState([]);
@@ -63,16 +50,10 @@ export default function HistorialPage() {
 
   useEffect(() => {
     loadHistorial();
-
-    const unsubscribe = subscribeMantencionesRefresh(() => {
-      loadHistorial();
-    });
-
-    return unsubscribe;
   }, [loadHistorial]);
 
   const lecturasRecientes = useMemo(() => {
-    return lecturas.slice(0, 25);
+    return sortByTimestampDesc(lecturas).slice(0, 25);
   }, [lecturas]);
 
   const mantencionesRecientes = useMemo(() => {
@@ -109,11 +90,11 @@ export default function HistorialPage() {
 
     try {
       await updateMantencion(resolvedMantencionId, payload);
-      notifyMantencionesRefresh();
+      await loadHistorial();
       setEditingMantencionId(null);
     } catch (updateError) {
       setUpdateMantencionErrorMessage(
-        resolveRequestErrorMessage(updateError, "No pudimos actualizar la mantención. Revisá los datos ingresados.")
+        getApiErrorMessage(updateError, "No pudimos actualizar la mantención. Revisá los datos ingresados.")
       );
     } finally {
       setIsSavingMantencion(false);
@@ -155,13 +136,16 @@ export default function HistorialPage() {
           <p style={{ marginBottom: 0, color: "#6b7280" }}>No hay lecturas históricas para mostrar.</p>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <caption style={{ textAlign: "left", paddingBottom: 8, color: "#6b7280" }}>
+              Historial cronológico de lecturas persistidas para auditoría del prototipo.
+            </caption>
             <thead>
               <tr>
-                <th align="left">Equipo</th>
-                <th align="left">Temperatura</th>
-                <th align="left">Humedad</th>
-                <th align="left">Vibración máx.</th>
-                <th align="left">Fecha</th>
+                <th scope="col" align="left">Equipo</th>
+                <th scope="col" align="left">Temperatura</th>
+                <th scope="col" align="left">Humedad</th>
+                <th scope="col" align="left">Vibración máx.</th>
+                <th scope="col" align="left">Fecha</th>
               </tr>
             </thead>
             <tbody>
@@ -187,14 +171,17 @@ export default function HistorialPage() {
           </p>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <caption style={{ textAlign: "left", paddingBottom: 8, color: "#6b7280" }}>
+              Mantenciones recientes con estado y acciones disponibles desde historial.
+            </caption>
             <thead>
               <tr>
-                <th align="left">ID</th>
-                <th align="left">Equipo</th>
-                <th align="left">Tipo</th>
-                <th align="left">Descripción</th>
-                <th align="left">Estado</th>
-                <th align="left">Acciones</th>
+                <th scope="col" align="left">ID</th>
+                <th scope="col" align="left">Equipo</th>
+                <th scope="col" align="left">Tipo</th>
+                <th scope="col" align="left">Descripción</th>
+                <th scope="col" align="left">Estado</th>
+                <th scope="col" align="left">Acciones</th>
               </tr>
             </thead>
             <tbody>

@@ -12,7 +12,8 @@ void setup() {
 
 void loop() {
   maintainMqttConnection();
-  logSensorReadings();
-  publishSensorReading();
+  const SensorSnapshot snapshot = readSensorSnapshot();
+  logSensorReadings(snapshot);
+  publishSensorReading(snapshot);
   delay(MAIN_LOOP_DELAY_MS);
 }

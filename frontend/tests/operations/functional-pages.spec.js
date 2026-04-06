@@ -100,6 +100,18 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
     },
   ];
 
+  // Establecer cookie de sesión antes de navegar
+  await page.context().addCookies([
+    {
+      name: "manttoai_token",
+      value: "mock-session-token",
+      domain: "127.0.0.1",
+      path: "/",
+      httpOnly: true,
+      sameSite: "Lax",
+    },
+  ]);
+
   await page.route("**/api/auth/me", async (route) => {
     await route.fulfill({
       status: 200,

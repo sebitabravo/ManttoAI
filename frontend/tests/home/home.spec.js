@@ -1,6 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 test("sin token no se puede acceder al dashboard", async ({ page }) => {
+  // Simular que no hay sesión activa - el backend devuelve 401
+  await page.route("**/api/auth/me", async (route) => {
+    await route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "No autenticado" }),
+    });
+  });
+
   await page.goto("/dashboard");
 
   await expect(page).toHaveURL(/\/login$/);
@@ -9,43 +18,94 @@ test("sin token no se puede acceder al dashboard", async ({ page }) => {
 
 test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) => {
   let loginPayload = null;
+  let isLoggedIn = false;
 
+  // Mock /api/auth/me: devuelve 401 hasta que el usuario haga login
+  await page.route("**/api/auth/me", async (route) => {
+    if (isLoggedIn) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: 1,
+          nombre: "demo",
+          email: "demo@example.com",
+          rol: "visualizador",
+        }),
+      });
+    } else {
+      await route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "No autenticado" }),
+      });
+    }
+  });
+
+  // Mock /api/auth/login: marca como logueado y devuelve token
   await page.route("**/api/auth/login", async (route) => {
     loginPayload = route.request().postDataJSON();
+    isLoggedIn = true;
+
     await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        access_token: "cookie-session-token",
+        access_token: "mock-session-token",
         token_type: "bearer",
       }),
     });
   });
 
-  await page.route("**/api/auth/me", async (route) => {
+  // Mock endpoints del dashboard para que no fallen
+  await page.route("**/api/dashboard/resumen", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        id: 1,
-        nombre: "demo",
-        email: "demo@example.com",
-        rol: "visualizador",
+        total_equipos: 1,
+        alertas_activas: 0,
+        equipos_en_riesgo: 0,
+        ultima_clasificacion: "normal",
+        probabilidad_falla: 0.1,
+        equipos: [],
       }),
     });
   });
 
+  await page.route("**/api/lecturas**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([]),
+    });
+  });
+
   await page.route("**/api/auth/logout", async (route) => {
+    isLoggedIn = false;
     await route.fulfill({ status: 204, body: "" });
   });
 
+  // Navegar a login
   await page.goto("/login");
+  await expect(page.getByRole("heading", { name: "ManttoAI Predictivo" })).toBeVisible();
+
+  // Llenar formulario y enviar
   await page.getByLabel("Email").fill("demo@example.com");
   await page.getByLabel("Contraseña").fill("123456");
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
 
+  // Verificar redirección al dashboard
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+
+  // Verificar que el payload del login fue correcto
+  expect(loginPayload).toEqual({
+    email: "demo@example.com",
+    password: "123456",
+  });
+
+  // Verificar sessionStorage tiene el usuario
   await expect
     .poll(() =>
       page.evaluate(
@@ -54,13 +114,10 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
     )
     .toBe("demo@example.com");
 
-  expect(loginPayload).toEqual({
-    email: "demo@example.com",
-    password: "123456",
-  });
-
+  // Hacer logout
   await page.getByRole("button", { name: "Salir" }).click();
 
+  // Verificar redirección a login y limpieza de sessionStorage
   await expect(page).toHaveURL(/\/login$/);
   await expect.poll(() => page.evaluate(() => window.sessionStorage.getItem("manttoai_user"))).toBeNull();
 });

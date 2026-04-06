@@ -10,6 +10,18 @@ test("dashboard consume API real y reemplaza placeholders", async ({ page }) => 
   const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
   const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
 
+  // Establecer cookie de sesión antes de navegar
+  await page.context().addCookies([
+    {
+      name: "manttoai_token",
+      value: "mock-session-token",
+      domain: "127.0.0.1",
+      path: "/",
+      httpOnly: true,
+      sameSite: "Lax",
+    },
+  ]);
+
   await page.route("**/api/auth/me", async (route) => {
     await route.fulfill({
       status: 200,

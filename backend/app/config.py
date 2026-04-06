@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from_email: str = ""
     smtp_to_email: str = ""
+    smtp_use_ssl: bool = False
+    smtp_timeout: int = 10
+    smtp_retry_attempts: int = 3
+    smtp_retry_backoff: float = 0.5
     enable_prediction_scheduler: bool = True
     prediction_interval_seconds: int = 300
     prediction_scheduler_max_workers: int = 4

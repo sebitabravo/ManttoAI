@@ -51,6 +51,8 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
     predicciones_rankeadas = select(
         Prediccion.equipo_id.label("equipo_id"),
         Prediccion.probabilidad.label("ultima_probabilidad"),
+        # Incluir clasificacion para mostrar el indicador visual en el dashboard
+        Prediccion.clasificacion.label("ultima_clasificacion"),
         func.row_number()
         .over(
             partition_by=Prediccion.equipo_id,
@@ -62,6 +64,7 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
         select(
             predicciones_rankeadas.c.equipo_id,
             predicciones_rankeadas.c.ultima_probabilidad,
+            predicciones_rankeadas.c.ultima_clasificacion,
         )
         .where(predicciones_rankeadas.c.ranking == 1)
         .subquery()
@@ -84,6 +87,7 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
             Equipo.nombre,
             ultimas_lecturas.c.ultima_temperatura,
             ultimas_predicciones.c.ultima_probabilidad,
+            ultimas_predicciones.c.ultima_clasificacion,
             func.coalesce(alertas_activas_por_equipo.c.alertas_activas, 0).label(
                 "alertas_activas"
             ),
@@ -105,6 +109,10 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
                 "nombre": str(row.nombre),
                 "ultima_temperatura": _to_float_or_none(row.ultima_temperatura),
                 "ultima_probabilidad": _to_float_or_none(row.ultima_probabilidad),
+                # Clasificacion de la última predicción para el indicador visual del frontend
+                "ultima_clasificacion": str(row.ultima_clasificacion)
+                if row.ultima_clasificacion
+                else None,
                 "alertas_activas": int(row.alertas_activas or 0),
             }
         )

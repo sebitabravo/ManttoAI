@@ -208,14 +208,20 @@ def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) ->
                             alerta.id,
                             email_result.error,
                         )
-                except Exception:
-                    logger.exception(
-                        "Falla inesperada en envío de email para alerta_id=%s",
+                except Exception as exc:
+                    # Usar warning en vez de exception para evitar volcar stack traces
+                    # con posibles credenciales SMTP en logs de producción
+                    logger.warning(
+                        "Falla inesperada en envío de email para alerta_id=%s: %s",
                         alerta.id,
+                        type(exc).__name__,
                     )
                     alerta.email_enviado = False
-    except Exception:
-        logger.exception("No se pudo establecer conexión SMTP para notificaciones")
+    except Exception as exc:
+        logger.warning(
+            "No se pudo establecer conexión SMTP para notificaciones: %s",
+            type(exc).__name__,
+        )
         for alerta in alertas_a_enviar:
             alerta.email_enviado = False
 
@@ -240,8 +246,10 @@ def _dispatch_emails_in_thread(
     try:
         alertas = list(db.scalars(select(Alerta).where(Alerta.id.in_(alerta_ids))))
         dispatch_critical_email_notifications(db, alertas)
-    except Exception:
-        logger.exception("Error en envío de emails en hilo de fondo")
+    except Exception as exc:
+        logger.warning(
+            "Error en envío de emails en hilo de fondo: %s", type(exc).__name__
+        )
     finally:
         db.close()
 

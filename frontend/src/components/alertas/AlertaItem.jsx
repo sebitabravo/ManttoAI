@@ -1,13 +1,19 @@
 import { formatDate } from "../../utils/formatDate";
 import Button from "../ui/Button";
 
+/** Capitaliza la primera letra del tipo de alerta para la UI */
+function formatTipoAlerta(tipo) {
+  if (!tipo) return "—";
+  return String(tipo).charAt(0).toUpperCase() + String(tipo).slice(1);
+}
+
 export default function AlertaItem({ alerta, onMarkAsRead, marking = false }) {
   const timestamp = alerta.created_at || alerta.fecha;
   const isLeida = Boolean(alerta.leida);
 
   return (
     <article style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-      <strong>{alerta.tipo}</strong>
+      <strong>{formatTipoAlerta(alerta.tipo)}</strong>
       <p style={{ margin: "8px 0" }}>{alerta.mensaje}</p>
       <small>
         Nivel: {alerta.nivel} · {timestamp ? formatDate(timestamp) : "Sin fecha"}

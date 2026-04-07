@@ -1,0 +1,94 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect project structure
+        id: project_check
+        run: |
+          if [ -f docker-compose.yml ]; then
+            echo "has_compose=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_compose=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Debug secrets (dry run)
+        if: false
+        run: |
+          echo "VPS_HOST: ${{ secrets.VPS_HOST }}"
+          echo "VPS_USER: ${{ secrets.VPS_USER }}"
+          echo "VPS_PROJECT_PATH: ${{ secrets.VPS_PROJECT_PATH }}"
+
+      - name: Deploy to VPS via SSH
+        if: steps.project_check.outputs.has_compose == 'true'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            # Navigate to project directory
+            cd ${{ secrets.VPS_PROJECT_PATH }}
+            
+            # Pull latest changes
+            echo "📦 Pulling latest changes..."
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # Create .env if it doesn't exist (for production)
+            if [ ! -f .env ]; then
+              echo "⚠️ .env not found, creating from template..."
+              cp .env.example .env || true
+            fi
+            
+            # Pull latest images
+            echo "🐳 Pulling latest Docker images..."
+            docker compose pull
+            
+            # Restart services
+            echo "🚀 Restarting services..."
+            docker compose up -d --build
+            
+            # Wait for services to be healthy
+            echo "⏳ Waiting for services..."
+            sleep 30
+            
+            # Check service status
+            echo "📊 Service status:"
+            docker compose ps
+            
+            # Show logs (last 20 lines)
+            echo "📝 Recent logs:"
+            docker compose logs --tail 20
+
+      - name: Verify deployment
+        if: steps.project_check.outputs.has_compose == 'true'
+        run: |
+          echo "✅ Deployment completed"
+          echo "🌐 Application should be available at: http://${{ secrets.VPS_HOST }}"

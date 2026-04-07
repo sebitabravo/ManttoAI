@@ -1,11 +1,13 @@
-"""Puebla datos demo mínimos para el entorno local de ManttoAI."""
+"""Puebla datos demo completos para el entorno local de ManttoAI."""
 
 from __future__ import annotations
 
 import os
+import random
 import time
 import sys
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from sqlalchemy.exc import OperationalError
@@ -42,6 +44,10 @@ from app.database import SessionLocal, initialize_database_schema  # noqa: E402
 from app.models.equipo import Equipo  # noqa: E402
 from app.models.umbral import Umbral  # noqa: E402
 from app.models.usuario import Usuario  # noqa: E402
+from app.models.lectura import Lectura  # noqa: E402
+from app.models.alerta import Alerta  # noqa: E402
+from app.models.mantencion import Mantencion  # noqa: E402
+from app.models.prediccion import Prediccion  # noqa: E402
 from app.services.auth_service import hash_password  # noqa: E402
 
 
@@ -89,6 +95,9 @@ UMBRALES_BASE: tuple[UmbralSeed, ...] = (
     UmbralSeed(variable="temperatura", valor_min=15.0, valor_max=55.0),
     UmbralSeed(variable="vibracion", valor_min=0.0, valor_max=9.9),
 )
+
+# Semilla para reproducibilidad del demo
+SEED_RANDOM = random.Random(42)
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -219,6 +228,284 @@ def seed_umbrales(db: Session, equipos: list[Equipo]) -> tuple[int, int]:
     return created_count, updated_count
 
 
+def seed_lecturas_historicas(db: Session, equipos: list[Equipo]) -> tuple[int, int]:
+    """Genera 30 días de lecturas históricas por equipo."""
+
+    created_count = 0
+    existing_count = 0
+
+    # Verificar si ya existen lecturas
+    for equipo in equipos:
+        existing = db.scalars(
+            select(Lectura).where(Lectura.equipo_id == equipo.id)
+        ).first()
+        if existing:
+            existing_count += 1
+            continue
+
+        # Generar 30 días de lecturas (cada 4 horas = 6 lecturas/día = 180 total)
+        for day in range(30):
+            for hour in range(0, 24, 4):
+                timestamp = datetime.now() - timedelta(days=day, hours=hour)
+
+                # Generar valores realistas con algo de variación
+                # Equipo 1: Compresor - tiende a temperatura alta
+                if "Compresor" in equipo.nombre:
+                    temp = SEED_RANDOM.uniform(35, 55)
+                    hum = SEED_RANDOM.uniform(30, 50)
+                # Equipo 2: Bomba - temperatura media
+                elif "Bomba" in equipo.nombre:
+                    temp = SEED_RANDOM.uniform(25, 45)
+                    hum = SEED_RANDOM.uniform(40, 70)
+                # Equipo 3: Motor - temperatura estable
+                else:
+                    temp = SEED_RANDOM.uniform(20, 40)
+                    hum = SEED_RANDOM.uniform(45, 75)
+
+                # Vibración - valores normales pero con algunos picos
+                if SEED_RANDOM.random() < 0.05:  # 5% de anomalías
+                    vib_x = SEED_RANDOM.uniform(5, 15)
+                    vib_y = SEED_RANDOM.uniform(5, 15)
+                    vib_z = SEED_RANDOM.uniform(10, 20)
+                else:
+                    vib_x = SEED_RANDOM.uniform(0, 2)
+                    vib_y = SEED_RANDOM.uniform(0, 2)
+                    vib_z = SEED_RANDOM.uniform(1, 9)
+
+                lectura = Lectura(
+                    equipo_id=equipo.id,
+                    temperatura=round(temp, 2),
+                    humedad=round(hum, 2),
+                    vib_x=round(vib_x, 3),
+                    vib_y=round(vib_y, 3),
+                    vib_z=round(vib_z, 3),
+                    timestamp=timestamp,
+                )
+                db.add(lectura)
+                created_count += 1
+
+    return created_count, existing_count
+
+
+def seed_predicciones_historicas(db: Session, equipos: list[Equipo]) -> int:
+    """Genera predicciones históricas para cada equipo."""
+
+    created_count = 0
+
+    for equipo in equipos:
+        # Verificar si ya tiene predicciones
+        existing = db.scalars(
+            select(Prediccion).where(Prediccion.equipo_id == equipo.id)
+        ).first()
+        if existing:
+            continue
+
+        # Crear última predicción
+        if "Compresor" in equipo.nombre:
+            clasificacion = "advertencia"
+            probabilidad = SEED_RANDOM.uniform(0.6, 0.75)
+        elif "Bomba" in equipo.nombre:
+            clasificacion = "critico"
+            probabilidad = SEED_RANDOM.uniform(0.75, 0.9)
+        else:
+            clasificacion = "normal"
+            probabilidad = SEED_RANDOM.uniform(0.85, 0.95)
+
+        prediccion = Prediccion(
+            equipo_id=equipo.id,
+            clasificacion=clasificacion,
+            probabilidad=round(probabilidad, 3),
+            modelo_version="rf-mvp",
+            created_at=datetime.now() - timedelta(hours=SEED_RANDOM.randint(1, 48)),
+        )
+        db.add(prediccion)
+        created_count += 1
+
+    return created_count
+
+
+def seed_alertas_historicas(db: Session, equipos: list[Equipo]) -> tuple[int, int]:
+    """Genera alertas de ejemplo para la demo."""
+
+    created_count = 0
+    existing_count = 0
+
+    # Definir alertas de ejemplo
+    alertas_seed = [
+        # Equipo 1: Compresor - algunas alertas de temperatura
+        {
+            "equipo_nombre": "Compresor Línea A",
+            "tipo": "umbral_temperatura",
+            "mensaje": "Temperatura elevada detectada: 58°C",
+            "nivel": "alto",
+        },
+        {
+            "equipo_nombre": "Compresor Línea A",
+            "tipo": "umbral_vibracion",
+            "mensaje": "Vibración anormal en eje X: 12.5 m/s²",
+            "nivel": "critico",
+        },
+        # Equipo 2: Bomba - alertas de vibración
+        {
+            "equipo_nombre": "Bomba Hidráulica B",
+            "tipo": "umbral_vibracion",
+            "mensaje": "Vibración excesiva detectada: 15.2 m/s²",
+            "nivel": "critico",
+        },
+        {
+            "equipo_nombre": "Bomba Hidráulica B",
+            "tipo": "prediccion_riesgo",
+            "mensaje": "Alto riesgo de falla predicho por ML",
+            "nivel": "alto",
+        },
+        # Equipo 3: Motor - todo normal, una advertencia leve
+        {
+            "equipo_nombre": "Motor Ventilación C",
+            "tipo": "umbral_temperatura",
+            "mensaje": "Temperatura ligeramente elevada: 48°C",
+            "nivel": "medio",
+        },
+    ]
+
+    for alerta_data in alertas_seed:
+        equipo = db.scalars(
+            select(Equipo).where(Equipo.nombre == alerta_data["equipo_nombre"])
+        ).first()
+
+        if not equipo:
+            continue
+
+        # Verificar si ya existe
+        existing = db.scalars(
+            select(Alerta)
+            .where(Alerta.equipo_id == equipo.id)
+            .where(Alerta.tipo == alerta_data["tipo"])
+            .where(Alerta.mensaje == alerta_data["mensaje"])
+        ).first()
+
+        if existing:
+            existing_count += 1
+            continue
+
+        # Crear alerta (algunas leídas, otras no)
+        is_read = SEED_RANDOM.random() < 0.4  # 40% leídas
+
+        alerta = Alerta(
+            equipo_id=equipo.id,
+            tipo=alerta_data["tipo"],
+            mensaje=alerta_data["mensaje"],
+            nivel=alerta_data["nivel"],
+            email_enviado=alerta_data["nivel"] in ("alto", "critico"),
+            leida=is_read,
+            created_at=datetime.now() - timedelta(hours=SEED_RANDOM.randint(1, 72)),
+        )
+        db.add(alerta)
+        created_count += 1
+
+    return created_count, existing_count
+
+
+def seed_mantenciones_historicas(db: Session, equipos: list[Equipo]) -> tuple[int, int]:
+    """Genera registros de mantención para la demo."""
+
+    created_count = 0
+    existing_count = 0
+
+    # Definir mantenciones de ejemplo
+    mantenciones_seed = [
+        # Compresor - varias mantenciones
+        {
+            "equipo_nombre": "Compresor Línea A",
+            "tipo": "preventiva",
+            "descripcion": "Cambio de filtros de aire",
+            "estado": "completada",
+            "dias_atras": 15,
+        },
+        {
+            "equipo_nombre": "Compresor Línea A",
+            "tipo": "correctiva",
+            "descripcion": "Reemplazo de correas de transmisión",
+            "estado": "completada",
+            "dias_atras": 45,
+        },
+        {
+            "equipo_nombre": "Compresor Línea A",
+            "tipo": "preventiva",
+            "descripcion": "Lubricación de rodamientos",
+            "estado": "completada",
+            "dias_atras": 60,
+        },
+        # Bomba - recientes
+        {
+            "equipo_nombre": "Bomba Hidráulica B",
+            "tipo": "predictiva",
+            "descripcion": "Inspección por anomalía de vibración",
+            "estado": "programada",
+            "dias_atras": -3,  # Futura
+        },
+        {
+            "equipo_nombre": "Bomba Hidráulica B",
+            "tipo": "preventiva",
+            "descripcion": "Cambio de aceite hidráulico",
+            "estado": "completada",
+            "dias_atras": 30,
+        },
+        # Motor - una pendiente
+        {
+            "equipo_nombre": "Motor Ventilación C",
+            "tipo": "preventiva",
+            "descripcion": "Limpieza de aspas y inspección de rodamientos",
+            "estado": "programada",
+            "dias_atras": -7,  # Futura
+        },
+        {
+            "equipo_nombre": "Motor Ventilación C",
+            "tipo": "correctiva",
+            "descripcion": "Alineación de eje",
+            "estado": "completada",
+            "dias_atras": 90,
+        },
+    ]
+
+    for mant_data in mantenciones_seed:
+        equipo = db.scalars(
+            select(Equipo).where(Equipo.nombre == mant_data["equipo_nombre"])
+        ).first()
+
+        if not equipo:
+            continue
+
+        # Verificar si ya existe相似的
+        existing = db.scalars(
+            select(Mantencion)
+            .where(Mantencion.equipo_id == equipo.id)
+            .where(Mantencion.descripcion == mant_data["descripcion"])
+        ).first()
+
+        if existing:
+            existing_count += 1
+            continue
+
+        dias = mant_data["dias_atras"]
+        fecha_programada = (
+            datetime.now() + timedelta(days=dias)
+            if dias > 0
+            else datetime.now() - timedelta(days=-dias)
+        )
+
+        mant = Mantencion(
+            equipo_id=equipo.id,
+            tipo=mant_data["tipo"],
+            descripcion=mant_data["descripcion"],
+            estado=mant_data["estado"],
+            created_at=datetime.now() - timedelta(days=abs(dias) + 5),
+        )
+        db.add(mant)
+        created_count += 1
+
+    return created_count, existing_count
+
+
 def initialize_database_with_retry(
     max_attempts: int = 8, delay_seconds: float = 2.0
 ) -> None:
@@ -239,30 +526,55 @@ def initialize_database_with_retry(
 
 
 def main() -> None:
-    """Ejecuta el seed mínimo requerido para la demo local."""
+    """Ejecuta el seed completo para la demo local."""
 
     _assert_safe_seed_environment()
     initialize_database_with_retry()
 
     with SessionLocal() as db:
+        # 1. Usuario admin
         admin_email, admin_created = seed_admin_user(db)
+
+        # 2. Equipos
         equipos, equipos_creados, equipos_actualizados = seed_equipos(db)
+
+        # 3. Umbrales
         umbrales_creados, umbrales_actualizados = seed_umbrales(db, equipos)
+
+        # 4. Lecturas históricas (30 días)
+        lecturas_creadas, lecturas_existentes = seed_lecturas_historicas(db, equipos)
+
+        # 5. Predicciones históricas
+        predicciones_creadas = seed_predicciones_historicas(db, equipos)
+
+        # 6. Alertas de ejemplo
+        alertas_creadas, alertas_existentes = seed_alertas_historicas(db, equipos)
+
+        # 7. Mantenciones históricas
+        mantenciones_creadas, mantenciones_existentes = seed_mantenciones_historicas(
+            db, equipos
+        )
 
         db.commit()
 
     print("✅ Seed completado")
     print(
-        f"- Usuario admin {'creado' if admin_created else 'actualizado'}: {admin_email}"
+        f"  Usuario admin: {admin_email} ({'creado' if admin_created else 'actualizado'})"
+    )
+    print(f"  Equipos: {equipos_creados} creados, {equipos_actualizados} actualizados")
+    print(
+        f"  Umbrales: {umbrales_creados} creados, {umbrales_actualizados} actualizados"
     )
     print(
-        f"- Equipos: {equipos_creados} creados, {equipos_actualizados} actualizados, "
-        f"total objetivo={len(EQUIPOS_DEMO)}"
+        f"  Lecturas históricas: {lecturas_creadas} creadas, {lecturas_existentes} ya existentes"
     )
+    print(f"  Predicciones: {predicciones_creadas} creadas")
+    print(f"  Alertas: {alertas_creadas} creadas, {alertas_existentes} ya existentes")
     print(
-        f"- Umbrales: {umbrales_creados} creados, {umbrales_actualizados} actualizados, "
-        f"variables por equipo={len(UMBRALES_BASE)}"
+        f"  Mantenciones: {mantenciones_creadas} creadas, {mantenciones_existentes} ya existentes"
     )
+    print("")
+    print("📊 El dashboard ahora tiene datos históricos para la demo.")
 
 
 if __name__ == "__main__":

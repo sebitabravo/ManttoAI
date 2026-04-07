@@ -12,11 +12,23 @@
   min-height: 100vh;
 }
 
-/* ─── Sidebar ───────────────────────────────────────────────────────────────── */
+/*
+ * Defaults para desktop: overlay y botón hamburguesa ocultos.
+ * Deben declararse ANTES del media query para que éste pueda sobrescribirlos.
+ */
+.layout-overlay {
+  display: none;
+}
+
+.btn-menu-tablet {
+  display: none;
+}
+
+/* ─── Responsive tablet ─────────────────────────────────────────────────────── */
 
 /*
  * En tablet el sidebar sale del flujo normal y se convierte en un drawer
- * que se desliza desde la izquierda. Por defecto está oculto.
+ * que se desliza desde la izquierda. Por defecto está oculto fuera de pantalla.
  */
 @media (max-width: 768px) {
   .layout-root {
@@ -41,7 +53,7 @@
     transform: translateX(0);
   }
 
-  /* Overlay semitransparente detrás del drawer */
+  /* Overlay semitransparente detrás del drawer — visible solo en tablet */
   .layout-overlay {
     display: block;
     position: fixed;
@@ -54,13 +66,4 @@
   .btn-menu-tablet {
     display: flex;
   }
-}
-
-/* En desktop el overlay y el botón hamburguesa no se muestran */
-.layout-overlay {
-  display: none;
-}
-
-.btn-menu-tablet {
-  display: none;
 }

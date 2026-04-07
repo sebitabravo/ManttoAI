@@ -8,20 +8,29 @@ import { FONT_SIZE, RADIUS, SPACING, SURFACE, TEXT_COLOR } from "../../styles/to
 /**
  * Header principal de la aplicación.
  * Props:
- *  - onMenuClick: callback para abrir el sidebar en resolución tablet
+ *  - onMenuToggle: callback para alternar el sidebar en resolución tablet
+ *  - sidebarAbierto: estado del drawer (para aria-expanded y aria-label dinámico)
+ *  - menuBtnRef: ref al botón hamburguesa (para devolver foco al cerrar el drawer)
  */
-export default function Header({ onMenuClick }) {
+export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
   const { user, logout } = useAuth();
 
   return (
     <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: SPACING.xl, borderBottom: `1px solid ${SURFACE.border}` }}>
       <div style={{ display: "flex", alignItems: "center", gap: SPACING.sm }}>
-        {/* Botón hamburguesa: solo visible en tablet via CSS (.btn-menu-tablet) */}
+        {/*
+          Botón hamburguesa: visible solo en tablet via CSS (.btn-menu-tablet).
+          aria-expanded comunica el estado del drawer a lectores de pantalla.
+          aria-controls apunta al id del aside del sidebar.
+        */}
         <button
           type="button"
+          ref={menuBtnRef}
           className="btn-menu-tablet"
-          onClick={onMenuClick}
-          aria-label="Abrir menú de navegación"
+          onClick={onMenuToggle}
+          aria-label={sidebarAbierto ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
+          aria-expanded={sidebarAbierto}
+          aria-controls="nav-sidebar"
           style={{ alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer", padding: SPACING.xs, borderRadius: RADIUS.sm, color: TEXT_COLOR.secondary }}
         >
           {/* Ícono hamburguesa SVG inline — sin dependencias externas */}

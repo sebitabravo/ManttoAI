@@ -267,6 +267,15 @@ def _persist_prediction_result(
 
     db.refresh(prediction)
 
+    logger.info(
+        "[PREDICCION] Persistida: equipo_id=%d prediccion_id=%d modelo_version=%s clasificacion=%s probabilidad=%.6f",
+        equipo_id,
+        prediction.id,
+        prediction.modelo_version,
+        prediction.clasificacion,
+        prediction.probabilidad,
+    )
+
     if prediction_failure_alert is not None:
         db.refresh(prediction_failure_alert)
         if background_tasks:

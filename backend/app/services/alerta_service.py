@@ -214,9 +214,16 @@ def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) ->
                     alerta.email_enviado = email_result.sent
                     if email_result.error:
                         logger.warning(
-                            "Error al enviar email para alerta_id=%s: %s",
+                            "[ALERTA][EMAIL] Error al enviar email para alerta_id=%s equipo_id=%s: %s",
                             alerta.id,
+                            alerta.equipo_id,
                             email_result.error,
+                        )
+                    else:
+                        logger.info(
+                            "[ALERTA][EMAIL] Email enviado para alerta_id=%s equipo_id=%s subject=Alerta crítica ManttoAI",
+                            alerta.id,
+                            alerta.equipo_id,
                         )
                 except Exception as exc:
                     # Registrar tipo y mensaje para diagnóstico sin volcar posibles

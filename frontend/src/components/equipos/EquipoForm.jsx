@@ -95,7 +95,7 @@ export default function EquipoForm({
   const resolvedErrorMessage = errorMessage || submitError;
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
+    <form onSubmit={handleSubmit} className="grid gap-3">
       <Input
         label="Nombre del equipo"
         name="nombre"
@@ -134,12 +134,12 @@ export default function EquipoForm({
       />
 
       {resolvedErrorMessage ? (
-        <div style={{ color: "#dc2626", fontSize: 14 }} role="alert">
+        <div className="text-sm text-danger-600" role="alert">
           {resolvedErrorMessage}
         </div>
       ) : null}
 
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+      <div className="flex flex-wrap justify-end gap-2">
         {onCancel ? (
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancelar

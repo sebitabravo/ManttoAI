@@ -16,9 +16,9 @@ export default function EquipoUmbralesSection({
   formatVariableLabel,
 }) {
   return (
-    <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-        <h2 style={{ marginTop: 0, marginBottom: 0 }}>Umbrales operativos</h2>
+    <section className="rounded-lg border border-neutral-200 bg-white p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Umbrales operativos</h2>
         <Button
           type="button"
           variant="outline"
@@ -28,104 +28,106 @@ export default function EquipoUmbralesSection({
           {umbralesLoading ? "Cargando..." : "Recargar umbrales"}
         </Button>
       </div>
-      <p style={{ marginTop: 8, color: "#6b7280" }}>
+      <p className="mt-2 text-sm text-neutral-600">
         Los cambios impactan en la evaluación de alertas para próximas lecturas de este equipo.
       </p>
 
       {umbralesLoading ? <LoadingSpinner label="Cargando umbrales del equipo..." /> : null}
 
       {umbralesErrorMessage ? (
-        <div style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 12, background: "#fffbeb" }}>
+        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
           {umbralesErrorMessage}
         </div>
       ) : null}
 
       {!umbralesLoading && !umbralesErrorMessage && umbrales.length === 0 ? (
-        <p style={{ marginBottom: 0, color: "#6b7280" }}>
+        <p className="mb-0 text-sm text-neutral-600">
           Este equipo no tiene umbrales configurados para editar desde la interfaz.
         </p>
       ) : null}
 
       {!umbralesLoading && umbrales.length > 0 ? (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <caption style={{ textAlign: "left", paddingBottom: 8, color: "#6b7280" }}>
-            Umbrales operativos editables para las próximas evaluaciones del equipo.
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col" align="left">Variable</th>
-              <th scope="col" align="left">Valor mínimo</th>
-              <th scope="col" align="left">Valor máximo</th>
-              <th scope="col" align="left">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {umbrales.map((umbral) => {
-              const resolvedUmbralId = Number(umbral.id);
-              const draft = umbralDrafts[resolvedUmbralId] || {
-                valor_min: String(umbral.valor_min),
-                valor_max: String(umbral.valor_max),
-              };
-              const isSaving = Boolean(savingUmbralById[resolvedUmbralId]);
-              const umbralErrorMessageById = umbralErrorById[resolvedUmbralId];
-              const umbralSuccessMessage = umbralSuccessById[resolvedUmbralId];
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <caption className="pb-2 text-left text-sm text-neutral-600">
+              Umbrales operativos editables para las próximas evaluaciones del equipo.
+            </caption>
+            <thead>
+              <tr className="border-b border-neutral-200">
+                <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Variable</th>
+                <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Valor mínimo</th>
+                <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Valor máximo</th>
+                <th scope="col" className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {umbrales.map((umbral) => {
+                const resolvedUmbralId = Number(umbral.id);
+                const draft = umbralDrafts[resolvedUmbralId] || {
+                  valor_min: String(umbral.valor_min),
+                  valor_max: String(umbral.valor_max),
+                };
+                const isSaving = Boolean(savingUmbralById[resolvedUmbralId]);
+                const umbralErrorMessageById = umbralErrorById[resolvedUmbralId];
+                const umbralSuccessMessage = umbralSuccessById[resolvedUmbralId];
 
-              return (
-                <tr key={umbral.id}>
-                  <td>{formatVariableLabel(umbral.variable)}</td>
-                  <td>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={draft.valor_min}
-                      onChange={(event) =>
-                        handleUmbralDraftChange(resolvedUmbralId, "valor_min", event.target.value)
-                      }
-                      disabled={isSaving}
-                      aria-label={`Valor mínimo para ${umbral.variable}`}
-                      style={{ padding: 8, borderRadius: 8, border: "1px solid #d1d5db", width: "100%" }}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={draft.valor_max}
-                      onChange={(event) =>
-                        handleUmbralDraftChange(resolvedUmbralId, "valor_max", event.target.value)
-                      }
-                      disabled={isSaving}
-                      aria-label={`Valor máximo para ${umbral.variable}`}
-                      style={{ padding: 8, borderRadius: 8, border: "1px solid #d1d5db", width: "100%" }}
-                    />
-                  </td>
-                  <td>
-                    <div style={{ display: "grid", gap: 6 }}>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleSaveUmbral(resolvedUmbralId)}
+                return (
+                  <tr key={umbral.id} className="hover:bg-neutral-50 transition-colors duration-150">
+                    <td className="py-2 pr-4 text-sm font-medium text-neutral-900">{formatVariableLabel(umbral.variable)}</td>
+                    <td className="py-2 pr-4">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={draft.valor_min}
+                        onChange={(event) =>
+                          handleUmbralDraftChange(resolvedUmbralId, "valor_min", event.target.value)
+                        }
                         disabled={isSaving}
-                      >
-                        {isSaving ? "Guardando..." : "Guardar"}
-                      </Button>
-                      {umbralErrorMessageById ? (
-                        <small style={{ color: "#dc2626" }} role="alert">
-                          {umbralErrorMessageById}
-                        </small>
-                      ) : null}
-                      {umbralSuccessMessage ? (
-                        <small style={{ color: "#15803d" }} aria-live="polite">
-                          {umbralSuccessMessage}
-                        </small>
-                      ) : null}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                        aria-label={`Valor mínimo para ${umbral.variable}`}
+                        className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm tabular-nums transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
+                      />
+                    </td>
+                    <td className="py-2 pr-4">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={draft.valor_max}
+                        onChange={(event) =>
+                          handleUmbralDraftChange(resolvedUmbralId, "valor_max", event.target.value)
+                        }
+                        disabled={isSaving}
+                        aria-label={`Valor máximo para ${umbral.variable}`}
+                        className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm tabular-nums transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
+                      />
+                    </td>
+                    <td className="py-2">
+                      <div className="grid gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleSaveUmbral(resolvedUmbralId)}
+                          disabled={isSaving}
+                        >
+                          {isSaving ? "Guardando..." : "Guardar"}
+                        </Button>
+                        {umbralErrorMessageById ? (
+                          <small className="text-xs text-danger-600" role="alert">
+                            {umbralErrorMessageById}
+                          </small>
+                        ) : null}
+                        {umbralSuccessMessage ? (
+                          <small className="text-xs text-success-700" aria-live="polite">
+                            {umbralSuccessMessage}
+                          </small>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       ) : null}
     </section>
   );

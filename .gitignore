@@ -61,3 +61,10 @@ qa-*.png
 audit-*.png
 .playwright-mcp/
 pr_review_comment.md
+
+# === AI Tools / Skills ===
+.agents/
+.claude/
+.factory/
+.kiro/
+skills-lock.json

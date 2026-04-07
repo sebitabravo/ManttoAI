@@ -1,6 +1,12 @@
 /**
  * Utilidades para interpretar y visualizar predicciones del modelo ML.
  * Mapea clasificaciones a colores, etiquetas y niveles de severidad.
+ *
+ * Los colores usan OKLCH para mantener consistencia con tailwind.config.js.
+ * Correspondencia con tokens del design system:
+ * - normal  → success-*
+ * - alerta  → warning-*
+ * - falla   → danger-*
  */
 
 /**
@@ -11,25 +17,25 @@
 const CLASIFICACION_CONFIG = {
   normal: {
     label: "Normal",
-    color: "#16a34a",       // verde
-    bgColor: "#dcfce7",
-    borderColor: "#86efac",
+    color: "oklch(45% 0.160 145)",      // success-600 verde industrial
+    bgColor: "oklch(96% 0.030 145)",     // success-50
+    borderColor: "oklch(90% 0.060 145)", // success-100
     emoji: "✅",
     nivel: 0,
   },
   alerta: {
     label: "Alerta",
-    color: "#d97706",       // amarillo/ámbar
-    bgColor: "#fef3c7",
-    borderColor: "#fcd34d",
+    color: "oklch(55% 0.170 85)",        // warning-600 amarillo-naranja
+    bgColor: "oklch(96% 0.025 85)",      // warning-50
+    borderColor: "oklch(92% 0.055 85)",  // warning-100
     emoji: "⚠️",
     nivel: 1,
   },
   falla: {
     label: "Falla",
-    color: "#dc2626",       // rojo
-    bgColor: "#fee2e2",
-    borderColor: "#fca5a5",
+    color: "oklch(50% 0.195 25)",        // danger-600 rojo industrial
+    bgColor: "oklch(96% 0.022 25)",      // danger-50
+    borderColor: "oklch(92% 0.048 25)",  // danger-100
     emoji: "🔴",
     nivel: 2,
   },
@@ -38,9 +44,9 @@ const CLASIFICACION_CONFIG = {
 /** Configuración por defecto cuando no hay predicción o la clasificación es desconocida */
 const CONFIG_DESCONOCIDA = {
   label: "Sin predicción",
-  color: "#6b7280",
-  bgColor: "#f3f4f6",
-  borderColor: "#d1d5db",
+  color: "oklch(55% 0.018 250)",        // neutral-500
+  bgColor: "oklch(96% 0.005 250)",      // neutral-100
+  borderColor: "oklch(92% 0.008 250)",  // neutral-200
   emoji: "—",
   nivel: -1,
 };

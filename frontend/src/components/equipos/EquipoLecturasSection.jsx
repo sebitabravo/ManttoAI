@@ -3,7 +3,7 @@ import { formatMetric, resolveMaxVibration } from "../../utils/metrics";
 
 export default function EquipoLecturasSection({ lecturas }) {
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-4">
+    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
       <h2 className="mt-0 text-lg font-semibold text-neutral-900">Últimas lecturas</h2>
       {lecturas.length === 0 ? (
         <p className="mb-0 text-sm text-neutral-600">

@@ -41,8 +41,8 @@ export default function EquipoPrediccionCard({ prediccion }) {
     <section
       className="rounded-lg border p-4"
       style={{
-        borderColor: prediccion ? config.borderColor : 'oklch(0.88 0.01 250.29)', // neutral-200
-        background: prediccion ? config.bgColor : 'oklch(1.00 0 0)', // white
+        borderColor: prediccion ? config.borderColor : 'oklch(92% 0.008 250)', // neutral-200
+        background: prediccion ? config.bgColor : 'oklch(96% 0.005 250)', // neutral-100
       }}
     >
       <h2 className="mb-3 mt-0 text-lg font-semibold text-neutral-900">Última predicción</h2>

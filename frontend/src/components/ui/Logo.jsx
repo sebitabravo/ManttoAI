@@ -19,8 +19,8 @@ import { memo } from "react";
  * que se re-renderizan frecuentemente (Header, Sidebar).
  */
 
-/** Color de marca principal OKLCH — azul petróleo industrial */
-export const BRAND_COLOR = "oklch(55% 0.110 250)"; // primary-500
+/** Color de marca principal — aproximación hex del azul petróleo OKLCH primary-500 */
+export const BRAND_COLOR = "#2b6b8e";
 
 const Logo = memo(function Logo({ size = 24, title }) {
   // Si no hay título, el SVG es puramente decorativo y se oculta a tecnologías asistivas

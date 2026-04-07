@@ -22,7 +22,7 @@ export default function Input({ label, error, className = "", ...props }) {
         className={`
           px-3 py-2.5 min-h-[44px]
           rounded border
-          bg-white
+          bg-neutral-100
           text-base text-neutral-700
           placeholder:text-neutral-400
           transition-all duration-150 ease-out-quart

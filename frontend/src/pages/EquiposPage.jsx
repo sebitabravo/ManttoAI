@@ -122,7 +122,7 @@ export default function EquiposPage() {
       </div>
 
       {showCreateForm ? (
-        <section className="rounded-lg border border-neutral-200 bg-white p-4">
+        <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
           <h2 className="mt-0 text-lg font-semibold text-neutral-900">Alta de equipo</h2>
           <EquipoForm
             submitLabel="Crear equipo"

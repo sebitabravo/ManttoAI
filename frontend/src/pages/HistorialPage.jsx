@@ -130,7 +130,7 @@ export default function HistorialPage() {
         />
       ) : null}
 
-      <section className="rounded-lg border border-neutral-200 bg-white p-4">
+      <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
         <h2 className="mt-0 text-lg font-semibold text-neutral-900">Lecturas recientes</h2>
         {lecturasRecientes.length === 0 ? (
           <p className="mb-0 text-sm text-neutral-600">No hay lecturas históricas para mostrar.</p>
@@ -165,7 +165,7 @@ export default function HistorialPage() {
         )}
       </section>
 
-      <section className="grid gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+      <section className="grid gap-3 rounded-lg border border-neutral-200 bg-neutral-100 p-4">
         <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Mantenciones recientes</h2>
         {mantencionesRecientes.length === 0 ? (
           <p className="mb-0 text-sm text-neutral-600">

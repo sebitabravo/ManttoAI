@@ -37,7 +37,7 @@ export default function EquipoCard({ equipo }) {
   const probabilidad = equipo.ultima_probabilidad ?? null;
 
   return (
-    <article className="flex flex-col gap-2 rounded-lg border border-neutral-200 bg-white p-4 transition-shadow duration-150 hover:shadow-md">
+    <article className="flex flex-col gap-2 rounded-lg border border-neutral-200 bg-neutral-100 p-4 transition-shadow duration-150 ease-out-quart hover:shadow-md">
       <h2 className="mb-1 mt-0 text-base font-semibold text-neutral-900">{equipo.nombre}</h2>
 
       {/* Indicador visual de predicción */}

@@ -1,10 +1,11 @@
 """Entrenamiento del modelo base de ManttoAI."""
 
+import hashlib
+import logging
 from copy import deepcopy
 from datetime import datetime, timezone
-import hashlib
-from threading import Lock
 from pathlib import Path
+from threading import Lock
 
 import joblib
 import pandas as pd
@@ -257,5 +258,6 @@ def clear_model_artifact_cache(model_path: Path | None = None) -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     output = train_and_save()
-    print(f"Modelo entrenado y guardado en: {output}")
+    logging.info("Modelo entrenado y guardado en: %s", output)

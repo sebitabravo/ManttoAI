@@ -1,4 +1,8 @@
-@import "tailwindcss";
+/* ─── Tailwind v3 Directives ──────────────────────────────────────────────── */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ─── Tipografía ──────────────────────────────────────────────────────────── */
 
@@ -6,14 +10,15 @@
  * Geist: fuente principal moderna y técnica (Vercel Design System)
  * Geist Mono: valores numéricos tabulares para tablas y métricas
  * 
+ * Las fuentes se cargan desde index.html con <link> tags para evitar
+ * conflictos con @import order en PostCSS/Tailwind.
+ * 
  * Estrategia de carga:
+ * - preconnect para DNS prefetching
  * - font-display: swap para evitar FOIT (Flash of Invisible Text)
  * - Pesos: 400 (Regular), 500 (Medium), 600 (Semibold)
  * - Subsetting: latin (optimización)
  */
-
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap');
 
 /*
  * Variables CSS personalizadas para tipografía

@@ -55,3 +55,9 @@ mosquitto/passwd
 *.db
 *.sqlite
 *.sqlite3
+
+# === QA / Testing temporal ===
+qa-*.png
+audit-*.png
+.playwright-mcp/
+pr_review_comment.md

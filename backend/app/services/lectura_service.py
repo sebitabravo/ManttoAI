@@ -116,9 +116,11 @@ def create_lectura(
             if existente is None:
                 alerta = Alerta(
                     equipo_id=lectura.equipo_id,
-                    tipo="temperatura"
-                    if umbral.variable.lower().strip() == "temperatura"
-                    else "vibracion",
+                    tipo=(
+                        "temperatura"
+                        if umbral.variable.lower().strip() == "temperatura"
+                        else "vibracion"
+                    ),
                     mensaje=mensaje_alerta,
                     nivel="alto",
                     email_enviado=False,

@@ -13,7 +13,8 @@ test("sin token no se puede acceder al dashboard", async ({ page }) => {
   await page.goto("/dashboard");
 
   await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole("heading", { name: "ManttoAI Predictivo" })).toBeVisible();
+  // El h1 del login ahora muestra "ManttoAI" (branding actualizado en issue #53)
+  await expect(page.getByRole("heading", { name: "ManttoAI" })).toBeVisible();
 });
 
 test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) => {
@@ -88,7 +89,8 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
 
   // Navegar a login
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "ManttoAI Predictivo" })).toBeVisible();
+  // El h1 del login ahora muestra "ManttoAI" (branding actualizado en issue #53)
+  await expect(page.getByRole("heading", { name: "ManttoAI" })).toBeVisible();
 
   // Llenar formulario y enviar
   await page.getByLabel("Email").fill("demo@example.com");

@@ -217,7 +217,7 @@ export default function HistorialPage() {
         )}
 
         {selectedMantencion ? (
-          <section className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+          <div className="border-t border-neutral-200 pt-3">
             <h3 className="mt-0 text-base font-semibold text-neutral-900">Actualizar mantención #{selectedMantencion.id}</h3>
             <MantencionForm
               initialValues={{
@@ -231,7 +231,7 @@ export default function HistorialPage() {
               isSubmitting={isSavingMantencion}
               errorMessage={updateMantencionErrorMessage}
             />
-          </section>
+          </div>
         ) : null}
       </section>
     </section>

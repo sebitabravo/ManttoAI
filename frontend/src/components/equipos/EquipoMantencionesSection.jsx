@@ -32,7 +32,7 @@ export default function EquipoMantencionesSection({
       </div>
 
       {showCreateMantencionForm ? (
-        <section className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+        <div className="border-t border-neutral-200 pt-3">
           <h3 className="mt-0 text-base font-semibold text-neutral-900">Registrar mantención</h3>
           <MantencionForm
             onSubmit={handleCreateMantencion}
@@ -41,7 +41,7 @@ export default function EquipoMantencionesSection({
             isSubmitting={isCreatingMantencion}
             errorMessage={createMantencionErrorMessage}
           />
-        </section>
+        </div>
       ) : null}
 
       {mantencionesRecientes.length === 0 ? (
@@ -92,7 +92,7 @@ export default function EquipoMantencionesSection({
       )}
 
       {selectedMantencion ? (
-        <section className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+        <div className="border-t border-neutral-200 pt-3">
           <h3 className="mt-0 text-base font-semibold text-neutral-900">Editar mantención #{selectedMantencion.id}</h3>
           <MantencionForm
             initialValues={{
@@ -106,7 +106,7 @@ export default function EquipoMantencionesSection({
             isSubmitting={isSavingMantencion}
             errorMessage={updateMantencionErrorMessage}
           />
-        </section>
+        </div>
       ) : null}
     </section>
   );

@@ -130,7 +130,7 @@ h1, h2, h3, h4, h5, h6 {
     /* Oculto fuera de pantalla por defecto */
     transform: translateX(-100%);
     transition: transform 0.25s ease;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.12);
+    box-shadow: 2px 0 8px oklch(15% 0.015 250 / 0.12);
   }
 
   /* Clase que activa el drawer cuando el usuario abre el menú */
@@ -144,11 +144,28 @@ h1, h2, h3, h4, h5, h6 {
     position: fixed;
     inset: 0;
     z-index: 99;
-    background: rgba(0, 0, 0, 0.35);
+    background: oklch(15% 0.015 250 / 0.35);
   }
 
   /* Botón hamburguesa: visible solo en tablet */
   .btn-menu-tablet {
     display: flex;
+  }
+}
+
+/* ─── Accesibilidad: movimiento reducido ─────────────────────────────────────── */
+
+/*
+ * Desactiva animaciones para usuarios que prefieren movimiento reducido.
+ * Cumple con WCAG 2.2 Criterion 2.3.3 (Animation from Interactions, Level AAA).
+ * Afecta: spinners, skeletons (pulse), polling dot, transiciones del sidebar.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

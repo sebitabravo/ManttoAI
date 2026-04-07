@@ -1,4 +1,5 @@
 import { BRAND_COLOR } from "./Logo";
+import { RADIUS, SPACING } from "../../styles/tokens";
 
 export default function Button({ children, type = "button", variant = "primary", ...props }) {
   // Colores por variante — primary usa BRAND_COLOR para consistencia con el logo y nav activo
@@ -11,7 +12,7 @@ export default function Button({ children, type = "button", variant = "primary",
   return (
     <button
       type={type}
-      style={{ borderRadius: 10, padding: "10px 14px", cursor: "pointer", ...colors[variant] }}
+      style={{ borderRadius: RADIUS.md, padding: "10px 14px", cursor: "pointer", ...colors[variant] }}
       {...props}
     >
       {children}

@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 /**
  * Componente de logo de marca ManttoAI.
  * Círculo azul con inicial "M" — consistente con el favicon de index.html.
@@ -12,12 +14,15 @@
  *
  * Uso semántico (cuando el logo aparece solo sin texto):
  *   <Logo size={52} title="ManttoAI — Mantenimiento Predictivo" />
+ *
+ * Memoizado con React.memo para evitar re-renders innecesarios en layouts
+ * que se re-renderizan frecuentemente (Header, Sidebar).
  */
 
 /** Color de marca principal — importar desde aquí para mantener consistencia */
 export const BRAND_COLOR = "#1d4ed8";
 
-export default function Logo({ size = 24, title }) {
+const Logo = memo(function Logo({ size = 24, title }) {
   // Si no hay título, el SVG es puramente decorativo y se oculta a tecnologías asistivas
   const esDecorativo = !title;
 
@@ -46,4 +51,6 @@ export default function Logo({ size = 24, title }) {
       </text>
     </svg>
   );
-}
+});
+
+export default Logo;

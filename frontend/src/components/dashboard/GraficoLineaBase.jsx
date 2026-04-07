@@ -51,10 +51,13 @@ export default function GraficoLineaBase({
 
   if (isEmpty) {
     return (
-      <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-6">
+      <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
         <h3 className="mb-2 mt-0 text-md font-semibold text-neutral-800">{title}</h3>
         <p className="mt-0 text-sm text-neutral-500">{subtitle}</p>
-        <p className="mb-0 text-sm text-neutral-600">{emptyMessage}</p>
+        {/* Placeholder visual — área del gráfico vacía */}
+        <div className="my-4 flex h-32 items-center justify-center rounded border border-dashed border-neutral-300 bg-neutral-50">
+          <span className="text-sm text-neutral-400">{emptyMessage}</span>
+        </div>
       </section>
     );
   }
@@ -68,7 +71,7 @@ export default function GraficoLineaBase({
   const lastTimestamp = series[series.length - 1].timestamp;
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-6">
+    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
       <h3 className="mb-2 mt-0 text-md font-semibold text-neutral-800">{title}</h3>
       <p className="mt-0 mb-4 text-sm text-neutral-500">{subtitle}</p>
 

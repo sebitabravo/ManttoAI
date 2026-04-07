@@ -3,7 +3,7 @@ import GraficoTemperatura from "../components/dashboard/GraficoTemperatura";
 import GraficoVibracion from "../components/dashboard/GraficoVibracion";
 import TablaEstadoEquipos from "../components/dashboard/TablaEstadoEquipos";
 import TablaUltimasLecturas from "../components/dashboard/TablaUltimasLecturas";
-import LoadingSpinner from "../components/ui/LoadingSpinner";
+import { SkeletonMetric, SkeletonTable, SkeletonChart } from "../components/ui/Skeleton";
 import { getDashboardData } from "../api/dashboard";
 import usePolling from "../hooks/usePolling";
 import { DASHBOARD_POLLING_INTERVAL_MS } from "../utils/constants";
@@ -41,15 +41,29 @@ export default function DashboardPage() {
         <p className="text-sm text-neutral-500">Resumen operativo del prototipo de mantenimiento predictivo.</p>
       </div>
 
-      {/* Resumen cards con jerarquía asimétrica */}
+      {/* Resumen cards — skeletons durante carga inicial */}
       {isInitialLoading ? (
-        <LoadingSpinner label="Cargando resumen del dashboard..." />
+        <div className="grid gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SkeletonMetric />
+            <SkeletonMetric />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <SkeletonMetric />
+            <SkeletonMetric />
+            <SkeletonMetric />
+          </div>
+        </div>
       ) : (
         <ResumenCards resumen={resumen} />
       )}
 
-      {/* Estado de equipos — tabla prominente */}
-      <TablaEstadoEquipos equipos={resumen.equipos || []} />
+      {/* Estado de equipos — skeleton durante carga inicial */}
+      {isInitialLoading ? (
+        <SkeletonTable rows={4} cols={6} />
+      ) : (
+        <TablaEstadoEquipos equipos={resumen.equipos || []} />
+      )}
 
       {error ? (
         <div className="rounded-lg border border-warning-500 bg-warning-50 px-4 py-3 text-sm text-warning-700">
@@ -59,12 +73,25 @@ export default function DashboardPage() {
 
       {/* Gráficos lado a lado — grid adaptativo */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <GraficoTemperatura lecturas={lecturas} />
-        <GraficoVibracion lecturas={lecturas} />
+        {isInitialLoading ? (
+          <>
+            <SkeletonChart />
+            <SkeletonChart />
+          </>
+        ) : (
+          <>
+            <GraficoTemperatura lecturas={lecturas} />
+            <GraficoVibracion lecturas={lecturas} />
+          </>
+        )}
       </div>
 
-      {/* Últimas lecturas — tabla secundaria */}
-      <TablaUltimasLecturas lecturas={lecturas} equipos={resumen.equipos || []} />
+      {/* Últimas lecturas — skeleton durante carga inicial */}
+      {isInitialLoading ? (
+        <SkeletonTable rows={5} cols={4} />
+      ) : (
+        <TablaUltimasLecturas lecturas={lecturas} equipos={resumen.equipos || []} />
+      )}
     </section>
   );
 }

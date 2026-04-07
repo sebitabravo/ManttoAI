@@ -135,6 +135,42 @@ docker exec manttoai-mosquitto-1 mosquitto_pub \
 ### Screenshots de evidencia
 - `qa-equipo-detalle-prediccion-ml.png` - Detalle de equipo con predicción ML
 - `qa-mqtt-live-test-prediction-updated.png` - Flujo MQTT en vivo
+- `qa-simulator-realtime-working.png` - Simulador 24/7 funcionando
+
+---
+
+## Simulador IoT 24/7 (nuevo)
+
+Se agregó un simulador automático de sensores que genera datos continuamente sin necesidad de hardware ESP32.
+
+### Configuración
+
+```bash
+# En backend/.env
+SIMULATOR_ENABLED=true      # Activa el simulador
+SIMULATOR_INTERVAL_SECONDS=30  # Intervalo entre ciclos
+```
+
+### Características
+- ✅ Corre automáticamente al iniciar el backend
+- ✅ Publica en MQTT cada 30 segundos (configurable)
+- ✅ Genera datos para todos los equipos activos
+- ✅ Perfiles de comportamiento por tipo de equipo (motor, bomba, compresor)
+- ✅ Usa APScheduler (mismo que predicciones) - sin contenedor extra
+- ✅ Desactivable por variable de entorno para producción real
+
+### Archivos agregados/modificados
+| Archivo | Cambio |
+|---------|--------|
+| `backend/app/services/simulator_service.py` | Nuevo servicio de simulación |
+| `backend/app/config.py` | Variables `simulator_enabled`, `simulator_interval_seconds` |
+| `backend/app/main.py` | Integración en lifespan |
+| `backend/.env.example` | Documentación de variables |
+
+### Verificación en vivo
+- Lecturas generándose automáticamente cada ~30 segundos
+- Predicción ML actualizándose en tiempo real (72.2% → 90.8%)
+- Flujo completo: Simulador → MQTT → Backend → BD → ML → Frontend
 
 ---
 

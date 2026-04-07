@@ -53,7 +53,15 @@ export default function AlertasPage() {
     <section className="grid gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="m-0 text-xl font-semibold text-neutral-900">Alertas</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="m-0 text-xl font-semibold text-neutral-900">Alertas</h1>
+            {loading && alertas.length > 0 ? (
+              <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" aria-hidden="true" />
+                Actualizando
+              </span>
+            ) : null}
+          </div>
           <p className="mb-0 mt-1.5 text-sm text-neutral-600">
             Monitoreo de alertas activas y trazabilidad de alertas leídas.
             <span className="ml-2 text-xs text-neutral-500">
@@ -68,13 +76,6 @@ export default function AlertasPage() {
           </Button>
         </div>
       </div>
-
-      {/* Indicador de actualización en segundo plano */}
-      {loading && alertas.length > 0 ? (
-        <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
-          Actualizando alertas...
-        </div>
-      ) : null}
 
       {isInitialLoading ? <LoadingSpinner label="Cargando alertas desde backend..." /> : null}
 

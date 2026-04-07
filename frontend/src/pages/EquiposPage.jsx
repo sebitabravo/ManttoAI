@@ -98,7 +98,15 @@ export default function EquiposPage() {
     <section className="grid gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="m-0 text-xl font-semibold text-neutral-900">Equipos</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="m-0 text-xl font-semibold text-neutral-900">Equipos</h1>
+            {loading && equipos.length > 0 ? (
+              <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" aria-hidden="true" />
+                Actualizando
+              </span>
+            ) : null}
+          </div>
           <p className="mb-0 mt-1.5 text-sm text-neutral-600">
             Activos registrados en el sistema de monitoreo.
             <span className="ml-2 text-xs text-neutral-500">
@@ -132,13 +140,6 @@ export default function EquiposPage() {
             errorMessage={createErrorMessage}
           />
         </section>
-      ) : null}
-
-      {/* Indicador de actualización en segundo plano */}
-      {loading && equipos.length > 0 ? (
-        <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
-          Actualizando equipos...
-        </div>
       ) : null}
 
       {isInitialLoading ? <LoadingSpinner label="Cargando equipos desde backend..." /> : null}

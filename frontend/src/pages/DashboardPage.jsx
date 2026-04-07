@@ -26,10 +26,18 @@ export default function DashboardPage() {
   const isInitialLoading = loading && !data;
 
   return (
-    <section className="grid gap-8">
+    <section className="grid gap-6">
       {/* Header con jerarquía clara */}
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold text-neutral-800 tracking-tight">Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold text-neutral-800 tracking-tight">Dashboard</h1>
+          {loading && data ? (
+            <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" aria-hidden="true" />
+              Actualizando
+            </span>
+          ) : null}
+        </div>
         <p className="text-sm text-neutral-500">Resumen operativo del prototipo de mantenimiento predictivo.</p>
       </div>
 
@@ -43,13 +51,6 @@ export default function DashboardPage() {
       {/* Estado de equipos — tabla prominente */}
       <TablaEstadoEquipos equipos={resumen.equipos || []} />
 
-      {/* Indicadores de estado de polling */}
-      {loading && data ? (
-        <div className="rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2.5 text-sm text-neutral-600">
-          Actualizando datos del dashboard...
-        </div>
-      ) : null}
-
       {error ? (
         <div className="rounded-lg border border-warning-500 bg-warning-50 px-4 py-3 text-sm text-warning-700">
           No se pudo actualizar el backend. Se mantienen los últimos datos disponibles.
@@ -57,7 +58,7 @@ export default function DashboardPage() {
       ) : null}
 
       {/* Gráficos lado a lado — grid adaptativo */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <GraficoTemperatura lecturas={lecturas} />
         <GraficoVibracion lecturas={lecturas} />
       </div>

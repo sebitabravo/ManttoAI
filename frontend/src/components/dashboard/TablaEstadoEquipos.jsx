@@ -23,7 +23,7 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
   const rows = Array.isArray(equipos) ? equipos : [];
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-6">
+    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
       <h2 className="mb-4 mt-0 text-lg font-semibold text-neutral-800">Estado por equipo</h2>
       
       {rows.length === 0 ? (

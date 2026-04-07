@@ -29,7 +29,7 @@ export default function TablaUltimasLecturas({ lecturas = [], equipos = [] }) {
   const rows = lecturas.slice(0, 10);
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-6">
+    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
       <h2 className="mb-4 mt-0 text-lg font-semibold text-neutral-800">Últimas lecturas</h2>
       
       {rows.length === 0 ? (

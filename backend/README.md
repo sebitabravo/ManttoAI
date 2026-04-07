@@ -35,6 +35,37 @@ El backend toma `DATABASE_URL` desde `backend/.env`, crea tablas faltantes al ar
 
 ## Tests
 
+Los tests requieren las dependencias de desarrollo y una base de datos MySQL running.
+
+### Verificación rápida (sin cobertura)
+
 ```bash
-pytest tests/ -v --cov=app --cov-report=term-missing
+pytest tests/ -v
 ```
+
+### Verificación completa (con cobertura)
+
+```bash
+pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=60
+```
+
+**Umbral de cobertura**: 60% — configurado en `--cov-fail-under=60`. Si la cobertura baja del umbral, pytest fallará indicando qué líneas no están cubiertas.
+
+### Ejecutar con uv (recomendado)
+
+```bash
+cd backend
+uv run pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=60
+```
+
+### Dependencias de test
+
+Las dependencias necesarias están en `requirements-dev.txt`:
+- `pytest==8.3.5` — framework de testing
+- `pytest-cov==6.0.0` — plugin de cobertura
+- `httpx==0.28.1` — cliente HTTP para tests de integración
+
+### Notas
+
+- Los tests de integración que requieren servicios externos (SMTP) están marcados con `@pytest.mark.integration` y se pueden skippear con `pytest -m "not integration"`.
+- La base de datos de test usa SQLite en memoria para velocidad; los tests de integración reales con MySQL requieren `docker compose up -d mysql`.

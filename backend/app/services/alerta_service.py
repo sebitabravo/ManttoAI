@@ -104,6 +104,13 @@ def evaluate_thresholds(db: Session, lectura: Lectura) -> list[Alerta]:
 
         db.add(alerta)
         alertas_creadas.append(alerta)
+        logger.info(
+            "[ALERTA] Creada: equipo_id=%d tipo=%s mensaje=%s nivel=%s",
+            lectura.equipo_id,
+            tipo_alerta,
+            mensaje_alerta,
+            "alto",
+        )
 
     return alertas_creadas
 
@@ -207,9 +214,16 @@ def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) ->
                     alerta.email_enviado = email_result.sent
                     if email_result.error:
                         logger.warning(
-                            "Error al enviar email para alerta_id=%s: %s",
+                            "[ALERTA][EMAIL] Error al enviar email para alerta_id=%s equipo_id=%s: %s",
                             alerta.id,
+                            alerta.equipo_id,
                             email_result.error,
+                        )
+                    else:
+                        logger.info(
+                            "[ALERTA][EMAIL] Email enviado para alerta_id=%s equipo_id=%s subject=Alerta crítica ManttoAI",
+                            alerta.id,
+                            alerta.equipo_id,
                         )
                 except Exception as exc:
                     # Registrar tipo y mensaje para diagnóstico sin volcar posibles
@@ -334,12 +348,21 @@ def create_prediction_failure_alert(
     db.add(alerta)
 
     if not auto_commit:
+        logger.info(
+            "[ALERTA] Predicción creada (sin commit): equipo_id=%d probabilidad=%.2f",
+            equipo_id,
+            probabilidad,
+        )
         return alerta
 
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
+        logger.warning(
+            "[ALERTA] Predicción duplicada no creada: equipo_id=%d",
+            equipo_id,
+        )
         return get_active_prediction_failure_alert(db, equipo_id)
     except SQLAlchemyError:
         db.rollback()

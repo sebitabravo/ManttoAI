@@ -103,13 +103,21 @@ def process_mqtt_message(
         equipo_id = extract_equipo_id(topic)
         lectura_payload = parse_message(payload)
     except ValueError as exc:
-        logger.warning("Mensaje MQTT descartado topic=%s error=%s", topic, exc)
+        logger.warning("Mensaje MQTT descartado topic=%s error=%s", topic, str(exc))
         return False
 
     db = session_factory()
     try:
-        create_lectura_from_mqtt_payload(
+        lectura = create_lectura_from_mqtt_payload(
             db, equipo_id, lectura_payload, background_tasks=None
+        )
+        logger.info(
+            "[MQTT] Lectura persistida: equipo_id=%d lectura_id=%s timestamp=%s temp=%.1f humedad=%.1f",
+            equipo_id,
+            getattr(lectura, "id", "n/a"),
+            getattr(lectura, "timestamp", "n/a"),
+            lectura_payload.temperatura or 0,
+            lectura_payload.humedad or 0,
         )
         return True
     except HTTPException as exc:
@@ -188,10 +196,11 @@ def start_mqtt_subscriber(session_factory: SessionFactory = SessionLocal) -> boo
         client.loop_start()
     except Exception as exc:
         logger.warning(
-            "No se pudo iniciar subscriber MQTT en %s:%s (%s)",
+            "No se pudo iniciar subscriber MQTT en %s:%s (%s: %s)",
             settings.mqtt_broker_host,
             settings.mqtt_broker_port,
-            exc,
+            type(exc).__name__,
+            str(exc),
         )
         return False
 

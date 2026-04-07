@@ -267,6 +267,15 @@ def _persist_prediction_result(
 
     db.refresh(prediction)
 
+    logger.info(
+        "[PREDICCION] Persistida: equipo_id=%d prediccion_id=%d modelo_version=%s clasificacion=%s probabilidad=%.6f",
+        equipo_id,
+        prediction.id,
+        prediction.modelo_version,
+        prediction.clasificacion,
+        prediction.probabilidad,
+    )
+
     if prediction_failure_alert is not None:
         db.refresh(prediction_failure_alert)
         if background_tasks:
@@ -324,8 +333,19 @@ def execute_prediction(
 
     get_equipo_or_404(db, equipo_id)
     latest_reading = get_latest_lectura(db, equipo_id)
+    logger.info(
+        "[PREDICCION] Ejecutando: equipo_id=%d lectura_id=%d",
+        equipo_id,
+        latest_reading.id,
+    )
     artifact = _load_prediction_artifact_or_503()
     probability, classification = _run_prediction_inference(artifact, latest_reading)
+    logger.info(
+        "[PREDICCION] Resultado: equipo_id=%d probabilidad=%.4f clasificacion=%s",
+        equipo_id,
+        probability,
+        classification,
+    )
     return _persist_prediction_result(
         db,
         equipo_id=equipo_id,

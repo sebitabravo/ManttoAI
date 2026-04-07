@@ -339,4 +339,23 @@ print(
 )
 PY
 
+log "Escenario 4/4 (opcional): validación de canal de email SMTP"
+# Solo se ejecuta si SMTP_HOST está configurado en el entorno o en backend/.env.
+# No falla el smoke si SMTP no está configurado — es un canal opcional del MVP.
+SMTP_HOST_CHECK="${SMTP_HOST:-}"
+if [ -z "$SMTP_HOST_CHECK" ] && [ -f "backend/.env" ]; then
+  SMTP_HOST_CHECK="$(grep -E '^SMTP_HOST=' backend/.env 2>/dev/null | cut -d= -f2- | tr -d '"' | tr -d "'" || true)"
+fi
+
+if [ -n "$SMTP_HOST_CHECK" ]; then
+  log "SMTP configurado (${SMTP_HOST_CHECK}), verificando envío de email de prueba..."
+  if docker compose exec backend python /scripts/test_smtp_real.py; then
+    log "Email SMTP OK ✅"
+  else
+    log "⚠️  Email SMTP falló — revisar configuración SMTP en backend/.env (no bloquea smoke)"
+  fi
+else
+  log "SMTP no configurado — escenario de email omitido (configurar SMTP_HOST en backend/.env para habilitarlo)"
+fi
+
 log "Smoke test completado correctamente ✅"

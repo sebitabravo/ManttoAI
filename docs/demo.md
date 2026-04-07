@@ -116,9 +116,26 @@ Durante la demo del frontend (`http://localhost:5173`), mostrar en este orden:
 3. Alertas (nuevas y marcar leída)
 4. Historial (lecturas y mantenciones)
 
+### 5) Escenario de email SMTP (si configurado)
+
+```bash
+python scripts/test_smtp_real.py
+```
+
+Resultado esperado: `SUCCESS: Email enviado correctamente.`
+
+> Si `SMTP_HOST` no está en `backend/.env`, este escenario se omite sin error.
+> El smoke automático (`bash scripts/smoke_test.sh`) detecta y ejecuta este paso automáticamente.
+
+## Evidencia para defensa
+
+Completar `docs/evidencia-qa-e2e.md` con los resultados reales de cada criterio.
+Guardar capturas en `evidencia/` con nombre `captura-YYYYMMDD-HHMM.png`.
+
 ## Troubleshooting rápido
 
 - **`make config` falla por env:** ejecutar `make setup-env`.
 - **No aparecen lecturas:** verificar contenedor backend/mosquitto con `make logs`.
 - **Predicción 503:** entrenar modelo con `docker compose exec backend python /app/app/ml/train.py`.
 - **Sin alertas tras breach:** revisar que `make seed` haya creado umbrales y reintentar POST extremo.
+- **Email SMTP falla:** verificar `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD` en `backend/.env`; probar con `python scripts/test_smtp_real.py`.

@@ -1,4 +1,9 @@
-"""Deduplica alertas y crea índice único para evitar duplicados activos."""
+"""Deduplica alertas y crea índice único para evitar duplicados activos.
+
+Después de remover 'leida' del UniqueConstraint del modelo Alerta,
+este script se actualizó para deduplicar por (equipo_id, tipo, mensaje)
+y crear el índice sin la columna 'leida'.
+"""
 
 from __future__ import annotations
 
@@ -25,11 +30,16 @@ UNIQUE_INDEX_NAME = "uq_alerta_activa_por_equipo_tipo_mensaje"
 
 
 def dedupe_alertas() -> int:
-    """Elimina duplicados manteniendo la alerta más antigua por clave lógica."""
+    """Elimina duplicados manteniendo la alerta más antigua por clave lógica.
+
+    Clave: (equipo_id, tipo, mensaje) — sin 'leida', consistente con el
+    UniqueConstraint actual del modelo Alerta.
+    """
 
     with SessionLocal() as db:
         alertas = list(db.scalars(select(Alerta).order_by(Alerta.id.asc())))
-        seen_keys: set[tuple[int, str, str, bool]] = set()
+        # Clave sin 'leida' — consistente con el nuevo UniqueConstraint
+        seen_keys: set[tuple[int, str, str]] = set()
         duplicate_ids: list[int] = []
 
         for alerta in alertas:
@@ -37,7 +47,6 @@ def dedupe_alertas() -> int:
                 int(alerta.equipo_id),
                 str(alerta.tipo),
                 str(alerta.mensaje),
-                bool(alerta.leida),
             )
             if dedupe_key in seen_keys:
                 duplicate_ids.append(int(alerta.id))
@@ -68,16 +77,51 @@ def unique_index_exists() -> bool:
 
 
 def create_unique_index() -> bool:
-    """Crea índice único si todavía no existe en la base actual."""
+    """Crea índice único sin 'leida' si todavía no existe.
+
+    Si existe un índice con el mismo nombre pero columnas distintas
+    (incluyendo 'leida'), lo elimina primero y crea el nuevo.
+    """
 
     if unique_index_exists():
-        return False
+        # Verificar si el índice existente tiene las columnas correctas
+        inspector = inspect(engine)
+        indexes = inspector.get_indexes("alertas")
+        for index in indexes:
+            if index.get("name") == UNIQUE_INDEX_NAME:
+                columns = set(index.get("column_names", []))
+                expected = {"equipo_id", "tipo", "mensaje"}
+                if columns == expected:
+                    return False  # Ya existe con columnas correctas
+                # Tiene columnas distintas (incluye 'leida') — hay que reemplazar
+                break
 
     with engine.begin() as connection:
+        dialect = engine.dialect.name
+
+        # Intentar eliminar índice existente con el mismo nombre
+        if dialect == "sqlite":
+            try:
+                connection.execute(text(f"DROP INDEX IF EXISTS {UNIQUE_INDEX_NAME}"))
+            except Exception:
+                pass
+        elif dialect == "mysql":
+            try:
+                connection.execute(text(f"DROP INDEX {UNIQUE_INDEX_NAME} ON alertas"))
+            except Exception:
+                pass
+        else:
+            # PostgreSQL u otros
+            try:
+                connection.execute(text(f"DROP INDEX IF EXISTS {UNIQUE_INDEX_NAME}"))
+            except Exception:
+                pass
+
+        # Crear índice sin 'leida' — consistente con el modelo actual
         connection.execute(
             text(
                 "CREATE UNIQUE INDEX "
-                f"{UNIQUE_INDEX_NAME} ON alertas (equipo_id, tipo, mensaje, leida)"
+                f"{UNIQUE_INDEX_NAME} ON alertas (equipo_id, tipo, mensaje)"
             )
         )
 

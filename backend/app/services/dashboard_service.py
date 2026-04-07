@@ -110,9 +110,9 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
                 "ultima_temperatura": _to_float_or_none(row.ultima_temperatura),
                 "ultima_probabilidad": _to_float_or_none(row.ultima_probabilidad),
                 # Clasificacion de la última predicción para el indicador visual del frontend
-                "ultima_clasificacion": str(row.ultima_clasificacion)
-                if row.ultima_clasificacion
-                else None,
+                "ultima_clasificacion": (
+                    str(row.ultima_clasificacion) if row.ultima_clasificacion else None
+                ),
                 "alertas_activas": int(row.alertas_activas or 0),
             }
         )

@@ -74,9 +74,9 @@ jobs:
           CI: "true"
         run: npm run build
 
-      - name: Install Playwright browser
+      - name: Install Playwright browsers
         if: steps.playwright_check.outputs.present == 'true'
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox
 
       - name: Run Playwright tests via npm script
         if: steps.playwright_check.outputs.present == 'true' && steps.playwright_check.outputs.reason == 'script-test-e2e'

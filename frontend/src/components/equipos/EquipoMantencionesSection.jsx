@@ -68,7 +68,7 @@ export default function EquipoMantencionesSection({
                 const isEditing = Number(editingMantencionId) === Number(mantencion.id);
 
                 return (
-                  <tr key={mantencion.id} className="hover:bg-neutral-50 transition-colors duration-150">
+                  <tr key={mantencion.id} className="hover:bg-neutral-50 transition-colors duration-150 ease-out-quart">
                     <td className="py-2 pr-4 text-sm tabular-nums text-neutral-900">{mantencion.id}</td>
                     <td className="py-2 pr-4 text-sm text-neutral-900">{mantencion.tipo}</td>
                     <td className="py-2 pr-4 text-sm text-neutral-700">{mantencion.descripcion}</td>

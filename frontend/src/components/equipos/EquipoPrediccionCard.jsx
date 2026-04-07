@@ -23,7 +23,7 @@ function BarraRiesgo({ probabilidad, config }) {
       className="h-2.5 w-full overflow-hidden rounded-full bg-neutral-200"
     >
       <div
-        className="h-full rounded-full transition-all duration-300"
+        className="h-full rounded-full transition-all duration-300 ease-out-quart"
         style={{
           width: `${porcentaje}%`,
           background: config.color,

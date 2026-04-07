@@ -64,7 +64,7 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
                 const hasAlerts = Number(equipo.alertas_activas || 0) > 0;
 
                 return (
-                  <tr key={equipo.id} className="transition-colors duration-150 hover:bg-neutral-50">
+                  <tr key={equipo.id} className="transition-colors duration-150 ease-out-quart hover:bg-neutral-50">
                     <td className="py-3 pr-4 tabular-nums text-sm text-neutral-700">
                       {equipo.id}
                     </td>

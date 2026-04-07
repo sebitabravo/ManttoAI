@@ -54,7 +54,7 @@ export default function EquipoCard({ equipo }) {
       <Link
         to={`/equipos/${equipo.id}`}
         aria-label={`Ver detalle ${equipo.nombre}`}
-        className="mt-1 text-sm font-medium text-primary-600 transition-colors duration-150 hover:text-primary-700 hover:underline"
+        className="mt-1 text-sm font-medium text-primary-600 transition-colors duration-150 ease-out-quart hover:text-primary-700 hover:underline"
       >
         Ver detalle
       </Link>

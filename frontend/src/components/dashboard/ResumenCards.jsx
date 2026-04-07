@@ -56,7 +56,7 @@ export default function ResumenCards({ resumen }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* ALERTAS ACTIVAS — card hero prominente */}
         <article
-          className={`rounded-lg border-2 p-6 ${alertasClasses.card} transition-all duration-200 ease-out-quart hover:shadow-md`}
+          className={`rounded-lg border-2 p-6 ${alertasClasses.card} transition-all duration-150 ease-out-quart hover:shadow-md`}
         >
           <div className={`text-sm font-medium uppercase tracking-wide ${alertasClasses.label} mb-2`}>
             Alertas activas
@@ -75,7 +75,7 @@ export default function ResumenCards({ resumen }) {
 
         {/* EQUIPOS EN RIESGO — card hero prominente */}
         <article
-          className={`rounded-lg border-2 p-6 ${riesgoClasses.card} transition-all duration-200 ease-out-quart hover:shadow-md`}
+          className={`rounded-lg border-2 p-6 ${riesgoClasses.card} transition-all duration-150 ease-out-quart hover:shadow-md`}
         >
           <div className={`text-sm font-medium uppercase tracking-wide ${riesgoClasses.label} mb-2`}>
             Equipos en riesgo
@@ -96,7 +96,7 @@ export default function ResumenCards({ resumen }) {
       {/* Fila inferior: métricas secundarias compactas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* TOTAL EQUIPOS */}
-        <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-200 ease-out-quart hover:shadow">
+        <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-150 ease-out-quart hover:shadow">
           <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-1">
             Total equipos
           </div>
@@ -106,7 +106,7 @@ export default function ResumenCards({ resumen }) {
         </article>
 
         {/* CLASIFICACIÓN */}
-        <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-200 ease-out-quart hover:shadow">
+        <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-150 ease-out-quart hover:shadow">
           <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-1">
             Clasificación
           </div>
@@ -116,7 +116,7 @@ export default function ResumenCards({ resumen }) {
         </article>
 
         {/* PROBABILIDAD FALLA */}
-        <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-200 ease-out-quart hover:shadow">
+        <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-150 ease-out-quart hover:shadow">
           <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-1">
             Probabilidad de falla
           </div>

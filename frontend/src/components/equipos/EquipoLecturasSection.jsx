@@ -25,7 +25,7 @@ export default function EquipoLecturasSection({ lecturas }) {
             </thead>
             <tbody className="divide-y divide-neutral-100">
               {lecturas.map((lectura) => (
-                <tr key={lectura.id || lectura.timestamp} className="hover:bg-neutral-50 transition-colors duration-150">
+                <tr key={lectura.id || lectura.timestamp} className="hover:bg-neutral-50 transition-colors duration-150 ease-out-quart">
                   <td className="py-2 pr-4 text-sm text-neutral-600">{formatDate(lectura.timestamp)}</td>
                   <td className="py-2 pr-4 text-sm tabular-nums text-neutral-900">{formatMetric(lectura.temperatura, "°C")}</td>
                   <td className="py-2 pr-4 text-sm tabular-nums text-neutral-900">{formatMetric(lectura.humedad, "%")}</td>

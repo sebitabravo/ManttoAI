@@ -60,7 +60,7 @@ export default function TablaUltimasLecturas({ lecturas = [], equipos = [] }) {
             </thead>
             <tbody className="divide-y divide-neutral-200">
               {rows.map((lectura) => (
-                <tr key={lectura.id || `${lectura.equipo_id}-${lectura.timestamp}`} className="transition-colors duration-150 hover:bg-neutral-50">
+                <tr key={lectura.id || `${lectura.equipo_id}-${lectura.timestamp}`} className="transition-colors duration-150 ease-out-quart hover:bg-neutral-50">
                   <td className="py-3 pr-4 text-sm font-medium text-neutral-800">
                     {resolveEquipoName(Number(lectura.equipo_id), equiposById)}
                   </td>

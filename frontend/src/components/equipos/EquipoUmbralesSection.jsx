@@ -72,7 +72,7 @@ export default function EquipoUmbralesSection({
                 const umbralSuccessMessage = umbralSuccessById[resolvedUmbralId];
 
                 return (
-                  <tr key={umbral.id} className="hover:bg-neutral-50 transition-colors duration-150">
+                  <tr key={umbral.id} className="hover:bg-neutral-50 transition-colors duration-150 ease-out-quart">
                     <td className="py-2 pr-4 text-sm font-medium text-neutral-900">{formatVariableLabel(umbral.variable)}</td>
                     <td className="py-2 pr-4">
                       <input
@@ -84,7 +84,7 @@ export default function EquipoUmbralesSection({
                         }
                         disabled={isSaving}
                         aria-label={`Valor mínimo para ${umbral.variable}`}
-                        className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm tabular-nums transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
+                        className="w-full rounded border border-neutral-300 px-2 py-1.5 text-sm tabular-nums transition-all duration-150 ease-out-quart focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
                       />
                     </td>
                     <td className="py-2 pr-4">
@@ -97,7 +97,7 @@ export default function EquipoUmbralesSection({
                         }
                         disabled={isSaving}
                         aria-label={`Valor máximo para ${umbral.variable}`}
-                        className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm tabular-nums transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
+                        className="w-full rounded border border-neutral-300 px-2 py-1.5 text-sm tabular-nums transition-all duration-150 ease-out-quart focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
                       />
                     </td>
                     <td className="py-2">

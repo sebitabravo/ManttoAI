@@ -28,8 +28,8 @@ services:
     build:
       context: ./frontend
       target: production
-    ports:
-      - "5173:80"
+    # En producción nginx hace el proxy al frontend — no se expone puerto directo.
+    # En desarrollo local el override agrega ports: ["5173:5173"] para Vite dev server.
     depends_on:
       backend:
         condition: service_healthy

@@ -13,10 +13,17 @@ SMOKE_CSRF_TOKEN=""
 TMP_FILES+=("$AUTH_COOKIE_FILE")
 
 if [ -f "backend/.env" ]; then
-  set -a
-  # shellcheck source=/dev/null
-  source "backend/.env"
-  set +a
+  # Cargar solo variables con valores simples (sin espacios sin comillas) para evitar
+  # que líneas como APP_NAME=ManttoAI Predictive... rompan el source con set -e.
+  while IFS= read -r line || [ -n "$line" ]; do
+    # Ignorar comentarios y líneas vacías
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "${line// }" ]] && continue
+    # Solo exportar si la línea tiene formato KEY=VALUE sin espacios fuera de comillas
+    if [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
+      export "$line" 2>/dev/null || true
+    fi
+  done < "backend/.env"
 fi
 
 SMOKE_AUTH_EMAIL="${SMOKE_AUTH_EMAIL:-${SEED_ADMIN_EMAIL:-admin@manttoai.local}}"
@@ -192,13 +199,16 @@ make setup-env
 make config
 make up
 wait_for_backend
-login_backend
 
 log "Verificando frontend disponible"
 curl --silent --show-error --fail "${FRONTEND_URL}" >/dev/null
 
 log "Cargando datos base de demo"
+# El seed debe ejecutarse ANTES del login para garantizar que el usuario admin exista,
+# incluso cuando el volumen de la DB fue eliminado (entorno limpio).
 make seed
+
+login_backend
 
 log "Escenario 1/3: operación normal (simulador -> persistencia)"
 make simulate
@@ -338,5 +348,24 @@ print(
     f"prob_equipo={equipo_objetivo.get('ultima_probabilidad')}"
 )
 PY
+
+log "Escenario 4/4 (opcional): validación de canal de email SMTP"
+# Solo se ejecuta si SMTP_HOST está configurado en el entorno o en backend/.env.
+# No falla el smoke si SMTP no está configurado — es un canal opcional del MVP.
+SMTP_HOST_CHECK="${SMTP_HOST:-}"
+if [ -z "$SMTP_HOST_CHECK" ] && [ -f "backend/.env" ]; then
+  SMTP_HOST_CHECK="$(grep -E '^SMTP_HOST=' backend/.env 2>/dev/null | cut -d= -f2- | tr -d '"' | tr -d "'" || true)"
+fi
+
+if [ -n "$SMTP_HOST_CHECK" ]; then
+  log "SMTP configurado (${SMTP_HOST_CHECK}), verificando envío de email de prueba..."
+  if docker compose exec backend python /scripts/test_smtp_real.py; then
+    log "Email SMTP OK ✅"
+  else
+    log "⚠️  Email SMTP falló — revisar configuración SMTP en backend/.env (no bloquea smoke)"
+  fi
+else
+  log "SMTP no configurado — escenario de email omitido (configurar SMTP_HOST en backend/.env para habilitarlo)"
+fi
 
 log "Smoke test completado correctamente ✅"

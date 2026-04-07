@@ -10,6 +10,8 @@ class DashboardEquipoResumen(BaseModel):
     nombre: str
     ultima_temperatura: float | None = None
     ultima_probabilidad: float | None = None
+    # Clasificación de la última predicción para el indicador visual del frontend
+    ultima_clasificacion: str | None = None
     alertas_activas: int
 
 

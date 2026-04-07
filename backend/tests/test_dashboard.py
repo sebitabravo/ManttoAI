@@ -178,6 +178,8 @@ def test_dashboard_summary_returns_real_data_for_polling(client, monkeypatch):
             "nombre",
             "ultima_temperatura",
             "ultima_probabilidad",
+            # Campo agregado para el indicador visual de predicción en el frontend
+            "ultima_clasificacion",
             "alertas_activas",
         }
         for equipo in equipos

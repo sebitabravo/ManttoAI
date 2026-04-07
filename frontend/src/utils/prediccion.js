@@ -6,6 +6,7 @@
 /**
  * Configuración visual por clasificación de riesgo.
  * Clave: valor exacto que devuelve el backend (clasificacion).
+ * Valores posibles según prediccion_service.py: "normal", "alerta", "falla".
  */
 const CLASIFICACION_CONFIG = {
   normal: {
@@ -16,16 +17,16 @@ const CLASIFICACION_CONFIG = {
     emoji: "✅",
     nivel: 0,
   },
-  advertencia: {
-    label: "Advertencia",
+  alerta: {
+    label: "Alerta",
     color: "#d97706",       // amarillo/ámbar
     bgColor: "#fef3c7",
     borderColor: "#fcd34d",
     emoji: "⚠️",
     nivel: 1,
   },
-  critico: {
-    label: "Crítico",
+  falla: {
+    label: "Falla",
     color: "#dc2626",       // rojo
     bgColor: "#fee2e2",
     borderColor: "#fca5a5",

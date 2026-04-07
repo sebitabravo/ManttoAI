@@ -22,12 +22,24 @@ describe("getConfigPrediccion", () => {
     expect(getConfigPrediccion("NORMAL").label).toBe("Normal");
   });
 
-  it("reconoce 'Advertencia' con capitalización mixta", () => {
-    expect(getConfigPrediccion("Advertencia").label).toBe("Advertencia");
+  it("reconoce 'alerta' (valor real del backend)", () => {
+    expect(getConfigPrediccion("alerta").label).toBe("Alerta");
   });
 
-  it("reconoce 'critico'", () => {
-    expect(getConfigPrediccion("critico").label).toBe("Crítico");
+  it("reconoce 'ALERTA' en mayúsculas (case-insensitive)", () => {
+    expect(getConfigPrediccion("ALERTA").label).toBe("Alerta");
+  });
+
+  it("reconoce 'falla' (valor real del backend)", () => {
+    expect(getConfigPrediccion("falla").label).toBe("Falla");
+  });
+
+  it("devuelve CONFIG_DESCONOCIDA para 'advertencia' (valor antiguo no usado por backend)", () => {
+    expect(getConfigPrediccion("advertencia").label).toBe("Sin predicción");
+  });
+
+  it("devuelve CONFIG_DESCONOCIDA para 'critico' (valor antiguo no usado por backend)", () => {
+    expect(getConfigPrediccion("critico").label).toBe("Sin predicción");
   });
 
   it("convierte a string antes de procesar (no falla con número)", () => {

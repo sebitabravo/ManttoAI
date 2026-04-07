@@ -77,14 +77,16 @@ def _build_feature_row_from_lectura(
         try:
             feature_values.append(float(value))
         except (TypeError, ValueError) as exc:
+            # 422 porque el dato existe pero no es convertible — problema de datos, no del servidor
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Valor inválido para feature '{feature}': {value}",
             ) from exc
 
     if missing_features:
+        # 422 porque la lectura no tiene los campos que el modelo necesita — problema de datos
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(
                 f"Modelo requiere features no disponibles o nulos: {missing_features}"
             ),

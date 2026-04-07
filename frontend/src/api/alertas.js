@@ -1,6 +1,7 @@
 import client from "./client";
 
-export async function getAlertas({ equipoId = null, soloNoLeidas = false, limite = 100 } = {}) {
+// limite default alineado con el backend (router alertas.py: default=50)
+export async function getAlertas({ equipoId = null, soloNoLeidas = false, limite = 50 } = {}) {
   const params = {
     solo_no_leidas: soloNoLeidas,
     limite,

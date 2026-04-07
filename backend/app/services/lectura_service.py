@@ -5,6 +5,7 @@ from collections.abc import Callable
 
 from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.lectura import Lectura
@@ -71,6 +72,62 @@ def create_lectura(
     try:
         db.flush()
         alertas_creadas = evaluate_thresholds(db, lectura)
+        db.commit()
+    except IntegrityError:
+        # Race condition: otra lectura concurrente ya creó la misma alerta.
+        # Revertimos y persistimos solo la lectura para no perder datos.
+        db.rollback()
+        db.add(lectura)
+        db.flush()
+        # Re-evaluar sin crear duplicados: verificar alertas existentes
+        from app.models.alerta import Alerta
+        from app.models.umbral import Umbral
+        from app.services.alerta_service import (
+            _is_out_of_range,
+            _resolve_threshold_target,
+        )
+
+        alertas_creadas = []
+        umbrales = list(
+            db.scalars(select(Umbral).where(Umbral.equipo_id == lectura.equipo_id))
+        )
+        for umbral in umbrales:
+            target = _resolve_threshold_target(lectura, umbral.variable)
+            if target is None:
+                continue
+            valor, mensaje_alerta = target
+            if not _is_out_of_range(valor, umbral.valor_min, umbral.valor_max):
+                continue
+            # Verificar si ya existe cualquier alerta con esta clave
+            existente = db.scalars(
+                select(Alerta)
+                .where(Alerta.equipo_id == lectura.equipo_id)
+                .where(
+                    Alerta.tipo
+                    == (
+                        "temperatura"
+                        if umbral.variable.lower().strip() == "temperatura"
+                        else "vibracion"
+                    )
+                )
+                .where(Alerta.mensaje == mensaje_alerta)
+                .limit(1)
+            ).first()
+            if existente is None:
+                alerta = Alerta(
+                    equipo_id=lectura.equipo_id,
+                    tipo=(
+                        "temperatura"
+                        if umbral.variable.lower().strip() == "temperatura"
+                        else "vibracion"
+                    ),
+                    mensaje=mensaje_alerta,
+                    nivel="alto",
+                    email_enviado=False,
+                    leida=False,
+                )
+                db.add(alerta)
+                alertas_creadas.append(alerta)
         db.commit()
     except Exception:
         db.rollback()

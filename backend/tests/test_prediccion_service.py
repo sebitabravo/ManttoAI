@@ -195,11 +195,11 @@ def test_execute_prediction_returns_503_when_model_is_unavailable(
     assert exc_info.value.detail == "Modelo de predicción no disponible"
 
 
-def test_execute_prediction_returns_500_when_artifact_requires_missing_feature(
+def test_execute_prediction_returns_422_when_artifact_requires_missing_feature(
     db_session,
     monkeypatch,
 ):
-    """Valida error cuando el artefacto pide features no disponibles."""
+    """Valida error 422 cuando el artefacto pide features no disponibles en la lectura."""
 
     equipo_id = _create_equipo(db_session)
     _create_lectura(
@@ -224,7 +224,8 @@ def test_execute_prediction_returns_500_when_artifact_requires_missing_feature(
     with pytest.raises(HTTPException) as exc_info:
         prediccion_service.execute_prediction(db_session, equipo_id)
 
-    assert exc_info.value.status_code == 500
+    # 422 porque el problema es de datos (feature faltante), no del servidor
+    assert exc_info.value.status_code == 422
     assert "features no disponibles" in str(exc_info.value.detail)
 
 

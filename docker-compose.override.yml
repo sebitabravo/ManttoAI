@@ -13,6 +13,9 @@ services:
       - ./backend:/app
       - ./scripts:/scripts:ro
       - ./iot/simulator:/simulator:ro
+      # Montar iot/ para que test_mqtt_simulator.py pueda resolver el path relativo
+      # desde backend/tests/ → ../../iot/simulator/mqtt_simulator.py
+      - ./iot:/iot:ro
 
   frontend:
     build:

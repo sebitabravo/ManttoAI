@@ -21,11 +21,13 @@ class Alerta(Base):
 
     __tablename__ = "alertas"
     __table_args__ = (
+        # 'leida' fue removido de la constraint: incluirlo permitía duplicar
+        # la misma alerta (una leída + una no leída), lo cual es incorrecto.
+        # La deduplicación se hace por equipo/tipo/mensaje sin importar el estado.
         UniqueConstraint(
             "equipo_id",
             "tipo",
             "mensaje",
-            "leida",
             name="uq_alerta_activa_por_equipo_tipo_mensaje",
         ),
     )

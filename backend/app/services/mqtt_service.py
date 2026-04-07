@@ -27,25 +27,34 @@ SessionFactory = Callable[[], Session]
 _mqtt_client = None
 
 
+def _normalize_base_topic(raw: str) -> str:
+    """Normaliza mqtt_base_topic eliminando slashes al inicio y al final."""
+
+    return raw.strip("/")
+
+
 def build_topic(equipo_id: int) -> str:
     """Construye el topic MQTT esperado para un equipo."""
 
     settings = get_settings()
-    return f"{settings.mqtt_base_topic.rstrip('/')}/{equipo_id}/lecturas"
+    base = _normalize_base_topic(settings.mqtt_base_topic)
+    return f"{base}/{equipo_id}/lecturas"
 
 
 def build_subscription_topic() -> str:
     """Construye el topic de suscripción wildcard para todas las lecturas."""
 
     settings = get_settings()
-    return f"{settings.mqtt_base_topic.rstrip('/')}/+/lecturas"
+    base = _normalize_base_topic(settings.mqtt_base_topic)
+    return f"{base}/+/lecturas"
 
 
 def extract_equipo_id(topic: str) -> int:
     """Extrae equipo_id desde un topic `.../equipo/{id}/lecturas`."""
 
     settings = get_settings()
-    base_parts = settings.mqtt_base_topic.strip("/").split("/")
+    # Usar la misma normalización que build_topic para consistencia
+    base_parts = _normalize_base_topic(settings.mqtt_base_topic).split("/")
     topic_parts = topic.strip("/").split("/")
 
     expected_len = len(base_parts) + 2

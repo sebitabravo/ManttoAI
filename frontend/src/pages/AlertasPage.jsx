@@ -16,7 +16,7 @@ export default function AlertasPage() {
   const loadAlertas = useCallback(async () => {
     setLoading(true);
     try {
-      const alertasData = await getAlertas({ limite: 200 });
+      const alertasData = await getAlertas({ limite: 50 });
       setAlertas(Array.isArray(alertasData) ? alertasData : []);
       setError(null);
     } catch (fetchError) {

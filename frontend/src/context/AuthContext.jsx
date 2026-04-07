@@ -5,6 +5,21 @@ import { getCurrentUser, logout as logoutRequest } from "../api/auth";
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext(null);
 
+/**
+ * Extrae solo los campos no sensibles del usuario para persistir en sessionStorage.
+ * Evita almacenar datos innecesarios que podrían filtrarse ante un XSS.
+ */
+function sanitizeUserForStorage(user) {
+  if (!user) return null;
+  return {
+    id: user.id,
+    nombre: user.nombre,
+    rol: user.rol,
+    // email se incluye porque se usa para mostrar en la UI (Header)
+    email: user.email,
+  };
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const stored = window.sessionStorage.getItem("manttoai_user");
@@ -34,7 +49,7 @@ export function AuthProvider({ children }) {
         }
 
         setUser(currentUser);
-        window.sessionStorage.setItem("manttoai_user", JSON.stringify(currentUser));
+        window.sessionStorage.setItem("manttoai_user", JSON.stringify(sanitizeUserForStorage(currentUser)));
       } catch {
         if (!isMounted) {
           return;
@@ -58,7 +73,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (user) {
-      window.sessionStorage.setItem("manttoai_user", JSON.stringify(user));
+      window.sessionStorage.setItem("manttoai_user", JSON.stringify(sanitizeUserForStorage(user)));
     } else {
       window.sessionStorage.removeItem("manttoai_user");
     }
@@ -69,7 +84,7 @@ export function AuthProvider({ children }) {
     setIsAuthResolved(true);
     // Persist to sessionStorage immediately so restoreSession() can find it
     if (nextUser) {
-      window.sessionStorage.setItem("manttoai_user", JSON.stringify(nextUser));
+      window.sessionStorage.setItem("manttoai_user", JSON.stringify(sanitizeUserForStorage(nextUser)));
     }
   }
 

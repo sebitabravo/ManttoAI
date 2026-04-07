@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const defaultBaseURL = window.location.port === "5173" ? "http://localhost:8000" : "/api";
+// En desarrollo (Vite dev server) VITE_API_URL apunta al backend directo.
+// En producción nginx hace proxy de /api/ al backend — se usa la ruta relativa.
+// La detección por puerto era frágil; ahora depende exclusivamente de VITE_API_URL.
+const defaultBaseURL = "/api";
 
 function getCookieValue(cookieName) {
   const cookies = document.cookie.split(";").map((cookie) => cookie.trim());

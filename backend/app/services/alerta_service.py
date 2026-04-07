@@ -79,15 +79,18 @@ def evaluate_thresholds(db: Session, lectura: Lectura) -> list[Alerta]:
             if umbral.variable.lower().strip() == "temperatura"
             else "vibracion"
         )
-        alerta_activa = db.scalars(
+        # Evitar duplicados por clave lógica (equipo_id, tipo, mensaje).
+        # Ya no se filtra por leida porque el UniqueConstraint del modelo
+        # abarca solo esas tres columnas — crear una alerta con la misma
+        # clave aunque la anterior esté leída violaría la constraint.
+        alerta_existente = db.scalars(
             select(Alerta)
             .where(Alerta.equipo_id == lectura.equipo_id)
             .where(Alerta.tipo == tipo_alerta)
             .where(Alerta.mensaje == mensaje_alerta)
-            .where(Alerta.leida.is_(False))
             .limit(1)
         ).first()
-        if alerta_activa is not None:
+        if alerta_existente is not None:
             continue
 
         alerta = Alerta(
@@ -208,14 +211,22 @@ def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) ->
                             alerta.id,
                             email_result.error,
                         )
-                except Exception:
-                    logger.exception(
-                        "Falla inesperada en envío de email para alerta_id=%s",
+                except Exception as exc:
+                    # Registrar tipo y mensaje para diagnóstico sin volcar posibles
+                    # credenciales SMTP. En staging/DEBUG habilitar exc_info=True.
+                    logger.warning(
+                        "Falla inesperada en envío de email para alerta_id=%s: %s: %s",
                         alerta.id,
+                        type(exc).__name__,
+                        str(exc),
                     )
                     alerta.email_enviado = False
-    except Exception:
-        logger.exception("No se pudo establecer conexión SMTP para notificaciones")
+    except Exception as exc:
+        logger.warning(
+            "No se pudo establecer conexión SMTP para notificaciones: %s: %s",
+            type(exc).__name__,
+            str(exc),
+        )
         for alerta in alertas_a_enviar:
             alerta.email_enviado = False
 
@@ -240,8 +251,12 @@ def _dispatch_emails_in_thread(
     try:
         alertas = list(db.scalars(select(Alerta).where(Alerta.id.in_(alerta_ids))))
         dispatch_critical_email_notifications(db, alertas)
-    except Exception:
-        logger.exception("Error en envío de emails en hilo de fondo")
+    except Exception as exc:
+        logger.warning(
+            "Error en envío de emails en hilo de fondo: %s: %s",
+            type(exc).__name__,
+            str(exc),
+        )
     finally:
         db.close()
 

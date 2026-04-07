@@ -196,10 +196,11 @@ def start_mqtt_subscriber(session_factory: SessionFactory = SessionLocal) -> boo
         client.loop_start()
     except Exception as exc:
         logger.warning(
-            "No se pudo iniciar subscriber MQTT en %s:%s (%s)",
+            "No se pudo iniciar subscriber MQTT en %s:%s (%s: %s)",
             settings.mqtt_broker_host,
             settings.mqtt_broker_port,
-            exc,
+            type(exc).__name__,
+            str(exc),
         )
         return False
 

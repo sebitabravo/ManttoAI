@@ -41,5 +41,9 @@ def check_database_connection() -> bool:
             connection.execute(text("SELECT 1"))
         return True
     except SQLAlchemyError as exc:
-        logger.warning("No se pudo conectar a la base de datos: %s", exc)
+        logger.warning(
+            "No se pudo conectar a la base de datos: %s: %s",
+            type(exc).__name__,
+            str(exc),
+        )
         return False

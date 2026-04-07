@@ -10,9 +10,18 @@ const items = [
   { to: "/historial", label: "Historial" },
 ];
 
-export default function Sidebar() {
+/**
+ * Sidebar de navegación.
+ * Props:
+ *  - className: clases CSS adicionales (usadas por Layout para el drawer en tablet)
+ *  - onNavClick: callback que se llama al hacer clic en un ítem de nav (cierra el drawer en tablet)
+ */
+export default function Sidebar({ className = "", onNavClick }) {
   return (
-    <aside style={{ borderRight: `1px solid ${SURFACE.border}`, padding: SPACING.xl, background: SURFACE.bg }}>
+    <aside
+      className={className}
+      style={{ borderRight: `1px solid ${SURFACE.border}`, padding: SPACING.xl, background: SURFACE.bg }}
+    >
       {/* Logo decorativo: el texto "ManttoAI" al lado hace redundante un title en el SVG */}
       <div style={{ display: "flex", alignItems: "center", gap: SPACING.sm, marginBottom: SPACING.xxl }}>
         <Logo size={28} />
@@ -24,6 +33,7 @@ export default function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={onNavClick}
             style={({ isActive }) => ({
               textDecoration: "none",
               padding: `${SPACING.sm}px ${SPACING.md}px`,

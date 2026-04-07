@@ -1,1 +1,66 @@
 @import "tailwindcss";
+
+/* ─── Layout principal ─────────────────────────────────────────────────────── */
+
+/*
+ * En desktop (>= 769px): sidebar fijo de 240px + contenido principal.
+ * En tablet (<= 768px): una sola columna; el sidebar se superpone como drawer.
+ */
+.layout-root {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+/* ─── Sidebar ───────────────────────────────────────────────────────────────── */
+
+/*
+ * En tablet el sidebar sale del flujo normal y se convierte en un drawer
+ * que se desliza desde la izquierda. Por defecto está oculto.
+ */
+@media (max-width: 768px) {
+  .layout-root {
+    grid-template-columns: 1fr;
+  }
+
+  .layout-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 240px;
+    z-index: 100;
+    /* Oculto fuera de pantalla por defecto */
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Clase que activa el drawer cuando el usuario abre el menú */
+  .layout-sidebar--abierto {
+    transform: translateX(0);
+  }
+
+  /* Overlay semitransparente detrás del drawer */
+  .layout-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  /* Botón hamburguesa: visible solo en tablet */
+  .btn-menu-tablet {
+    display: flex;
+  }
+}
+
+/* En desktop el overlay y el botón hamburguesa no se muestran */
+.layout-overlay {
+  display: none;
+}
+
+.btn-menu-tablet {
+  display: none;
+}

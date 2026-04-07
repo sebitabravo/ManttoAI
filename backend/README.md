@@ -9,13 +9,20 @@ Backend FastAPI organizado con el patrón **router → service → model**.
 - entregar endpoints base para el dashboard
 - dejar la estructura lista para crecer sin mezclar capas
 
-## Ejecutar local
+## Ejecutar local (desde directorio backend/)
 
 ```bash
+# Crear entorno virtual
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
-bash ../scripts/setup_env.sh
+
+# Generar archivos .env (desde la raíz del repo)
+cd ..
+bash scripts/setup_env.sh
+cd backend
+
+# Iniciar servidor
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -35,7 +42,14 @@ El backend toma `DATABASE_URL` desde `backend/.env`, crea tablas faltantes al ar
 
 ## Tests
 
-Los tests requieren las dependencias de desarrollo y una base de datos MySQL running.
+Los tests usan SQLite en memoria por defecto. Solo los tests de integración requieren MySQL.
+
+### Tests unitarios (no requiere MySQL)
+
+```bash
+# Desde el directorio backend/
+pytest tests/ -v -m "not integration"
+```
 
 ### Verificación rápida (sin cobertura)
 
@@ -51,11 +65,14 @@ pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=60
 
 **Umbral de cobertura**: 60% — configurado en `--cov-fail-under=60`. Si la cobertura baja del umbral, pytest fallará indicando qué líneas no están cubiertas.
 
-### Ejecutar con uv (recomendado)
+### Tests de integración (requiere MySQL)
 
 ```bash
-cd backend
-uv run pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=60
+# Desde la raíz del repo, iniciar MySQL
+docker compose up -d mysql
+
+# Desde backend/, ejecutar solo tests de integración
+pytest tests/ -v -m "integration"
 ```
 
 ### Dependencias de test

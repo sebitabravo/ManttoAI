@@ -98,8 +98,8 @@ export default function Sidebar({ className = "", sidebarAbierto = false, onNavC
                 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset
                 ${
                   isActive
-                    ? "bg-primary-50 font-semibold text-primary-600"
-                    : "font-normal text-neutral-600 hover:bg-neutral-100 hover:text-neutral-800"
+                    ? "bg-primary-50 font-semibold text-primary-600 border-l-2 border-primary-500 -ml-[2px] pl-[calc(0.75rem+2px)]"
+                    : "font-normal text-neutral-600 hover:bg-neutral-100 hover:text-neutral-800 border-l-2 border-transparent"
                 }
               `.trim()
             }

@@ -27,7 +27,7 @@ export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
         <button
           type="button"
           ref={menuBtnRef}
-          className="btn-menu-tablet flex items-center justify-center rounded-sm bg-transparent p-1 text-neutral-600 transition-colors duration-150 hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="btn-menu-tablet flex items-center justify-center rounded-sm bg-transparent p-1 text-neutral-600 transition-all duration-150 ease-out-quart hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
           onClick={onMenuToggle}
           aria-label={sidebarAbierto ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
           aria-expanded={sidebarAbierto}

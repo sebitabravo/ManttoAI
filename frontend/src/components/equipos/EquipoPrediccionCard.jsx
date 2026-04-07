@@ -39,7 +39,7 @@ export default function EquipoPrediccionCard({ prediccion }) {
 
   return (
     <section
-      className="rounded-lg border p-4"
+      className="rounded-lg border p-4 transition-all duration-150 ease-out-quart"
       style={{
         borderColor: prediccion ? config.borderColor : 'oklch(92% 0.008 250)', // neutral-200
         background: prediccion ? config.bgColor : 'oklch(96% 0.005 250)', // neutral-100

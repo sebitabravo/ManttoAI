@@ -12,7 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 function AuthBootstrapFallback() {
-  return <div style={{ padding: "2rem" }}>Validando sesión...</div>;
+  return <div className="flex min-h-screen items-center justify-center bg-neutral-50 text-sm text-neutral-600">Validando sesión...</div>;
 }
 
 function ProtectedLayout() {

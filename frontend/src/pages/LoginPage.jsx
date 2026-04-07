@@ -4,34 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { getCurrentUser, login as loginRequest } from "../api/auth";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import Logo from "../components/ui/Logo";
 import useAuth from "../hooks/useAuth";
 import { getApiErrorMessage } from "../utils/errorHandling";
-
-/** Logo de marca: círculo azul con inicial "M", consistente con el favicon */
-function ManttoAILogo({ size = 48 }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <circle cx="16" cy="16" r="16" fill="#1d4ed8" />
-      <text
-        x="16"
-        y="22"
-        fontSize="20"
-        fontWeight="700"
-        textAnchor="middle"
-        fontFamily="system-ui, sans-serif"
-        fill="white"
-      >
-        M
-      </text>
-    </svg>
-  );
-}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -75,9 +50,9 @@ export default function LoginPage() {
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "2rem", background: "#f8fafc" }}>
       <section style={{ width: "100%", maxWidth: 420, border: "1px solid #d1d5db", borderRadius: 16, padding: 32, background: "#ffffff" }}>
-        {/* Branding: logo + nombre de producto */}
+        {/* Branding: logo semántico con title ya que aparece sin texto equivalente visible */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 24 }}>
-          <ManttoAILogo size={52} />
+          <Logo size={52} title="ManttoAI — Mantenimiento Predictivo" />
           <div style={{ textAlign: "center" }}>
             <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#111827" }}>ManttoAI</h1>
             <p style={{ margin: "4px 0 0", fontSize: 13, color: "#6b7280" }}>Mantenimiento Predictivo</p>

@@ -1,5 +1,7 @@
 import { NavLink } from "react-router-dom";
 
+import Logo, { BRAND_COLOR } from "../ui/Logo";
+
 const items = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/equipos", label: "Equipos" },
@@ -10,12 +12,9 @@ const items = [
 export default function Sidebar() {
   return (
     <aside style={{ borderRight: "1px solid #e5e7eb", padding: 20, background: "#f8fafc" }}>
-      {/* Branding del sidebar: logo + nombre de producto */}
+      {/* Logo decorativo: el texto "ManttoAI" al lado hace redundante un title en el SVG */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
-        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-          <circle cx="16" cy="16" r="16" fill="#1d4ed8" />
-          <text x="16" y="22" fontSize="20" fontWeight="700" textAnchor="middle" fontFamily="system-ui, sans-serif" fill="white">M</text>
-        </svg>
+        <Logo size={28} />
         <span style={{ fontWeight: 700, fontSize: 16, color: "#111827" }}>ManttoAI</span>
       </div>
 
@@ -30,8 +29,8 @@ export default function Sidebar() {
               borderRadius: 8,
               fontSize: 14,
               fontWeight: isActive ? 600 : 400,
-              // Color de marca azul para el ítem activo, gris neutro para el resto
-              color: isActive ? "#1d4ed8" : "#374151",
+              // Color de marca centralizado para el ítem activo
+              color: isActive ? BRAND_COLOR : "#374151",
               background: isActive ? "#eff6ff" : "transparent",
             })}
           >

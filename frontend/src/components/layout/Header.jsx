@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import Button from "../ui/Button";
+import Logo from "../ui/Logo";
 import useAuth from "../../hooks/useAuth";
 
 export default function Header() {
@@ -8,12 +9,9 @@ export default function Header() {
 
   return (
     <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 20, borderBottom: "1px solid #e5e7eb" }}>
-      {/* Nombre de producto consistente con el branding del login */}
+      {/* Logo decorativo: el texto "ManttoAI" al lado hace redundante un title en el SVG */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-          <circle cx="16" cy="16" r="16" fill="#1d4ed8" />
-          <text x="16" y="22" fontSize="20" fontWeight="700" textAnchor="middle" fontFamily="system-ui, sans-serif" fill="white">M</text>
-        </svg>
+        <Logo size={24} />
         <strong style={{ color: "#111827" }}>ManttoAI</strong>
         <span style={{ color: "#6b7280", fontSize: 13 }}>Mantenimiento Predictivo</span>
       </div>

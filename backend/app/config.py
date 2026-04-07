@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     enable_prediction_scheduler: bool = True
     prediction_interval_seconds: int = 300
     prediction_scheduler_max_workers: int = 4
+    # Simulador de sensores IoT para demo (genera lecturas MQTT automáticas)
+    simulator_enabled: bool = False
+    simulator_interval_seconds: int = 30
     auth_cookie_name: str = "manttoai_token"
     auth_csrf_cookie_name: str = "manttoai_csrf"
     auth_csrf_header_name: str = "X-CSRF-Token"

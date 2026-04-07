@@ -27,6 +27,7 @@ from app.services.prediccion_scheduler_service import (
     start_prediction_scheduler,
     stop_prediction_scheduler,
 )
+from app.services.simulator_service import start_simulator, stop_simulator
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -71,9 +72,15 @@ async def lifespan(app_instance: FastAPI):
     if settings.enable_prediction_scheduler:
         start_prediction_scheduler()
 
+    if settings.simulator_enabled:
+        start_simulator()
+
     try:
         yield
     finally:
+        if settings.simulator_enabled:
+            stop_simulator()
+
         if settings.enable_prediction_scheduler:
             stop_prediction_scheduler()
 

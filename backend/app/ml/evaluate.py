@@ -1,5 +1,6 @@
 """Evaluación simple del modelo MVP."""
 
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -129,4 +130,5 @@ def evaluate_model(
 
 
 if __name__ == "__main__":
-    print(evaluate_model())
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    logging.info("Resultados de evaluación: %s", evaluate_model())

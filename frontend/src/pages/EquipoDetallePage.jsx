@@ -64,12 +64,26 @@ export default function EquipoDetallePage() {
 
     // Refresh
     handleRefresh,
+
+    // Polling
+    pollingIntervalMs,
   } = useEquipoDetalle();
+
+  // Solo mostrar loading spinner en carga inicial
+  const isInitialLoading = loading && !equipo;
 
   return (
     <section style={{ display: "grid", gap: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-        <h1 style={{ margin: 0 }}>Detalle del equipo {equipoId}</h1>
+        <div>
+          <h1 style={{ margin: 0 }}>Detalle del equipo {equipoId}</h1>
+          <p style={{ marginTop: 6, marginBottom: 0, color: "#6b7280", fontSize: "0.9em" }}>
+            Lecturas, predicciones y mantenciones en tiempo real.
+            <span style={{ marginLeft: 8, fontSize: "0.85em", color: "#9ca3af" }}>
+              (actualización automática cada {pollingIntervalMs / 1000}s)
+            </span>
+          </p>
+        </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           <Button
             type="button"
@@ -97,15 +111,15 @@ export default function EquipoDetallePage() {
         </div>
       </div>
 
-      {loading ? <LoadingSpinner label="Cargando detalle de equipo..." /> : null}
+      {isInitialLoading ? <LoadingSpinner label="Cargando detalle de equipo..." /> : null}
 
       {error ? (
         <div style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 12, background: "#fffbeb" }}>
-          No pudimos obtener datos reales del equipo solicitado.
+          No pudimos obtener datos reales del equipo solicitado. Se mantienen los últimos datos disponibles.
         </div>
       ) : null}
 
-      {!loading && !equipo ? (
+      {!isInitialLoading && !equipo ? (
         <EmptyState
           title="Equipo no disponible"
           description="El backend no devolvió información para este equipo o todavía no existe."

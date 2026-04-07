@@ -1,5 +1,6 @@
 """Generación de dataset sintético para el MVP."""
 
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -75,5 +76,6 @@ def generate_and_save_dataset(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     saved_path = generate_and_save_dataset()
-    print(f"Dataset generado en: {saved_path}")
+    logging.info("Dataset generado en: %s", saved_path)

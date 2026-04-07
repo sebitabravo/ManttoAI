@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { getEquipo, updateEquipo } from "../api/equipos";
@@ -6,6 +6,7 @@ import { getLecturas } from "../api/lecturas";
 import { createMantencion, getMantenciones, updateMantencion } from "../api/mantenciones";
 import { getPredicciones } from "../api/predicciones";
 import { getUmbrales, updateUmbral } from "../api/umbrales";
+import { EQUIPO_DETALLE_POLLING_INTERVAL_MS } from "../utils/constants";
 import { getApiErrorMessage } from "../utils/errorHandling";
 import { sortByTimestampDesc } from "../utils/time";
 
@@ -54,6 +55,7 @@ export function formatVariableLabel(variable) {
 /**
  * Hook que encapsula toda la lógica de estado y operaciones para la página de detalle de equipo.
  * Maneja: datos del equipo, lecturas, predicciones, mantenciones y umbrales.
+ * Incluye polling automático para actualización en tiempo real.
  *
  * @returns {Object} Estado y handlers para el componente EquipoDetallePage
  */
@@ -68,6 +70,11 @@ export default function useEquipoDetalle() {
   const [mantenciones, setMantenciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // === Control de polling ===
+  // Usamos ref para trackear si hay operaciones de usuario en curso
+  // y evitar que el polling interfiera con ellas
+  const isUserOperationInProgress = useRef(false);
 
   // === Estados de edición de equipo ===
   const [showEditForm, setShowEditForm] = useState(false);
@@ -92,14 +99,23 @@ export default function useEquipoDetalle() {
   const [updateMantencionErrorMessage, setUpdateMantencionErrorMessage] = useState("");
 
   // === Carga de datos del equipo ===
-  const loadEquipoDetalle = useCallback(async () => {
+  const loadEquipoDetalle = useCallback(async (isPolling = false) => {
     if (!Number.isFinite(resolvedEquipoId)) {
       setError(new Error("Identificador de equipo inválido"));
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    // Si es polling y hay operación de usuario en curso, saltear esta actualización
+    if (isPolling && isUserOperationInProgress.current) {
+      return;
+    }
+
+    // Solo mostrar loading en carga inicial, no en polling
+    if (!isPolling) {
+      setLoading(true);
+    }
+
     try {
       const [equipoData, lecturasData, prediccionData, mantencionesData] = await Promise.all([
         getEquipo(resolvedEquipoId),
@@ -120,14 +136,27 @@ export default function useEquipoDetalle() {
       setMantenciones(Array.isArray(mantencionesData) ? mantencionesData : []);
       setError(null);
     } catch (fetchError) {
-      setError(fetchError);
+      // En polling, no mostrar error si ya tenemos datos
+      if (!isPolling || !equipo) {
+        setError(fetchError);
+      }
     } finally {
       setLoading(false);
     }
-  }, [resolvedEquipoId]);
+  }, [resolvedEquipoId, equipo]);
 
+  // Carga inicial
   useEffect(() => {
-    loadEquipoDetalle();
+    loadEquipoDetalle(false);
+  }, [loadEquipoDetalle]);
+
+  // Polling automático
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      loadEquipoDetalle(true);
+    }, EQUIPO_DETALLE_POLLING_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
   }, [loadEquipoDetalle]);
 
   // === Carga de umbrales ===
@@ -187,7 +216,7 @@ export default function useEquipoDetalle() {
 
   // === Handlers de refresh ===
   function handleRefresh() {
-    loadEquipoDetalle();
+    loadEquipoDetalle(false);
     loadUmbrales();
   }
 
@@ -200,10 +229,11 @@ export default function useEquipoDetalle() {
 
     setUpdateErrorMessage("");
     setIsUpdating(true);
+    isUserOperationInProgress.current = true;
 
     try {
       await updateEquipo(resolvedEquipoId, payload);
-      await loadEquipoDetalle();
+      await loadEquipoDetalle(false);
       setShowEditForm(false);
     } catch (updateError) {
       setUpdateErrorMessage(
@@ -211,6 +241,7 @@ export default function useEquipoDetalle() {
       );
     } finally {
       setIsUpdating(false);
+      isUserOperationInProgress.current = false;
     }
   }
 
@@ -255,13 +286,14 @@ export default function useEquipoDetalle() {
 
     setCreateMantencionErrorMessage("");
     setIsCreatingMantencion(true);
+    isUserOperationInProgress.current = true;
 
     try {
       await createMantencion({
         equipo_id: resolvedEquipoId,
         ...payload,
       });
-      await loadEquipoDetalle();
+      await loadEquipoDetalle(false);
       setEditingMantencionId(null);
       setShowCreateMantencionForm(false);
     } catch (createError) {
@@ -270,6 +302,7 @@ export default function useEquipoDetalle() {
       );
     } finally {
       setIsCreatingMantencion(false);
+      isUserOperationInProgress.current = false;
     }
   }
 
@@ -282,10 +315,11 @@ export default function useEquipoDetalle() {
 
     setUpdateMantencionErrorMessage("");
     setIsSavingMantencion(true);
+    isUserOperationInProgress.current = true;
 
     try {
       await updateMantencion(resolvedMantencionId, payload);
-      await loadEquipoDetalle();
+      await loadEquipoDetalle(false);
       setEditingMantencionId(null);
     } catch (updateError) {
       setUpdateMantencionErrorMessage(
@@ -293,6 +327,7 @@ export default function useEquipoDetalle() {
       );
     } finally {
       setIsSavingMantencion(false);
+      isUserOperationInProgress.current = false;
     }
   }
 
@@ -430,5 +465,8 @@ export default function useEquipoDetalle() {
 
     // Refresh
     handleRefresh,
+
+    // Polling info (para mostrar en UI)
+    pollingIntervalMs: EQUIPO_DETALLE_POLLING_INTERVAL_MS,
   };
 }

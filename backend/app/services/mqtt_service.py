@@ -111,6 +111,12 @@ def process_mqtt_message(
         create_lectura_from_mqtt_payload(
             db, equipo_id, lectura_payload, background_tasks=None
         )
+        logger.info(
+            "[MQTT] Lectura persistida: equipo_id=%d temp=%.1f humedad=%.1f",
+            equipo_id,
+            lectura_payload.temperatura or 0,
+            lectura_payload.humedad or 0,
+        )
         return True
     except HTTPException as exc:
         logger.warning(

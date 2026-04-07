@@ -115,15 +115,20 @@ def send_alert_email_with_client(
             smtp_client.send_message(email_message)
             if attempt > 1:
                 logger.info(
-                    "Email enviado exitosamente después de %d intentos", attempt
+                    "[EMAIL] Enviado exitosamente después de %d intentos: subject=%s",
+                    attempt,
+                    subject,
                 )
+            else:
+                logger.info("[EMAIL] Enviado: subject=%s", subject)
             return EmailResponse(sent=True, subject=subject, message=message)
         except Exception as exc:
             last_exc = exc
             logger.warning(
-                "Intento %d/%d de envío SMTP falló: %s",
+                "[EMAIL] Intento %d/%d falló: subject=%s error=%s",
                 attempt,
                 max_attempts,
+                subject,
                 _sanitize_smtp_error(exc),
             )
             if attempt < max_attempts:
@@ -132,8 +137,9 @@ def send_alert_email_with_client(
                 time.sleep(sleep_time)
             else:
                 logger.error(
-                    "Email no enviado después de %d intentos: %s",
+                    "[EMAIL] Fallido después de %d intentos: subject=%s error=%s",
                     max_attempts,
+                    subject,
                     _sanitize_smtp_error(last_exc),
                 )
                 return EmailResponse(

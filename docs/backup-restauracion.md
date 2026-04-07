@@ -23,17 +23,35 @@ El script:
 
 ### Programacion Semanal (VPS)
 
-En el VPS, configurar un cron semanal para ejecutacion automatica:
+En el VPS, configurar un cron semanal para ejecucion automatica:
 
 ```bash
-# Editar crontab
+# Editar crontab del usuario (ej. manttoai o root)
 crontab -e
 
-# Agregar esta linea para ejecutar ogni domingo a las 3:00 AM
-0 3 * * 0 cd /home/manttoai/ManttoAI && bash scripts/backup_db.sh >> /var/log/manttoai_backup.log 2>&1
+# Agregar estas lineas al inicio del crontab para garantizar PATH
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Ejecutar cada domingo a las 3:00 AM, usando rutas absolutas
+0 3 * * 0 cd /home/manttoai/ManttoAI && /usr/bin/env bash /home/manttoai/ManttoAI/scripts/backup_db.sh >> /var/log/manttoai_backup.log 2>&1
 ```
 
-Verificar que el log rote mensualmente para evitar acumulacion.
+**Requisitos:**
+- El usuario del cron debe tener permisos para ejecutar `docker compose`
+- Usualmente esto significa ser miembro del grupo `docker` o ejecutar como root
+
+**Rotacion del log:** Crear archivo `/etc/logrotate.d/manttoai_backup`:
+```
+/var/log/manttoai_backup.log {
+    monthly
+    rotate 6
+    compress
+    missingok
+    notifempty
+    create 640 manttoai adm
+}
+```
 
 ---
 
@@ -117,6 +135,26 @@ El backup valido debe contener:
 - `CREATE DATABASE` o `USE manttoai_db`
 - `CREATE TABLE` para todas las entidades
 - `INSERT INTO` con datos
+
+### Verificacion en Entorno de Staging
+
+La verificacion ideal es restaurar en un entorno de staging o base de datos temporal:
+
+```bash
+# Crear base de datos temporal
+docker compose exec mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE manttoai_test"
+
+# Restaurar el backup en la DB temporal
+gunzip -c backups/manttoai_YYYYMMDD_HHMMSS.sql.gz | docker compose exec -T mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" manttoai_test'
+
+# Verificar que los datos fueron restaurados correctamente
+docker compose exec mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "USE manttoai_test; SHOW TABLES;"
+
+# Limpiar: eliminar base de datos temporal
+docker compose exec mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE manttoai_test"
+```
+
+Se recomienda programar esta verificacion trimestralmente para asegurar que los backups son funcionales.
 
 ---
 

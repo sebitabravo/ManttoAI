@@ -1,18 +1,49 @@
-import { BRAND_COLOR } from "./Logo";
-import { RADIUS, SPACING } from "../../styles/tokens";
+/**
+ * Botón del sistema de diseño ManttoAI.
+ * 
+ * Variantes:
+ * - primary: acción principal (bg azul petróleo, texto blanco)
+ * - outline: acción secundaria (bg transparente, borde neutral)
+ * - danger: acción destructiva (bg rojo, texto blanco)
+ * 
+ * Touch target: mínimo 44px altura (WCAG 2.2 Level AA)
+ * Transiciones: 150ms ease-out-quart
+ */
+export default function Button({ children, type = "button", variant = "primary", className = "", ...props }) {
+  const baseClasses = `
+    inline-flex items-center justify-center gap-2
+    px-4 py-2.5 min-h-[44px]
+    rounded font-medium text-base
+    transition-all duration-150 ease-out-quart
+    focus:outline-none focus:ring-2 focus:ring-offset-2
+    disabled:opacity-50 disabled:cursor-not-allowed
+  `;
 
-export default function Button({ children, type = "button", variant = "primary", ...props }) {
-  // Colores por variante — primary usa BRAND_COLOR para consistencia con el logo y nav activo
-  const colors = {
-    primary: { background: BRAND_COLOR, color: "#ffffff", border: `1px solid ${BRAND_COLOR}` },
-    outline: { background: "transparent", color: "#111827", border: "1px solid #d1d5db" },
-    danger: { background: "#dc2626", color: "#ffffff", border: "1px solid #dc2626" },
+  const variantClasses = {
+    primary: `
+      bg-primary-600 text-white border border-primary-600
+      hover:bg-primary-700 hover:border-primary-700
+      active:bg-primary-800
+      focus:ring-primary-500
+    `,
+    outline: `
+      bg-transparent text-neutral-700 border border-neutral-300
+      hover:bg-neutral-100 hover:border-neutral-400
+      active:bg-neutral-200
+      focus:ring-neutral-400
+    `,
+    danger: `
+      bg-danger-600 text-white border border-danger-600
+      hover:bg-danger-700 hover:border-danger-700
+      active:bg-danger-800
+      focus:ring-danger-500
+    `,
   };
 
   return (
     <button
       type={type}
-      style={{ borderRadius: RADIUS.md, padding: "10px 14px", cursor: "pointer", ...colors[variant] }}
+      className={`${baseClasses} ${variantClasses[variant]} ${className}`.trim()}
       {...props}
     >
       {children}

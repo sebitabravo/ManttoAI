@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 
-import Logo, { BRAND_COLOR } from "../ui/Logo";
-import { FONT_SIZE, RADIUS, SPACING, SURFACE, TEXT_COLOR } from "../../styles/tokens";
+import Logo from "../ui/Logo";
 
 const items = [
   { to: "/dashboard", label: "Dashboard" },
@@ -12,7 +11,17 @@ const items = [
 ];
 
 /**
- * Sidebar de navegación.
+ * Sidebar de navegación principal.
+ * 
+ * Comportamiento responsive:
+ * - Desktop (>768px): sidebar fijo persistente
+ * - Tablet/Mobile (<=768px): drawer superpuesto con focus trap
+ * 
+ * Accesibilidad:
+ * - role="dialog" + aria-modal cuando actúa como drawer
+ * - Focus trap en modo drawer (Tab/Shift+Tab circulares)
+ * - Restauración de foco al cerrar
+ * 
  * Props:
  *  - className: clases CSS adicionales (usadas por Layout para el drawer en tablet)
  *  - sidebarAbierto: estado del drawer (para atributos ARIA y gestión de foco)
@@ -62,35 +71,38 @@ export default function Sidebar({ className = "", sidebarAbierto = false, onNavC
     <aside
       id="nav-sidebar"
       ref={asideRef}
-      className={className}
+      className={`layout-sidebar border-r border-neutral-200 bg-neutral-50 p-5 ${className}`}
       // En tablet actúa como diálogo modal; en desktop es navegación estática
       role={sidebarAbierto ? "dialog" : undefined}
       aria-modal={sidebarAbierto ? "true" : undefined}
       aria-label="Menú de navegación"
-      style={{ borderRight: `1px solid ${SURFACE.border}`, padding: SPACING.xl, background: SURFACE.bg }}
     >
-      {/* Logo decorativo: el texto "ManttoAI" al lado hace redundante un title en el SVG */}
-      <div style={{ display: "flex", alignItems: "center", gap: SPACING.sm, marginBottom: SPACING.xxl }}>
+      {/* Logo + branding */}
+      <div className="mb-6 flex items-center gap-2">
         <Logo size={28} />
-        <span style={{ fontWeight: 700, fontSize: FONT_SIZE.md, color: TEXT_COLOR.primary }}>ManttoAI</span>
+        <span className="text-md font-semibold text-neutral-800">ManttoAI</span>
       </div>
 
-      <nav style={{ display: "grid", gap: SPACING.xs }}>
+      {/* Navegación principal */}
+      <nav className="flex flex-col gap-1">
         {items.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             onClick={onNavClick}
-            style={({ isActive }) => ({
-              textDecoration: "none",
-              padding: `${SPACING.sm}px ${SPACING.md}px`,
-              borderRadius: RADIUS.sm,
-              fontSize: FONT_SIZE.base,
-              fontWeight: isActive ? 600 : 400,
-              // Color de marca centralizado para el ítem activo
-              color: isActive ? BRAND_COLOR : TEXT_COLOR.secondary,
-              background: isActive ? "#eff6ff" : "transparent",
-            })}
+            className={({ isActive }) =>
+              `
+                block rounded-sm px-3 py-2 text-base
+                transition-all duration-150 ease-out-quart
+                no-underline
+                focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset
+                ${
+                  isActive
+                    ? "bg-primary-50 font-semibold text-primary-600"
+                    : "font-normal text-neutral-600 hover:bg-neutral-100 hover:text-neutral-800"
+                }
+              `.trim()
+            }
           >
             {item.label}
           </NavLink>

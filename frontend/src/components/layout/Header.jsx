@@ -3,10 +3,15 @@ import { Link } from "react-router-dom";
 import Button from "../ui/Button";
 import Logo from "../ui/Logo";
 import useAuth from "../../hooks/useAuth";
-import { FONT_SIZE, RADIUS, SPACING, SURFACE, TEXT_COLOR } from "../../styles/tokens";
 
 /**
  * Header principal de la aplicación.
+ * 
+ * Funcionalidad:
+ * - Logo + branding
+ * - Botón hamburguesa para sidebar responsive (visible solo en tablet/mobile)
+ * - Usuario actual + botón salir
+ * 
  * Props:
  *  - onMenuToggle: callback para alternar el sidebar en resolución tablet
  *  - sidebarAbierto: estado del drawer (para aria-expanded y aria-label dinámico)
@@ -16,24 +21,19 @@ export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
   const { user, logout } = useAuth();
 
   return (
-    <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: SPACING.xl, borderBottom: `1px solid ${SURFACE.border}` }}>
-      <div style={{ display: "flex", alignItems: "center", gap: SPACING.sm }}>
-        {/*
-          Botón hamburguesa: visible solo en tablet via CSS (.btn-menu-tablet).
-          aria-expanded comunica el estado del drawer a lectores de pantalla.
-          aria-controls apunta al id del aside del sidebar.
-        */}
+    <header className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100 px-5 py-4">
+      <div className="flex items-center gap-3">
+        {/* Botón hamburguesa: visible solo en tablet/mobile via CSS (.btn-menu-tablet) */}
         <button
           type="button"
           ref={menuBtnRef}
-          className="btn-menu-tablet"
+          className="btn-menu-tablet flex items-center justify-center rounded-sm bg-transparent p-1 text-neutral-600 transition-colors duration-150 hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
           onClick={onMenuToggle}
           aria-label={sidebarAbierto ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
           aria-expanded={sidebarAbierto}
           aria-controls="nav-sidebar"
-          style={{ alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer", padding: SPACING.xs, borderRadius: RADIUS.sm, color: TEXT_COLOR.secondary }}
         >
-          {/* Ícono hamburguesa SVG inline — sin dependencias externas */}
+          {/* Ícono hamburguesa SVG inline */}
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="12" x2="21" y2="12" />
@@ -41,13 +41,15 @@ export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
           </svg>
         </button>
 
-        {/* Logo decorativo: el texto "ManttoAI" al lado hace redundante un title en el SVG */}
+        {/* Logo + branding */}
         <Logo size={24} />
-        <strong style={{ color: TEXT_COLOR.primary }}>ManttoAI</strong>
-        <span style={{ color: TEXT_COLOR.muted, fontSize: FONT_SIZE.sm }}>Mantenimiento Predictivo</span>
+        <strong className="text-base font-semibold text-neutral-800">ManttoAI</strong>
+        <span className="hidden text-sm text-neutral-500 sm:inline">Mantenimiento Predictivo</span>
       </div>
-      <div style={{ display: "flex", gap: SPACING.md, alignItems: "center" }}>
-        <span style={{ fontSize: FONT_SIZE.base, color: TEXT_COLOR.secondary }}>{user?.nombre || "Invitado"}</span>
+
+      {/* Usuario + botón salir */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-neutral-600">{user?.nombre || "Invitado"}</span>
         <Link to="/login" onClick={logout}>
           <Button variant="outline">Salir</Button>
         </Link>

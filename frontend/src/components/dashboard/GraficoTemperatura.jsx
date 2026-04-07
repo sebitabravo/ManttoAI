@@ -16,7 +16,7 @@ export default function GraficoTemperatura({ lecturas = [] }) {
       subtitle="Serie temporal base (últimas 24 lecturas)"
       series={temporalSeries}
       unit="°C"
-      color="#ef4444"
+      color="oklch(0.61 0.20 27.33)" // danger-500 - warm red for temperature
       emptyMessage="Todavía no hay lecturas de temperatura para graficar."
     />
   );

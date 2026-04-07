@@ -4,11 +4,11 @@ export default function EquipoResumenCard({ equipo }) {
   }
 
   return (
-    <article style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-      <h2 style={{ marginTop: 0 }}>{equipo.nombre}</h2>
-      <p>Estado: {equipo.estado}</p>
-      <p>Ubicación: {equipo.ubicacion}</p>
-      <p>Tipo: {equipo.tipo}</p>
+    <article className="rounded-lg border border-neutral-200 bg-white p-4">
+      <h2 className="mt-0 text-lg font-semibold text-neutral-900">{equipo.nombre}</h2>
+      <p className="text-sm text-neutral-700">Estado: <span className="font-medium">{equipo.estado}</span></p>
+      <p className="text-sm text-neutral-700">Ubicación: <span className="font-medium">{equipo.ubicacion}</span></p>
+      <p className="text-sm text-neutral-700">Tipo: <span className="font-medium">{equipo.tipo}</span></p>
     </article>
   );
 }

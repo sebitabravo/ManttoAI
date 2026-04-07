@@ -2,7 +2,7 @@ export default function AlertaBadge({ total = 0 }) {
   const label = total === 1 ? "alerta" : "alertas";
 
   return (
-    <span style={{ padding: "4px 10px", borderRadius: 999, background: "#fee2e2", color: "#991b1b", fontSize: 12 }}>
+    <span className="inline-flex items-center gap-1 rounded-full bg-danger-100 px-2.5 py-1 text-xs font-semibold tabular-nums text-danger-800">
       {total} {label}
     </span>
   );

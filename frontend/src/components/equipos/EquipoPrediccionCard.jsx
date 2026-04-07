@@ -20,21 +20,13 @@ function BarraRiesgo({ probabilidad, config }) {
       aria-valuemax={100}
       aria-label="Probabilidad de falla"
       aria-valuetext={textoAccesible}
-      style={{
-        width: "100%",
-        height: 10,
-        borderRadius: 9999,
-        background: "#e5e7eb",
-        overflow: "hidden",
-      }}
+      className="h-2.5 w-full overflow-hidden rounded-full bg-neutral-200"
     >
       <div
+        className="h-full rounded-full transition-all duration-300"
         style={{
           width: `${porcentaje}%`,
-          height: "100%",
           background: config.color,
-          borderRadius: 9999,
-          transition: "width 0.4s ease",
         }}
       />
     </div>
@@ -47,38 +39,34 @@ export default function EquipoPrediccionCard({ prediccion }) {
 
   return (
     <section
+      className="rounded-lg border p-4"
       style={{
-        padding: 16,
-        border: `1px solid ${prediccion ? config.borderColor : "#e5e7eb"}`,
-        borderRadius: 16,
-        background: prediccion ? config.bgColor : "#ffffff",
+        borderColor: prediccion ? config.borderColor : 'oklch(0.88 0.01 250.29)', // neutral-200
+        background: prediccion ? config.bgColor : 'oklch(1.00 0 0)', // white
       }}
     >
-      <h2 style={{ marginTop: 0, marginBottom: 12 }}>Última predicción</h2>
+      <h2 className="mb-3 mt-0 text-lg font-semibold text-neutral-900">Última predicción</h2>
 
       {prediccion ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className="flex flex-col gap-3">
           {/* Clasificación con ícono semántico */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 24 }} aria-hidden="true">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl" aria-hidden="true">
               {config.emoji}
             </span>
             <span
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: config.color,
-              }}
+              className="text-lg font-bold"
+              style={{ color: config.color }}
             >
               {config.label}
             </span>
           </div>
 
           {/* Barra de riesgo */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#374151" }}>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between text-xs text-neutral-700">
               <span>Probabilidad de falla</span>
-              <strong style={{ color: config.color }}>
+              <strong className="tabular-nums" style={{ color: config.color }}>
                 {formatPorcentajeRiesgo(prediccion.probabilidad)}
               </strong>
             </div>
@@ -86,15 +74,15 @@ export default function EquipoPrediccionCard({ prediccion }) {
           </div>
 
           {/* Clasificación raw del modelo (referencia técnica) */}
-          <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
+          <p className="m-0 text-xs text-neutral-600">
             Clasificación del modelo:{" "}
-            <code style={{ fontFamily: "monospace" }}>{prediccion.clasificacion}</code>
+            <code className="font-mono">{prediccion.clasificacion}</code>
           </p>
         </div>
       ) : (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#6b7280" }}>
+        <div className="flex items-center gap-2 text-neutral-600">
           <span aria-hidden="true">—</span>
-          <p style={{ margin: 0 }}>
+          <p className="m-0 text-sm">
             Todavía no hay una predicción persistida para este equipo.
           </p>
         </div>

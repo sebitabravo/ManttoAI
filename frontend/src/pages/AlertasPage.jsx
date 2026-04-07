@@ -50,18 +50,18 @@ export default function AlertasPage() {
   const isInitialLoading = loading && alertas.length === 0;
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+    <section className="grid gap-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 style={{ margin: 0 }}>Alertas</h1>
-          <p style={{ marginTop: 6, marginBottom: 0, color: "#6b7280" }}>
+          <h1 className="m-0 text-xl font-semibold text-neutral-900">Alertas</h1>
+          <p className="mb-0 mt-1.5 text-sm text-neutral-600">
             Monitoreo de alertas activas y trazabilidad de alertas leídas.
-            <span style={{ marginLeft: 8, fontSize: "0.85em", color: "#9ca3af" }}>
+            <span className="ml-2 text-xs text-neutral-500">
               (actualización automática cada {ALERTAS_POLLING_INTERVAL_MS / 1000}s)
             </span>
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div className="flex items-center gap-2">
           <AlertaBadge total={alertasNoLeidas.length} />
           <Button type="button" variant="outline" onClick={refresh} disabled={loading}>
             {loading ? "Actualizando..." : "Actualizar"}
@@ -71,7 +71,7 @@ export default function AlertasPage() {
 
       {/* Indicador de actualización en segundo plano */}
       {loading && alertas.length > 0 ? (
-        <div className="rounded-xl border border-gray-300 bg-gray-50 p-2.5 text-gray-500">
+        <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
           Actualizando alertas...
         </div>
       ) : null}
@@ -79,13 +79,13 @@ export default function AlertasPage() {
       {isInitialLoading ? <LoadingSpinner label="Cargando alertas desde backend..." /> : null}
 
       {error ? (
-        <div style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 12, background: "#fffbeb" }}>
+        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
           No se pudieron cargar o actualizar alertas. Se mantienen los últimos datos disponibles.
         </div>
       ) : null}
 
       {markError ? (
-        <div style={{ padding: 12, border: "1px solid #ef4444", borderRadius: 12, background: "#fef2f2" }}>
+        <div className="rounded-lg border border-danger-300 bg-danger-50 px-3 py-2 text-sm text-danger-800">
           Error al marcar alerta como leída. Intentá de nuevo.
         </div>
       ) : null}
@@ -98,8 +98,8 @@ export default function AlertasPage() {
       ) : null}
 
       {alertasNoLeidas.length > 0 ? (
-        <section style={{ display: "grid", gap: 12 }}>
-          <h2 style={{ marginBottom: 0 }}>No leídas</h2>
+        <section className="grid gap-3">
+          <h2 className="mb-0 text-lg font-semibold text-neutral-900">No leídas</h2>
           {alertasNoLeidas.map((alerta) => (
             <AlertaItem
               key={alerta.id}
@@ -112,8 +112,8 @@ export default function AlertasPage() {
       ) : null}
 
       {alertasLeidas.length > 0 ? (
-        <section style={{ display: "grid", gap: 12 }}>
-          <h2 style={{ marginBottom: 0 }}>Leídas recientemente</h2>
+        <section className="grid gap-3">
+          <h2 className="mb-0 text-lg font-semibold text-neutral-900">Leídas recientemente</h2>
           {alertasLeidas.slice(0, 20).map((alerta) => (
             <AlertaItem key={alerta.id} alerta={alerta} />
           ))}
@@ -121,7 +121,7 @@ export default function AlertasPage() {
       ) : null}
 
       {!isInitialLoading && alertas.length > 0 && alertasNoLeidas.length === 0 ? (
-        <p style={{ margin: 0, color: "#166534" }}>
+        <p className="m-0 text-sm text-success-700">
           No quedan alertas pendientes por marcar como leídas.
         </p>
       ) : null}

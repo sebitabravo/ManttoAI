@@ -95,18 +95,18 @@ export default function EquiposPage() {
   const isInitialLoading = loading && equipos.length === 0;
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+    <section className="grid gap-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 style={{ margin: 0 }}>Equipos</h1>
-          <p style={{ marginTop: 6, marginBottom: 0, color: "#6b7280" }}>
+          <h1 className="m-0 text-xl font-semibold text-neutral-900">Equipos</h1>
+          <p className="mb-0 mt-1.5 text-sm text-neutral-600">
             Activos registrados en el sistema de monitoreo.
-            <span style={{ marginLeft: 8, fontSize: "0.85em", color: "#9ca3af" }}>
+            <span className="ml-2 text-xs text-neutral-500">
               (actualización automática cada {EQUIPOS_POLLING_INTERVAL_MS / 1000}s)
             </span>
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <div className="flex flex-wrap justify-end gap-2">
           <Button
             type="button"
             variant={showCreateForm ? "primary" : "outline"}
@@ -122,8 +122,8 @@ export default function EquiposPage() {
       </div>
 
       {showCreateForm ? (
-        <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-          <h2 style={{ marginTop: 0 }}>Alta de equipo</h2>
+        <section className="rounded-lg border border-neutral-200 bg-white p-4">
+          <h2 className="mt-0 text-lg font-semibold text-neutral-900">Alta de equipo</h2>
           <EquipoForm
             submitLabel="Crear equipo"
             onSubmit={handleCreateEquipo}
@@ -136,7 +136,7 @@ export default function EquiposPage() {
 
       {/* Indicador de actualización en segundo plano */}
       {loading && equipos.length > 0 ? (
-        <div className="rounded-xl border border-gray-300 bg-gray-50 p-2.5 text-gray-500">
+        <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
           Actualizando equipos...
         </div>
       ) : null}
@@ -144,7 +144,7 @@ export default function EquiposPage() {
       {isInitialLoading ? <LoadingSpinner label="Cargando equipos desde backend..." /> : null}
 
       {error ? (
-        <div style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 12, background: "#fffbeb" }}>
+        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
           No se pudieron cargar equipos. Se mantienen los últimos datos disponibles.
         </div>
       ) : null}
@@ -156,7 +156,7 @@ export default function EquiposPage() {
         />
       ) : null}
 
-      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
         {equipos.map((equipo) => (
           <EquipoCard key={equipo.id} equipo={equipo} />
         ))}

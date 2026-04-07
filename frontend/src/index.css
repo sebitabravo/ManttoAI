@@ -1,4 +1,89 @@
-@import "tailwindcss";
+/* ─── Tailwind v3 Directives ──────────────────────────────────────────────── */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Tipografía ──────────────────────────────────────────────────────────── */
+
+/*
+ * Geist: fuente principal moderna y técnica (Vercel Design System)
+ * Geist Mono: valores numéricos tabulares para tablas y métricas
+ * 
+ * Las fuentes se cargan desde index.html con <link> tags para evitar
+ * conflictos con @import order en PostCSS/Tailwind.
+ * 
+ * Estrategia de carga:
+ * - preconnect para DNS prefetching
+ * - font-display: swap para evitar FOIT (Flash of Invisible Text)
+ * - Pesos: 400 (Regular), 500 (Medium), 600 (Semibold)
+ * - Subsetting: latin (optimización)
+ */
+
+/*
+ * Variables CSS personalizadas para tipografía
+ * Usado en componentes que necesitan valores dinámicos
+ */
+:root {
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+}
+
+/*
+ * Reset base + configuración tipográfica global
+ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  /* Base 16px para rem scaling accesible */
+  font-size: 16px;
+  /* Evita saltos horizontales en mobile cuando aparece scrollbar */
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Mejora renderizado en pantallas no-retina */
+  text-rendering: optimizeLegibility;
+}
+
+/*
+ * Números tabulares para tablas y valores numéricos
+ * Evita que los números "salten" al cambiar (ej. 999 → 1000)
+ */
+.tabular-nums {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/*
+ * Clase para valores numéricos destacados (dashboard, métricas)
+ */
+.metric-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.02em;
+}
+
+/*
+ * Headings con jerarquía clara
+ * Aplicar manualmente en componentes para control preciso
+ */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
 
 /* ─── Layout principal ─────────────────────────────────────────────────────── */
 

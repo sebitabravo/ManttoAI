@@ -3,8 +3,20 @@ import { Outlet } from "react-router-dom";
 
 import Header from "./Header";
 import Sidebar from "./Sidebar";
-import { SPACING } from "../../styles/tokens";
 
+/**
+ * Layout principal de la aplicación.
+ * 
+ * Estructura:
+ * - Desktop (>768px): sidebar fijo 240px + header + main
+ * - Tablet/Mobile (<=768px): header + main, sidebar como drawer superpuesto
+ * 
+ * Accesibilidad:
+ * - Cierre del drawer con Escape
+ * - Cierre del drawer al hacer clic en overlay
+ * - Cierre del drawer al navegar (onNavClick)
+ * - Restauración de foco al cerrar
+ */
 export default function Layout() {
   // Estado del drawer de navegación en resolución tablet
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
@@ -39,19 +51,19 @@ export default function Layout() {
       )}
 
       <Sidebar
-        className={`layout-sidebar${sidebarAbierto ? " layout-sidebar--abierto" : ""}`}
+        className={sidebarAbierto ? "layout-sidebar--abierto" : ""}
         sidebarAbierto={sidebarAbierto}
         onNavClick={cerrarSidebar}
         retornarFocoRef={menuBtnRef}
       />
 
-      <div>
+      <div className="flex flex-col">
         <Header
           onMenuToggle={toggleSidebar}
           sidebarAbierto={sidebarAbierto}
           menuBtnRef={menuBtnRef}
         />
-        <main style={{ padding: SPACING.xxl }}>
+        <main className="bg-neutral-50 p-6">
           <Outlet />
         </main>
       </div>

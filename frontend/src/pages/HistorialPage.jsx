@@ -102,11 +102,11 @@ export default function HistorialPage() {
   }
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+    <section className="grid gap-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 style={{ margin: 0 }}>Historial</h1>
-          <p style={{ marginTop: 6, marginBottom: 0, color: "#6b7280" }}>
+          <h1 className="m-0 text-xl font-semibold text-neutral-900">Historial</h1>
+          <p className="mb-0 mt-1.5 text-sm text-neutral-600">
             Lecturas y mantenciones persistidas para trazabilidad del prototipo.
           </p>
         </div>
@@ -118,7 +118,7 @@ export default function HistorialPage() {
       {loading ? <LoadingSpinner label="Cargando historial desde backend..." /> : null}
 
       {error ? (
-        <div style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 12, background: "#fffbeb" }}>
+        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
           No se pudo cargar historial real de lecturas y mantenciones.
         </div>
       ) : null}
@@ -130,91 +130,95 @@ export default function HistorialPage() {
         />
       ) : null}
 
-      <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-        <h2 style={{ marginTop: 0 }}>Lecturas recientes</h2>
+      <section className="rounded-lg border border-neutral-200 bg-white p-4">
+        <h2 className="mt-0 text-lg font-semibold text-neutral-900">Lecturas recientes</h2>
         {lecturasRecientes.length === 0 ? (
-          <p style={{ marginBottom: 0, color: "#6b7280" }}>No hay lecturas históricas para mostrar.</p>
+          <p className="mb-0 text-sm text-neutral-600">No hay lecturas históricas para mostrar.</p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <caption style={{ textAlign: "left", paddingBottom: 8, color: "#6b7280" }}>
-              Historial cronológico de lecturas persistidas para auditoría del prototipo.
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col" align="left">Equipo</th>
-                <th scope="col" align="left">Temperatura</th>
-                <th scope="col" align="left">Humedad</th>
-                <th scope="col" align="left">Vibración máx.</th>
-                <th scope="col" align="left">Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lecturasRecientes.map((lectura) => (
-                <tr key={lectura.id || `${lectura.equipo_id}-${lectura.timestamp}`}>
-                  <td>{resolveEquipoName(lectura.equipo_id)}</td>
-                  <td>{formatMetric(lectura.temperatura, "°C")}</td>
-                  <td>{formatMetric(lectura.humedad, "%")}</td>
-                  <td>{formatMetric(resolveMaxVibration(lectura), "g")}</td>
-                  <td>{formatDate(lectura.timestamp)}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <caption className="pb-2 text-left text-sm text-neutral-600">
+                Historial cronológico de lecturas persistidas para auditoría del prototipo.
+              </caption>
+              <thead>
+                <tr className="border-b border-neutral-200">
+                  <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Equipo</th>
+                  <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Temperatura</th>
+                  <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Humedad</th>
+                  <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Vibración máx.</th>
+                  <th scope="col" className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Fecha</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {lecturasRecientes.map((lectura) => (
+                  <tr key={lectura.id || `${lectura.equipo_id}-${lectura.timestamp}`} className="hover:bg-neutral-50 transition-colors duration-150">
+                    <td className="py-2 pr-4 text-sm text-neutral-900">{resolveEquipoName(lectura.equipo_id)}</td>
+                    <td className="py-2 pr-4 text-sm tabular-nums text-neutral-900">{formatMetric(lectura.temperatura, "°C")}</td>
+                    <td className="py-2 pr-4 text-sm tabular-nums text-neutral-900">{formatMetric(lectura.humedad, "%")}</td>
+                    <td className="py-2 pr-4 text-sm tabular-nums text-neutral-900">{formatMetric(resolveMaxVibration(lectura), "g")}</td>
+                    <td className="py-2 text-sm text-neutral-600">{formatDate(lectura.timestamp)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
-      <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16, display: "grid", gap: 12 }}>
-        <h2 style={{ marginTop: 0, marginBottom: 0 }}>Mantenciones recientes</h2>
+      <section className="grid gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+        <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Mantenciones recientes</h2>
         {mantencionesRecientes.length === 0 ? (
-          <p style={{ marginBottom: 0, color: "#6b7280" }}>
+          <p className="mb-0 text-sm text-neutral-600">
             No hay mantenciones registradas para este período.
           </p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <caption style={{ textAlign: "left", paddingBottom: 8, color: "#6b7280" }}>
-              Mantenciones recientes con estado y acciones disponibles desde historial.
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col" align="left">ID</th>
-                <th scope="col" align="left">Equipo</th>
-                <th scope="col" align="left">Tipo</th>
-                <th scope="col" align="left">Descripción</th>
-                <th scope="col" align="left">Estado</th>
-                <th scope="col" align="left">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mantencionesRecientes.map((mantencion) => {
-                const isEditing = Number(editingMantencionId) === Number(mantencion.id);
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <caption className="pb-2 text-left text-sm text-neutral-600">
+                Mantenciones recientes con estado y acciones disponibles desde historial.
+              </caption>
+              <thead>
+                <tr className="border-b border-neutral-200">
+                  <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">ID</th>
+                  <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Equipo</th>
+                  <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Tipo</th>
+                  <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Descripción</th>
+                  <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Estado</th>
+                  <th scope="col" className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {mantencionesRecientes.map((mantencion) => {
+                  const isEditing = Number(editingMantencionId) === Number(mantencion.id);
 
-                return (
-                  <tr key={mantencion.id}>
-                    <td>{mantencion.id}</td>
-                    <td>{resolveEquipoName(mantencion.equipo_id)}</td>
-                    <td>{mantencion.tipo}</td>
-                    <td>{mantencion.descripcion}</td>
-                    <td>{mantencion.estado}</td>
-                    <td>
-                      <Button
-                        type="button"
-                        variant={isEditing ? "primary" : "outline"}
-                        onClick={() => (isEditing ? closeMantencionEdit() : openMantencionEdit(mantencion.id))}
-                        disabled={isSavingMantencion}
-                      >
-                        {isEditing ? "Cancelar" : "Editar"}
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={mantencion.id} className="hover:bg-neutral-50 transition-colors duration-150">
+                      <td className="py-2 pr-4 text-sm tabular-nums text-neutral-900">{mantencion.id}</td>
+                      <td className="py-2 pr-4 text-sm text-neutral-900">{resolveEquipoName(mantencion.equipo_id)}</td>
+                      <td className="py-2 pr-4 text-sm text-neutral-900">{mantencion.tipo}</td>
+                      <td className="py-2 pr-4 text-sm text-neutral-700">{mantencion.descripcion}</td>
+                      <td className="py-2 pr-4 text-sm text-neutral-900">{mantencion.estado}</td>
+                      <td className="py-2">
+                        <Button
+                          type="button"
+                          variant={isEditing ? "primary" : "outline"}
+                          onClick={() => (isEditing ? closeMantencionEdit() : openMantencionEdit(mantencion.id))}
+                          disabled={isSavingMantencion}
+                        >
+                          {isEditing ? "Cancelar" : "Editar"}
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {selectedMantencion ? (
-          <section style={{ padding: 12, border: "1px solid #e5e7eb", borderRadius: 12 }}>
-            <h3 style={{ marginTop: 0 }}>Actualizar mantención #{selectedMantencion.id}</h3>
+          <section className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+            <h3 className="mt-0 text-base font-semibold text-neutral-900">Actualizar mantención #{selectedMantencion.id}</h3>
             <MantencionForm
               initialValues={{
                 tipo: selectedMantencion.tipo,

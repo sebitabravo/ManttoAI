@@ -73,18 +73,18 @@ export default function EquipoDetallePage() {
   const isInitialLoading = loading && !equipo;
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+    <section className="grid gap-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 style={{ margin: 0 }}>Detalle del equipo {equipoId}</h1>
-          <p style={{ marginTop: 6, marginBottom: 0, color: "#6b7280", fontSize: "0.9em" }}>
+          <h1 className="m-0 text-xl font-semibold text-neutral-900">Detalle del equipo {equipoId}</h1>
+          <p className="mb-0 mt-1.5 text-sm text-neutral-600">
             Lecturas, predicciones y mantenciones en tiempo real.
-            <span style={{ marginLeft: 8, fontSize: "0.85em", color: "#9ca3af" }}>
+            <span className="ml-2 text-xs text-neutral-500">
               (actualización automática cada {pollingIntervalMs / 1000}s)
             </span>
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <div className="flex flex-wrap justify-end gap-2">
           <Button
             type="button"
             variant={showEditForm ? "primary" : "outline"}
@@ -114,7 +114,7 @@ export default function EquipoDetallePage() {
       {isInitialLoading ? <LoadingSpinner label="Cargando detalle de equipo..." /> : null}
 
       {error ? (
-        <div style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 12, background: "#fffbeb" }}>
+        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
           No pudimos obtener datos reales del equipo solicitado. Se mantienen los últimos datos disponibles.
         </div>
       ) : null}
@@ -129,8 +129,8 @@ export default function EquipoDetallePage() {
       <EquipoResumenCard equipo={equipo} />
 
       {equipo && showEditForm ? (
-        <section style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-          <h2 style={{ marginTop: 0 }}>Editar equipo</h2>
+        <section className="rounded-lg border border-neutral-200 bg-white p-4">
+          <h2 className="mt-0 text-lg font-semibold text-neutral-900">Editar equipo</h2>
           <EquipoForm
             initialValues={{
               nombre: equipo.nombre,

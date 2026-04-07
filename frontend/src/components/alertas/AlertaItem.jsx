@@ -12,14 +12,14 @@ export default function AlertaItem({ alerta, onMarkAsRead, marking = false }) {
   const isLeida = Boolean(alerta.leida);
 
   return (
-    <article style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 16 }}>
-      <strong>{formatTipoAlerta(alerta.tipo)}</strong>
-      <p style={{ margin: "8px 0" }}>{alerta.mensaje}</p>
-      <small>
-        Nivel: {alerta.nivel} · {timestamp ? formatDate(timestamp) : "Sin fecha"}
+    <article className="rounded-lg border border-neutral-200 bg-white p-4">
+      <strong className="text-base font-semibold text-neutral-900">{formatTipoAlerta(alerta.tipo)}</strong>
+      <p className="my-2 text-sm text-neutral-700">{alerta.mensaje}</p>
+      <small className="text-xs text-neutral-600">
+        Nivel: <span className="font-medium">{alerta.nivel}</span> · {timestamp ? formatDate(timestamp) : "Sin fecha"}
       </small>
-      <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 12, color: isLeida ? "#166534" : "#991b1b" }}>
+      <div className="mt-2.5 flex items-center justify-between">
+        <span className={`text-xs font-medium ${isLeida ? 'text-success-700' : 'text-danger-700'}`}>
           {isLeida ? "Leída" : "No leída"}
         </span>
         {onMarkAsRead && !isLeida ? (

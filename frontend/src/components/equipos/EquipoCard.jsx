@@ -10,18 +10,10 @@ function PrediccionBadge({ clasificacion, probabilidad }) {
 
   return (
     <span
+      className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold text-neutral-900"
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-        padding: "2px 10px",
-        borderRadius: 9999,
-        fontSize: 12,
-        fontWeight: 600,
-        // Texto oscuro fijo para garantizar contraste WCAG AA sobre cualquier bgColor
-        color: "#1f2937",
         background: config.bgColor,
-        border: `1px solid ${config.borderColor}`,
+        borderColor: config.borderColor,
       }}
       title={probabilidad != null ? `Probabilidad de falla: ${formatPorcentajeRiesgo(probabilidad)}` : undefined}
     >
@@ -29,7 +21,7 @@ function PrediccionBadge({ clasificacion, probabilidad }) {
       <span aria-hidden="true" style={{ color: config.color }}>{config.emoji}</span>
       {config.label}
       {probabilidad != null && (
-        <span style={{ fontWeight: 400, opacity: 0.75 }}>
+        <span className="font-normal opacity-75">
           {" "}· {formatPorcentajeRiesgo(probabilidad)}
         </span>
       )}
@@ -45,33 +37,24 @@ export default function EquipoCard({ equipo }) {
   const probabilidad = equipo.ultima_probabilidad ?? null;
 
   return (
-    <article
-      style={{
-        padding: 16,
-        border: "1px solid #e5e7eb",
-        borderRadius: 16,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-      }}
-    >
-      <h2 style={{ marginTop: 0, marginBottom: 4 }}>{equipo.nombre}</h2>
+    <article className="flex flex-col gap-2 rounded-lg border border-neutral-200 bg-white p-4 transition-shadow duration-150 hover:shadow-md">
+      <h2 className="mb-1 mt-0 text-base font-semibold text-neutral-900">{equipo.nombre}</h2>
 
       {/* Indicador visual de predicción */}
       <PrediccionBadge clasificacion={clasificacion} probabilidad={probabilidad} />
 
-      <p style={{ margin: 0 }}>Estado: {equipo.estado}</p>
-      {equipo.tipo ? <p style={{ margin: 0 }}>Tipo: {equipo.tipo}</p> : null}
-      {equipo.ubicacion ? <p style={{ margin: 0 }}>Ubicación: {equipo.ubicacion}</p> : null}
-      <p style={{ margin: 0 }}>Último dato: {latestValueLabel}</p>
+      <p className="m-0 text-sm text-neutral-700">Estado: {equipo.estado}</p>
+      {equipo.tipo ? <p className="m-0 text-sm text-neutral-700">Tipo: {equipo.tipo}</p> : null}
+      {equipo.ubicacion ? <p className="m-0 text-sm text-neutral-700">Ubicación: {equipo.ubicacion}</p> : null}
+      <p className="m-0 text-sm text-neutral-700">Último dato: <span className="tabular-nums">{latestValueLabel}</span></p>
       {typeof equipo.alertas_activas === "number" ? (
-        <p style={{ margin: 0 }}>Alertas activas: {equipo.alertas_activas}</p>
+        <p className="m-0 text-sm text-neutral-700">Alertas activas: <span className="tabular-nums font-semibold text-danger-600">{equipo.alertas_activas}</span></p>
       ) : null}
 
       <Link
         to={`/equipos/${equipo.id}`}
         aria-label={`Ver detalle ${equipo.nombre}`}
-        style={{ marginTop: 4 }}
+        className="mt-1 text-sm font-medium text-primary-600 transition-colors duration-150 hover:text-primary-700 hover:underline"
       >
         Ver detalle
       </Link>

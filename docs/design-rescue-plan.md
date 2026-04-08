@@ -110,7 +110,7 @@
 - `frontend/src/hooks/**`
 - `frontend/src/App.jsx` (rutas)
 - Lógica de negocio, contratos API, y funciones que llaman backend
-- Lógica interna de procesamiento de datos de gráficos (solo estilos/colores)
+- Lógica de negocio de gráficos y contratos API (se permite ajuste técnico de visualización SVG para mejorar legibilidad/UX)
 
 ---
 

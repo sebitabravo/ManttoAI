@@ -1,4 +1,7 @@
-# Auditoría Final ManttoAI Predictivo
+# [ARCHIVADO] Auditoría Final ManttoAI Predictivo
+
+> ⚠️ Documento archivado por redundancia con auditorías y verificaciones más recientes.
+> Estado vigente: revisar `docs/README.md`.
 
 **Fecha:** 2026-04-07  
 **Auditor:** Sebastian (Arquitecto Senior, modelo de IA)  

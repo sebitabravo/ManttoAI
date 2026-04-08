@@ -102,10 +102,10 @@ Las PYMES y entornos académicos **no tienen acceso** a sistemas predictivos por
 #### Frontend Layer
 - **Framework**: React 18
 - **Build tool**: Vite
-- **Estilos**: Tailwind CSS 4
+- **Estilos**: Tailwind CSS 3.4.x
 - **HTTP client**: Axios
 - **Routing**: React Router v6
-- **Charts**: Chart.js
+- **Charts**: SVG nativo (componente base reutilizable)
 
 #### Infrastructure
 - **Contenedores**: Docker + Docker Compose

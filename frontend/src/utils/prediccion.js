@@ -1,9 +1,11 @@
 /**
  * Utilidades para interpretar y visualizar predicciones del modelo ML.
- * Mapea clasificaciones a colores, etiquetas y niveles de severidad.
+ * Mapea clasificaciones a estilos semánticos, etiquetas y niveles de severidad.
  *
- * Los colores usan OKLCH para mantener consistencia con tailwind.config.js.
- * Correspondencia con tokens del design system:
+ * Los colores se resuelven desde tokens de Tailwind (sin estilos inline),
+ * para mantener consistencia con el design system industrial.
+ *
+ * Correspondencia de severidad:
  * - normal  → success-*
  * - alerta  → warning-*
  * - falla   → danger-*
@@ -17,26 +19,29 @@
 const CLASIFICACION_CONFIG = {
   normal: {
     label: "Normal",
-    color: "oklch(45% 0.160 145)",      // success-600 verde industrial
-    bgColor: "oklch(96% 0.030 145)",     // success-50
-    borderColor: "oklch(90% 0.060 145)", // success-100
-    emoji: "✅",
+    dotClass: "bg-success-600",
+    textClass: "text-success-700",
+    barClass: "bg-success-600",
+    surfaceClass: "border-success-300 bg-success-50",
+    chipClass: "border-success-300 bg-success-100 text-success-800",
     nivel: 0,
   },
   alerta: {
     label: "Alerta",
-    color: "oklch(55% 0.170 85)",        // warning-600 amarillo-naranja
-    bgColor: "oklch(96% 0.025 85)",      // warning-50
-    borderColor: "oklch(92% 0.055 85)",  // warning-100
-    emoji: "⚠️",
+    dotClass: "bg-warning-600",
+    textClass: "text-warning-700",
+    barClass: "bg-warning-600",
+    surfaceClass: "border-warning-300 bg-warning-50",
+    chipClass: "border-warning-300 bg-warning-100 text-warning-800",
     nivel: 1,
   },
   falla: {
     label: "Falla",
-    color: "oklch(50% 0.195 25)",        // danger-600 rojo industrial
-    bgColor: "oklch(96% 0.022 25)",      // danger-50
-    borderColor: "oklch(92% 0.048 25)",  // danger-100
-    emoji: "🔴",
+    dotClass: "bg-danger-600",
+    textClass: "text-danger-700",
+    barClass: "bg-danger-600",
+    surfaceClass: "border-danger-300 bg-danger-50",
+    chipClass: "border-danger-300 bg-danger-100 text-danger-800",
     nivel: 2,
   },
 };
@@ -44,10 +49,11 @@ const CLASIFICACION_CONFIG = {
 /** Configuración por defecto cuando no hay predicción o la clasificación es desconocida */
 const CONFIG_DESCONOCIDA = {
   label: "Sin predicción",
-  color: "oklch(55% 0.018 250)",        // neutral-500
-  bgColor: "oklch(96% 0.005 250)",      // neutral-100
-  borderColor: "oklch(92% 0.008 250)",  // neutral-200
-  emoji: "—",
+  dotClass: "bg-neutral-400",
+  textClass: "text-neutral-600",
+  barClass: "bg-neutral-400",
+  surfaceClass: "border-neutral-300 bg-neutral-100",
+  chipClass: "border-neutral-300 bg-neutral-200 text-neutral-700",
   nivel: -1,
 };
 

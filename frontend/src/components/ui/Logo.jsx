@@ -19,15 +19,13 @@ import { memo } from "react";
  * que se re-renderizan frecuentemente (Header, Sidebar).
  */
 
-/** Color de marca principal — aproximación hex del azul petróleo OKLCH primary-500 */
-export const BRAND_COLOR = "#2b6b8e";
-
-const Logo = memo(function Logo({ size = 24, title }) {
+const Logo = memo(function Logo({ size = 24, title, className = "" }) {
   // Si no hay título, el SVG es puramente decorativo y se oculta a tecnologías asistivas
   const esDecorativo = !title;
 
   return (
     <svg
+      className={`text-primary-600 ${className}`.trim()}
       width={size}
       height={size}
       viewBox="0 0 32 32"
@@ -37,15 +35,15 @@ const Logo = memo(function Logo({ size = 24, title }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       {title ? <title>{title}</title> : null}
-      <circle cx="16" cy="16" r="16" fill={BRAND_COLOR} />
+      <circle cx="16" cy="16" r="16" fill="currentColor" />
       <text
+        className="fill-neutral-50"
         x="16"
         y="22"
         fontSize="20"
         fontWeight="700"
         textAnchor="middle"
         fontFamily="system-ui, sans-serif"
-        fill="white"
       >
         M
       </text>

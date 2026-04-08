@@ -21,7 +21,7 @@ export default function Button({ children, type = "button", variant = "primary",
 
   const variantClasses = {
     primary: `
-      bg-primary-600 text-white border border-primary-600
+      bg-primary-600 text-neutral-50 border border-primary-600
       hover:bg-primary-700 hover:border-primary-700
       active:bg-primary-800
       focus:ring-primary-500
@@ -33,7 +33,7 @@ export default function Button({ children, type = "button", variant = "primary",
       focus:ring-neutral-400
     `,
     danger: `
-      bg-danger-600 text-white border border-danger-600
+      bg-danger-600 text-neutral-50 border border-danger-600
       hover:bg-danger-700 hover:border-danger-700
       active:bg-danger-800
       focus:ring-danger-500

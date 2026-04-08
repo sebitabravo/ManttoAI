@@ -23,10 +23,9 @@ function BarraRiesgo({ probabilidad, config }) {
       className="h-2.5 w-full overflow-hidden rounded-full bg-neutral-200"
     >
       <div
-        className="h-full rounded-full transition-all duration-300 ease-out-quart"
+        className={`h-full rounded-full transition-all duration-300 ease-out-quart ${config.barClass}`}
         style={{
           width: `${porcentaje}%`,
-          background: config.color,
         }}
       />
     </div>
@@ -36,28 +35,20 @@ function BarraRiesgo({ probabilidad, config }) {
 export default function EquipoPrediccionCard({ prediccion }) {
   // Configuración visual según clasificación del modelo
   const config = getConfigPrediccion(prediccion?.clasificacion);
+  const cardToneClass = prediccion ? config.surfaceClass : "border-neutral-300 bg-neutral-100";
 
   return (
     <section
-      className="rounded-lg border p-4 transition-all duration-150 ease-out-quart"
-      style={{
-        borderColor: prediccion ? config.borderColor : 'oklch(92% 0.008 250)', // neutral-200
-        background: prediccion ? config.bgColor : 'oklch(96% 0.005 250)', // neutral-100
-      }}
+      className={`rounded-lg border p-4 transition-all duration-150 ease-out-quart ${cardToneClass}`}
     >
       <h2 className="mb-3 mt-0 text-lg font-semibold text-neutral-900">Última predicción</h2>
 
       {prediccion ? (
         <div className="flex flex-col gap-3">
-          {/* Clasificación con ícono semántico */}
+          {/* Clasificación semántica */}
           <div className="flex items-center gap-2">
-            <span className="text-2xl" aria-hidden="true">
-              {config.emoji}
-            </span>
-            <span
-              className="text-lg font-bold"
-              style={{ color: config.color }}
-            >
+            <span aria-hidden="true" className={`h-2.5 w-2.5 rounded-full ${config.dotClass}`} />
+            <span className={`text-lg font-semibold ${config.textClass}`}>
               {config.label}
             </span>
           </div>
@@ -66,7 +57,7 @@ export default function EquipoPrediccionCard({ prediccion }) {
           <div className="flex flex-col gap-1">
             <div className="flex justify-between text-xs text-neutral-700">
               <span>Probabilidad de falla</span>
-              <strong className="tabular-nums" style={{ color: config.color }}>
+              <strong className={`tabular-nums ${config.textClass}`}>
                 {formatPorcentajeRiesgo(prediccion.probabilidad)}
               </strong>
             </div>

@@ -17,6 +17,13 @@ const CHART_WIDTH = 560;
 const CHART_HEIGHT = 220;
 const CHART_PADDING = 28;
 
+const LINE_TONE_CLASS = {
+  primary: "text-primary-600",
+  success: "text-success-600",
+  warning: "text-warning-600",
+  danger: "text-danger-600",
+};
+
 function buildLinePoints(values) {
   if (values.length === 0) {
     return "";
@@ -44,10 +51,11 @@ export default function GraficoLineaBase({
   subtitle,
   series,
   unit,
-  color,
+  lineTone = "primary",
   emptyMessage,
 }) {
   const isEmpty = series.length === 0;
+  const lineClass = LINE_TONE_CLASS[lineTone] || LINE_TONE_CLASS.primary;
 
   if (isEmpty) {
     return (
@@ -90,7 +98,8 @@ export default function GraficoLineaBase({
           y1={CHART_HEIGHT - CHART_PADDING}
           x2={CHART_WIDTH - CHART_PADDING}
           y2={CHART_HEIGHT - CHART_PADDING}
-          stroke="oklch(85% 0.012 250)"
+          className="text-neutral-300"
+          stroke="currentColor"
           strokeWidth="1"
         />
         <line
@@ -98,12 +107,21 @@ export default function GraficoLineaBase({
           y1={CHART_PADDING}
           x2={CHART_PADDING}
           y2={CHART_HEIGHT - CHART_PADDING}
-          stroke="oklch(85% 0.012 250)"
+          className="text-neutral-300"
+          stroke="currentColor"
           strokeWidth="1"
         />
         
         {/* Línea de datos */}
-        <polyline fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={points} />
+        <polyline
+          className={lineClass}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={points}
+        />
       </svg>
 
       {/* Métricas resumen */}

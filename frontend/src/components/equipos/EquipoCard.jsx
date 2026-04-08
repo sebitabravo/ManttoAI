@@ -10,15 +10,10 @@ function PrediccionBadge({ clasificacion, probabilidad }) {
 
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold text-neutral-900"
-      style={{
-        background: config.bgColor,
-        borderColor: config.borderColor,
-      }}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${config.chipClass}`}
       title={probabilidad != null ? `Probabilidad de falla: ${formatPorcentajeRiesgo(probabilidad)}` : undefined}
     >
-      {/* El ícono mantiene el color semántico de riesgo */}
-      <span aria-hidden="true" style={{ color: config.color }}>{config.emoji}</span>
+      <span aria-hidden="true" className={`h-2 w-2 rounded-full ${config.dotClass}`} />
       {config.label}
       {probabilidad != null && (
         <span className="font-normal opacity-75">

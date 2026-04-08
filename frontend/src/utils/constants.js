@@ -4,11 +4,11 @@ export const ESTADOS = {
   detenido: "Detenido",
 };
 
-// Colores de nivel de alerta — valores OKLCH consistentes con tailwind.config.js
+// Severidad de nivel de alerta — usar tokens semánticos del design system
 export const NIVELES_ALERTA = {
-  bajo: "oklch(45% 0.160 145)",    // success-600
-  medio: "oklch(55% 0.170 85)",    // warning-600
-  alto: "oklch(50% 0.195 25)",     // danger-600
+  bajo: "success",
+  medio: "warning",
+  alto: "danger",
 };
 
 // === Intervalos de polling por página ===

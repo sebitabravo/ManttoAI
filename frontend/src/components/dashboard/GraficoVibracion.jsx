@@ -17,7 +17,7 @@ export default function GraficoVibracion({ lecturas = [] }) {
       subtitle="Magnitud máxima por lectura (últimas 24 lecturas)"
       series={temporalSeries}
       unit="g"
-      color="oklch(0.55 0.15 250.29)" // primary-600 - industrial blue for vibration
+      lineTone="primary"
       emptyMessage="Todavía no hay lecturas de vibración para graficar."
     />
   );

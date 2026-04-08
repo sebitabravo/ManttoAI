@@ -18,7 +18,7 @@ export default function EquipoMantencionesSection({
   updateMantencionErrorMessage,
 }) {
   return (
-    <section className="grid gap-3 rounded-lg border border-neutral-300 bg-neutral-100 p-4 shadow-sm">
+    <section className="grid grid-cols-1 gap-3 rounded-lg border border-neutral-300 bg-neutral-100 p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Mantenciones recientes</h2>
         <Button

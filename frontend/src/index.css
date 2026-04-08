@@ -156,7 +156,7 @@ table th {
  */
 .layout-root {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -180,7 +180,7 @@ table th {
  */
 @media (max-width: 768px) {
   .layout-root {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .layout-sidebar {

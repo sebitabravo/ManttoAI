@@ -60,11 +60,12 @@ export default function Layout() {
       <Sidebar
         className={sidebarAbierto ? "layout-sidebar--abierto" : ""}
         sidebarAbierto={sidebarAbierto}
+        onClose={cerrarSidebar}
         onNavClick={cerrarSidebar}
         retornarFocoRef={menuBtnRef}
       />
 
-      <div className="flex flex-col">
+      <div className="flex min-w-0 flex-col">
         <Header
           onMenuToggle={toggleSidebar}
           sidebarAbierto={sidebarAbierto}

@@ -73,7 +73,7 @@ export default function EquipoDetallePage() {
   const isInitialLoading = loading && !equipo;
 
   return (
-    <section className="grid gap-4">
+    <section className="grid grid-cols-1 gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-3">
@@ -120,7 +120,7 @@ export default function EquipoDetallePage() {
       </div>
 
       {isInitialLoading ? (
-        <div className="grid gap-4" aria-label="Cargando detalle de equipo">
+        <div className="grid grid-cols-1 gap-4" aria-label="Cargando detalle de equipo">
           <SkeletonCard />
           <SkeletonTable rows={4} cols={4} />
           <SkeletonTable rows={4} cols={5} />

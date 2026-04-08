@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import ResumenCards from "../components/dashboard/ResumenCards";
 import GraficoTemperatura from "../components/dashboard/GraficoTemperatura";
 import GraficoVibracion from "../components/dashboard/GraficoVibracion";
-import PanelAccionOperativa from "../components/dashboard/PanelAccionOperativa";
 import TablaEstadoEquipos from "../components/dashboard/TablaEstadoEquipos";
 import TablaUltimasLecturas from "../components/dashboard/TablaUltimasLecturas";
 import { SkeletonMetric, SkeletonTable, SkeletonChart } from "../components/ui/Skeleton";
@@ -45,7 +44,7 @@ export default function DashboardPage() {
     : "sin sincronización";
 
   return (
-    <section className="grid gap-8">
+    <section className="grid grid-cols-1 gap-8">
       {/* Header orientado a valor operacional (no solo visual) */}
       <div className="space-y-1">
         <div className="flex items-center gap-3">
@@ -70,9 +69,9 @@ export default function DashboardPage() {
       ) : null}
 
       {/* Bloque crítico: resumen operativo */}
-      <section className="grid gap-5" aria-label="Resumen operativo crítico">
+      <section className="grid grid-cols-1 gap-5" aria-label="Resumen operativo crítico">
         {isInitialLoading ? (
-          <div className="grid gap-4 xl:grid-cols-12">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
             <SkeletonMetric className="xl:col-span-7" />
             <SkeletonMetric className="xl:col-span-5" />
             <SkeletonMetric className="xl:col-span-4" />
@@ -82,10 +81,6 @@ export default function DashboardPage() {
         ) : (
           <ResumenCards resumen={resumen} />
         )}
-      </section>
-
-      <section className="grid gap-5" aria-label="Prioridades de intervención">
-        {isInitialLoading ? <SkeletonTable rows={4} cols={2} /> : <PanelAccionOperativa resumen={resumen} />}
       </section>
 
       {error ? (
@@ -101,12 +96,12 @@ export default function DashboardPage() {
       ) : null}
 
       {/* Bloque analítico: estado + últimas lecturas */}
-      <section className="grid gap-5 xl:grid-cols-12" aria-label="Estado y lecturas recientes">
-        <div className="xl:col-span-7">
+      <section className="grid grid-cols-1 gap-5 xl:grid-cols-12" aria-label="Estado y lecturas recientes">
+        <div className="min-w-0 xl:col-span-7">
           {isInitialLoading ? <SkeletonTable rows={5} cols={6} /> : <TablaEstadoEquipos equipos={resumen.equipos || []} />}
         </div>
 
-        <div className="xl:col-span-5">
+        <div className="min-w-0 xl:col-span-5">
           {isInitialLoading ? (
             <SkeletonTable rows={5} cols={4} />
           ) : (

@@ -101,7 +101,7 @@ export default function EquipoUmbralesSection({
                       />
                     </td>
                     <td className="py-2">
-                      <div className="grid gap-1.5">
+                      <div className="grid grid-cols-1 gap-1.5">
                         <Button
                           type="button"
                           variant="outline"

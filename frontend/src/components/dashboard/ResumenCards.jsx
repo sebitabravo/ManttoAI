@@ -1,4 +1,5 @@
 import { formatProbability } from "../../utils/metrics";
+import InfoTooltip from "../ui/InfoTooltip";
 
 /**
  * Cards de resumen con jerarquía visual asimétrica.
@@ -51,7 +52,7 @@ export default function ResumenCards({ resumen }) {
   const riesgoClasses = SEVERITY_CLASSES[riesgoSeveridad];
 
   return (
-    <div className="grid gap-5 xl:grid-cols-12">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
       {/* ALERTAS ACTIVAS — card hero primaria */}
       <article
         className={`resumen-hero rounded-lg border-2 p-6 md:p-7 xl:col-span-7 ${alertasClasses.card} transition-colors duration-150 ease-out-quart`}
@@ -92,8 +93,12 @@ export default function ResumenCards({ resumen }) {
 
       {/* Métricas secundarias compactas */}
       <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
-        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-neutral-500">
-          Total equipos
+        <div className="mb-1 flex items-center gap-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">Total equipos</span>
+          <InfoTooltip
+            label="Ayuda: total equipos"
+            text="Cantidad de equipos registrados y actualmente monitoreados por la plataforma."
+          />
         </div>
         <div className="metric-value text-2xl font-semibold text-neutral-700">
           {totalEquipos}
@@ -101,8 +106,12 @@ export default function ResumenCards({ resumen }) {
       </article>
 
       <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
-        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-neutral-500">
-          Clasificación
+        <div className="mb-1 flex items-center gap-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">Clasificación</span>
+          <InfoTooltip
+            label="Ayuda: clasificación"
+            text="Estado global estimado según telemetría reciente y evaluación del modelo predictivo."
+          />
         </div>
         <div className="text-2xl font-semibold text-neutral-700 capitalize">
           {clasificacion}
@@ -110,8 +119,12 @@ export default function ResumenCards({ resumen }) {
       </article>
 
       <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
-        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-neutral-500">
-          Probabilidad de falla
+        <div className="mb-1 flex items-center gap-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">Probabilidad de falla</span>
+          <InfoTooltip
+            label="Ayuda: probabilidad de falla"
+            text="Probabilidad estimada de falla en el estado actual de operación (valor de 0% a 100%)."
+          />
         </div>
         <div className="metric-value text-2xl font-semibold text-neutral-700">
           {probabilidad}

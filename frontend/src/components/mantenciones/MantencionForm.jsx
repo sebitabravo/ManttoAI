@@ -88,7 +88,7 @@ export default function MantencionForm({
   const resolvedErrorMessage = errorMessage || submitError;
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-3">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
       <Input
         label="Tipo"
         name="tipo"

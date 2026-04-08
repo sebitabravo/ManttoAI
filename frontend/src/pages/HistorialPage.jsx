@@ -102,7 +102,7 @@ export default function HistorialPage() {
   }
 
   return (
-    <section className="grid gap-4">
+    <section className="grid grid-cols-1 gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="m-0 text-xl font-semibold text-neutral-900">Historial</h1>
@@ -116,7 +116,7 @@ export default function HistorialPage() {
       </div>
 
       {loading ? (
-        <div className="grid gap-4" aria-label="Cargando historial">
+        <div className="grid grid-cols-1 gap-4" aria-label="Cargando historial">
           <SkeletonTable rows={6} cols={5} />
           <SkeletonTable rows={5} cols={6} />
         </div>
@@ -177,7 +177,7 @@ export default function HistorialPage() {
         )}
       </section>
 
-      <section className="grid gap-3 rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+      <section className="grid grid-cols-1 gap-3 rounded-lg border border-neutral-200 bg-neutral-100 p-4">
         <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Mantenciones recientes</h2>
         {mantencionesRecientes.length === 0 ? (
           <p className="mb-0 text-sm text-neutral-600">

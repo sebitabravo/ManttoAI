@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import Button from "../ui/Button";
 import Logo from "../ui/Logo";
+import TopbarNotifications from "./TopbarNotifications";
 import useAuth from "../../hooks/useAuth";
 
 /**
@@ -27,7 +28,7 @@ export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
   }
 
   return (
-    <header className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100 px-5 py-4">
+    <header className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100 px-3 py-3 sm:px-5 sm:py-4">
       <div className="flex items-center gap-3">
         {/* Botón hamburguesa: visible solo en tablet/mobile via CSS (.btn-menu-tablet) */}
         <button
@@ -54,9 +55,10 @@ export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
       </div>
 
       {/* Usuario + botón salir */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-neutral-600">{user?.nombre || "Invitado"}</span>
-        <Button type="button" variant="outline" onClick={handleLogout}>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <TopbarNotifications />
+        <span className="hidden text-sm text-neutral-600 md:inline">{user?.nombre || "Invitado"}</span>
+        <Button type="button" variant="outline" onClick={handleLogout} className="px-3 sm:px-4">
           Salir
         </Button>
       </div>

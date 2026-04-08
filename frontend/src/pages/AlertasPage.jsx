@@ -50,7 +50,7 @@ export default function AlertasPage() {
   const isInitialLoading = loading && alertas.length === 0;
 
   return (
-    <section className="grid gap-4">
+    <section className="grid grid-cols-1 gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-3">
@@ -78,7 +78,7 @@ export default function AlertasPage() {
       </div>
 
       {isInitialLoading ? (
-        <div className="grid gap-3" aria-label="Cargando alertas">
+        <div className="grid grid-cols-1 gap-3" aria-label="Cargando alertas">
           {Array.from({ length: 4 }, (_, index) => (
             <SkeletonCard key={index} />
           ))}
@@ -112,7 +112,7 @@ export default function AlertasPage() {
       ) : null}
 
       {alertasNoLeidas.length > 0 ? (
-        <section className="grid gap-3">
+        <section className="grid grid-cols-1 gap-3">
           <h2 className="mb-0 text-lg font-semibold text-neutral-900">No leídas</h2>
           {alertasNoLeidas.map((alerta) => (
             <AlertaItem
@@ -126,7 +126,7 @@ export default function AlertasPage() {
       ) : null}
 
       {alertasLeidas.length > 0 ? (
-        <section className="grid gap-3">
+        <section className="grid grid-cols-1 gap-3">
           <h2 className="mb-0 text-lg font-semibold text-neutral-900">Leídas recientemente</h2>
           {alertasLeidas.slice(0, 20).map((alerta) => (
             <AlertaItem key={alerta.id} alerta={alerta} />

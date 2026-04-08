@@ -104,12 +104,12 @@ export default {
         lg: "12px",  // cards principales, modales
       },
       fontSize: {
-        xs: ["0.75rem", { lineHeight: "1rem", letterSpacing: "0" }],        // 12px - badges, labels
-        sm: ["0.8125rem", { lineHeight: "1.25rem", letterSpacing: "0" }],   // 13px - secondary text
-        base: ["0.875rem", { lineHeight: "1.375rem", letterSpacing: "0" }], // 14px - UI text
-        md: ["1rem", { lineHeight: "1.5rem", letterSpacing: "-0.01em" }],   // 16px - sidebar titles
-        lg: ["1.125rem", { lineHeight: "1.625rem", letterSpacing: "-0.01em" }], // 18px - page headers
-        xl: ["1.375rem", { lineHeight: "1.875rem", letterSpacing: "-0.02em" }], // 22px - dashboard title
+        // Escala fija (4 niveles visuales) para UI densa de operación.
+        xs: ["0.75rem", { lineHeight: "1rem", letterSpacing: "0" }],
+        sm: ["0.875rem", { lineHeight: "1.375rem", letterSpacing: "0" }],
+        base: ["0.875rem", { lineHeight: "1.375rem", letterSpacing: "0" }],
+        lg: ["1.125rem", { lineHeight: "1.625rem", letterSpacing: "-0.01em" }],
+        xl: ["1.875rem", { lineHeight: "2.25rem", letterSpacing: "-0.02em" }],
       },
       fontWeight: {
         normal: "400",

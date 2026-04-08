@@ -85,6 +85,50 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.01em;
 }
 
+/*
+ * Escala tipográfica fija para app (4 niveles visuales).
+ * Mantiene densidad controlada y evita drift de tamaños aleatorios.
+ */
+@layer utilities {
+  .text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .text-sm,
+  .text-base {
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+  }
+
+  .text-md,
+  .text-lg,
+  .text-xl {
+    font-size: 1.125rem;
+    line-height: 1.625rem;
+    letter-spacing: -0.01em;
+  }
+
+  .text-2xl,
+  .text-3xl,
+  .text-4xl,
+  .text-5xl,
+  .text-6xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+    letter-spacing: -0.02em;
+  }
+}
+
+/*
+ * Los datos tabulares (históricos y sensores) deben mantener ancho estable.
+ */
+table td,
+table th {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
 /* ─── Layout principal ─────────────────────────────────────────────────────── */
 
 /*

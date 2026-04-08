@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import Button from "../ui/Button";
 import Logo from "../ui/Logo";
@@ -19,6 +19,12 @@ import useAuth from "../../hooks/useAuth";
  */
 export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate("/login", { replace: true });
+  }
 
   return (
     <header className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100 px-5 py-4">
@@ -50,9 +56,9 @@ export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
       {/* Usuario + botón salir */}
       <div className="flex items-center gap-3">
         <span className="text-sm text-neutral-600">{user?.nombre || "Invitado"}</span>
-        <Link to="/login" onClick={logout}>
-          <Button variant="outline">Salir</Button>
-        </Link>
+        <Button type="button" variant="outline" onClick={handleLogout}>
+          Salir
+        </Button>
       </div>
     </header>
   );

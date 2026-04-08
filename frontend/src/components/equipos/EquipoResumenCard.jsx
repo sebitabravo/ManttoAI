@@ -4,11 +4,22 @@ export default function EquipoResumenCard({ equipo }) {
   }
 
   return (
-    <article className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
-      <h2 className="mt-0 text-lg font-semibold text-neutral-900">{equipo.nombre}</h2>
-      <p className="text-sm text-neutral-700">Estado: <span className="font-medium">{equipo.estado}</span></p>
-      <p className="text-sm text-neutral-700">Ubicación: <span className="font-medium">{equipo.ubicacion}</span></p>
-      <p className="text-sm text-neutral-700">Tipo: <span className="font-medium">{equipo.tipo}</span></p>
+    <article className="grid gap-3 rounded-lg border border-neutral-300 bg-neutral-100 p-4 shadow-sm">
+      <h2 className="m-0 text-lg font-semibold text-neutral-900">{equipo.nombre}</h2>
+      <dl className="grid gap-2 sm:grid-cols-3">
+        <div>
+          <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">Estado</dt>
+          <dd className="text-sm font-medium text-neutral-700">{equipo.estado}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">Ubicación</dt>
+          <dd className="text-sm font-medium text-neutral-700">{equipo.ubicacion}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">Tipo</dt>
+          <dd className="text-sm font-medium text-neutral-700">{equipo.tipo}</dd>
+        </div>
+      </dl>
     </article>
   );
 }

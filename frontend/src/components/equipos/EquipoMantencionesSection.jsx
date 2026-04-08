@@ -18,7 +18,7 @@ export default function EquipoMantencionesSection({
   updateMantencionErrorMessage,
 }) {
   return (
-    <section className="grid gap-3 rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+    <section className="grid gap-3 rounded-lg border border-neutral-300 bg-neutral-100 p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Mantenciones recientes</h2>
         <Button
@@ -63,7 +63,7 @@ export default function EquipoMantencionesSection({
                 <th scope="col" className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-neutral-200">
               {mantencionesRecientes.map((mantencion) => {
                 const isEditing = Number(editingMantencionId) === Number(mantencion.id);
 

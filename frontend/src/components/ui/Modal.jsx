@@ -23,22 +23,52 @@ export default function Modal({ open = false, title = "Modal", onClose, children
   useEffect(() => {
     if (!open) return;
 
+    const dialog = dialogRef.current;
+    const selector =
+      'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    const getFocusables = () => Array.from(dialog?.querySelectorAll(selector) || []);
+
     const handleEscape = (e) => {
       if (e.key === "Escape" && onClose) {
         onClose();
       }
     };
 
+    const handleTabTrap = (e) => {
+      if (e.key !== "Tab") return;
+
+      const focusables = getFocusables();
+      if (focusables.length === 0) {
+        e.preventDefault();
+        return;
+      }
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
     // Guardar foco anterior
     const previousFocus = document.activeElement;
 
-    // Dar foco al modal
-    dialogRef.current?.focus();
+    // Dar foco al primer elemento interactivo o al contenedor
+    const focusables = getFocusables();
+    (focusables[0] || dialog)?.focus();
 
     document.addEventListener("keydown", handleEscape);
+    document.addEventListener("keydown", handleTabTrap);
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("keydown", handleTabTrap);
       // Restaurar foco
       previousFocus?.focus();
     };
@@ -65,8 +95,7 @@ export default function Modal({ open = false, title = "Modal", onClose, children
         tabIndex={-1}
         className="
           relative w-full max-w-lg max-h-[90vh] overflow-y-auto
-          bg-neutral-100 rounded-lg shadow-md
-          p-6
+          rounded-lg border border-neutral-300 bg-neutral-100 p-5 shadow
           focus:outline-none
         "
       >

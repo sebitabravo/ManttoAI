@@ -23,12 +23,12 @@ export default function Input({ label, error, className = "", ...props }) {
           px-3 py-2.5 min-h-[44px]
           rounded border
           bg-neutral-100
-          text-base text-neutral-700
+          text-base text-neutral-700 shadow-sm
           placeholder:text-neutral-400
           transition-all duration-150 ease-out-quart
-          focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus:border-primary-500
           disabled:bg-neutral-100 disabled:cursor-not-allowed
-          ${error ? "border-danger-500 focus:ring-danger-500" : "border-neutral-300"}
+          ${error ? "border-danger-500 focus-visible:ring-danger-500" : "border-neutral-300"}
           ${className}
         `.trim()}
         {...props}

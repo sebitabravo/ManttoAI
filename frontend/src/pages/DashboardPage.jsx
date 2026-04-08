@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import ResumenCards from "../components/dashboard/ResumenCards";
 import GraficoTemperatura from "../components/dashboard/GraficoTemperatura";
 import GraficoVibracion from "../components/dashboard/GraficoVibracion";
+import PanelAccionOperativa from "../components/dashboard/PanelAccionOperativa";
 import TablaEstadoEquipos from "../components/dashboard/TablaEstadoEquipos";
 import TablaUltimasLecturas from "../components/dashboard/TablaUltimasLecturas";
 import { SkeletonMetric, SkeletonTable, SkeletonChart } from "../components/ui/Skeleton";
@@ -45,10 +46,10 @@ export default function DashboardPage() {
 
   return (
     <section className="grid gap-8">
-      {/* Header con jerarquía clara */}
+      {/* Header orientado a valor operacional (no solo visual) */}
       <div className="space-y-1">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-neutral-800 tracking-tight">Dashboard</h1>
+          <h1 className="text-xl font-semibold text-neutral-800 tracking-tight">Centro de control operacional</h1>
           {loading && data ? (
             <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" aria-hidden="true" />
@@ -57,14 +58,16 @@ export default function DashboardPage() {
           ) : null}
         </div>
         <p className="text-sm text-neutral-500">
-          Resumen operativo del prototipo de mantenimiento predictivo.
+          Priorizá intervención antes de una detención no planificada.
           <span className="ml-2 text-xs text-neutral-500">Última actualización: {lastUpdatedLabel}</span>
         </p>
       </div>
 
-      <div className="sr-only" aria-live="polite" aria-atomic="true">
-        Dashboard actualizado a las {lastUpdatedLabel}.
-      </div>
+      {lastUpdatedAt ? (
+        <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          Dashboard actualizado a las {lastUpdatedLabel}.
+        </div>
+      ) : null}
 
       {/* Bloque crítico: resumen operativo */}
       <section className="grid gap-5" aria-label="Resumen operativo crítico">
@@ -79,6 +82,10 @@ export default function DashboardPage() {
         ) : (
           <ResumenCards resumen={resumen} />
         )}
+      </section>
+
+      <section className="grid gap-5" aria-label="Prioridades de intervención">
+        {isInitialLoading ? <SkeletonTable rows={4} cols={2} /> : <PanelAccionOperativa resumen={resumen} />}
       </section>
 
       {error ? (

@@ -202,8 +202,9 @@ def test_post_prediccion_falla_con_error_email_no_rompe_alerta(client, monkeypat
 
     @contextmanager
     def failing_smtp_client():
+        if False:  # pragma: no cover - mantiene firma de generator para contextmanager
+            yield
         raise RuntimeError("smtp unavailable")
-        yield  # noqa: unreachable — necesario para que sea generator
 
     monkeypatch.setattr(
         prediccion_service,

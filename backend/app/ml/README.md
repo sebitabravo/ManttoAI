@@ -15,11 +15,15 @@ Este módulo contiene un pipeline reproducible para generar datos sintéticos, e
 
 La generación usa una semilla fija por defecto para que el pipeline sea repetible en la memoria técnica.
 
+Tamaño por defecto del dataset sintético: **12.000 filas**.
+
 ## Modelo
 
 - Algoritmo: `RandomForestClassifier`
 - Artefacto: `app/ml/modelo.joblib`
 - El artefacto queda fuera de git por `.gitignore`.
+- El build Docker omite entrenamiento por defecto (`SKIP_TRAIN=true`).
+- Si se necesita incluir artefacto en imagen: build con `--build-arg SKIP_TRAIN=false`.
 
 ## Comandos
 

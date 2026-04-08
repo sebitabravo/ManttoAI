@@ -21,14 +21,17 @@ def can_send_email() -> bool:
     settings = get_settings()
     sender = settings.smtp_from_email or settings.smtp_user
     recipient = settings.smtp_to_email or settings.smtp_user
-    return bool(
-        settings.smtp_host
-        and settings.smtp_port is not None
-        and settings.smtp_user
-        and settings.smtp_password
-        and sender
-        and recipient
+
+    has_minimum_config = bool(
+        settings.smtp_host and settings.smtp_port is not None and sender and recipient
     )
+    if not has_minimum_config:
+        return False
+
+    if settings.smtp_require_auth:
+        return bool(settings.smtp_user and settings.smtp_password)
+
+    return True
 
 
 def _sanitize_smtp_error(exc: Exception) -> str:
@@ -56,6 +59,9 @@ def get_smtp_client() -> Generator[smtplib.SMTP | smtplib.SMTP_SSL, None, None]:
 
     timeout = settings.smtp_timeout
     use_ssl = settings.smtp_use_ssl
+    use_starttls = settings.smtp_use_starttls
+    require_auth = settings.smtp_require_auth
+    should_login = require_auth or bool(settings.smtp_user and settings.smtp_password)
 
     if use_ssl:
         # SMTP con SSL implícito (típicamente puerto 465)
@@ -64,7 +70,8 @@ def get_smtp_client() -> Generator[smtplib.SMTP | smtplib.SMTP_SSL, None, None]:
             settings.smtp_host, settings.smtp_port, timeout=timeout, context=context
         )
         try:
-            client.login(settings.smtp_user, settings.smtp_password)
+            if should_login:
+                client.login(settings.smtp_user, settings.smtp_password)
             yield client
         finally:
             try:
@@ -72,13 +79,15 @@ def get_smtp_client() -> Generator[smtplib.SMTP | smtplib.SMTP_SSL, None, None]:
             except Exception:
                 pass
     else:
-        # SMTP con STARTTLS (típicamente puerto 587)
+        # SMTP con STARTTLS opcional (p.ej. 587) o sin TLS para brokers locales de demo
         client = smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=timeout)
         try:
             client.ehlo()
-            client.starttls(context=ssl.create_default_context())
-            client.ehlo()
-            client.login(settings.smtp_user, settings.smtp_password)
+            if use_starttls:
+                client.starttls(context=ssl.create_default_context())
+                client.ehlo()
+            if should_login:
+                client.login(settings.smtp_user, settings.smtp_password)
             yield client
         finally:
             try:

@@ -4,7 +4,7 @@
 # Desarrollo local: Docker Compose carga automáticamente docker-compose.yml + docker-compose.override.yml.
 # Producción (Dokploy): usar solo docker-compose.yml; ver docs/despliegue-dokploy.md.
 
-.PHONY: setup-env setup-mqtt-creds up down logs build config test lint lint-fix seed seed-run smoke-test backup db-shell simulate verify-3-nodes train evaluate dev-front lint-front build-front e2e-front mqtt-listen mqtt-test
+.PHONY: setup-env setup-mqtt-creds up down logs build config test lint lint-fix seed seed-run smoke-test backup db-shell simulate verify-3-nodes train evaluate ml-report dev-front lint-front build-front unit-front e2e-front smoke-front mqtt-listen mqtt-test
 
 # === Docker ===
 setup-env:
@@ -58,8 +58,14 @@ lint-front:
 build-front:
 	cd frontend && npm run build
 
+unit-front:
+	cd frontend && npm run test:unit
+
 e2e-front:
 	cd frontend && npm run test:e2e
+
+smoke-front:
+	cd frontend && npm run test:unit && npm run test:e2e
 
 # === IoT ===
 simulate:
@@ -81,6 +87,9 @@ train:
 
 evaluate:
 	cd backend/app/ml && python evaluate.py
+
+ml-report:
+	docker compose exec backend python /scripts/generate_ml_report.py
 
 # === MQTT ===
 mqtt-listen:

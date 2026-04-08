@@ -19,3 +19,13 @@ export async function marcarLeida(id) {
   const { data } = await client.patch(`/alertas/${id}/leer`);
   return data;
 }
+
+export async function getAlertasCount(equipoId = null) {
+  const params = {};
+  if (equipoId !== null && equipoId !== undefined) {
+    params.equipo_id = equipoId;
+  }
+
+  const { data } = await client.get("/alertas/count", { params });
+  return data;
+}

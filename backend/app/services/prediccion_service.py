@@ -1,6 +1,7 @@
 """Servicios de predicción de riesgo con persistencia en base de datos."""
 
 import logging
+from threading import Lock
 
 from collections.abc import Callable
 
@@ -9,7 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.ml.train import MODEL_PATH, load_model_artifact_cached
+from app.config import get_settings
+from app.ml.train import MODEL_PATH, load_model_artifact_cached, train_and_save_model
 from app.models.prediccion import Prediccion
 from app.services.alerta_service import (
     create_prediction_failure_alert,
@@ -22,6 +24,7 @@ from app.services.lectura_service import get_latest_lectura
 
 
 logger = logging.getLogger(__name__)
+_MODEL_BOOTSTRAP_LOCK = Lock()
 
 
 def load_model_artifact(model_path=MODEL_PATH):
@@ -98,8 +101,43 @@ def _build_feature_row_from_lectura(
 def _load_prediction_artifact_or_503() -> dict[str, object]:
     """Carga artefacto de inferencia o retorna 503 controlado."""
 
+    settings = get_settings()
+
     try:
         return load_model_artifact(MODEL_PATH)
+    except FileNotFoundError as exc:
+        if not settings.ml_auto_train_on_missing:
+            logger.exception(
+                "No se encontró artefacto ML y auto-entrenamiento está deshabilitado"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Modelo de predicción no disponible",
+            ) from exc
+
+        logger.warning(
+            "Artefacto ML ausente en %s. Se intentará bootstrap automático.",
+            MODEL_PATH,
+        )
+        with _MODEL_BOOTSTRAP_LOCK:
+            if not MODEL_PATH.exists():
+                try:
+                    train_and_save_model(model_path=MODEL_PATH)
+                except Exception as train_exc:
+                    logger.exception("Falló bootstrap automático del modelo ML")
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail="Modelo de predicción no disponible",
+                    ) from train_exc
+
+        try:
+            return load_model_artifact(MODEL_PATH)
+        except Exception as second_exc:
+            logger.exception("No se pudo cargar artefacto ML tras bootstrap automático")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Modelo de predicción no disponible",
+            ) from second_exc
     except Exception as exc:
         logger.exception("No se pudo cargar el artefacto de predicción")
         raise HTTPException(

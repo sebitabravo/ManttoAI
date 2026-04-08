@@ -36,7 +36,28 @@ docker compose up -d mysql backend
 curl http://localhost:8000/health
 ```
 
-El backend toma `DATABASE_URL` desde `backend/.env`, crea tablas faltantes al arrancar con `Base.metadata.create_all(...)` y expone en `/health` la señal `database.connected`.
+El backend toma `DATABASE_URL` desde `backend/.env` y expone en `/health` la señal `database.connected`.
+
+`Base.metadata.create_all(...)` queda habilitado automáticamente sólo en `development`.
+Fuera de desarrollo se activa únicamente con `ALLOW_SCHEMA_AUTO_CREATE=true`.
+
+Los parches runtime idempotentes de compatibilidad de esquema (columnas nuevas y constraint de alertas)
+se aplican automáticamente en `development`.
+Fuera de desarrollo se ejecutan sólo si `ALLOW_RUNTIME_SCHEMA_CHANGES=true` para evitar cambios
+destructivos no intencionales en bases productivas.
+
+## Modelo ML en runtime
+
+- Por defecto el build Docker instala solo dependencias runtime (`INSTALL_DEV_REQS=false`) y
+  no entrena modelo (`SKIP_TRAIN=true`) para mantener imágenes livianas y builds reproducibles.
+- En desarrollo local, `docker-compose.override.yml` activa `INSTALL_DEV_REQS=true`.
+- Si se requiere artefacto embebido en imagen: `docker compose build --build-arg SKIP_TRAIN=false backend`.
+- Si falta en runtime y `ML_AUTO_TRAIN_ON_MISSING=true`, el backend auto-entrena y continúa.
+
+## SMTP de demo
+
+- El stack local incluye Mailpit (`mailpit:1025` SMTP, `http://localhost:8025` UI).
+- Permite validar alertas email sin depender de un proveedor externo.
 
 > **Nota MVP**: el bootstrap automático de esquema (`create_all`) es suficiente para el prototipo. En un entorno productivo se reemplazaría por migraciones explícitas con Alembic.
 
@@ -60,10 +81,10 @@ pytest tests/ -v
 ### Verificación completa (con cobertura)
 
 ```bash
-pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=60
+pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=80
 ```
 
-**Umbral de cobertura**: 60% — configurado en `--cov-fail-under=60`. Si la cobertura baja del umbral, pytest fallará indicando qué líneas no están cubiertas.
+**Umbral de cobertura**: 80% — configurado en `--cov-fail-under=80`. Si la cobertura baja del umbral, pytest fallará indicando qué líneas no están cubiertas.
 
 ### Tests de integración (requiere MySQL)
 

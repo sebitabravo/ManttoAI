@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     api_prefix: str = ""
     database_url: str = "sqlite:///./manttoai.db"
     database_auto_init: bool = True
-    # SECRET_KEY no tiene default — debe definirse en .env.
-    # En desarrollo usar: openssl rand -hex 32
+    # En desarrollo se permite fallback para facilitar demo local.
+    # En stage/prod se exige valor seguro (ver validate_security_settings).
     secret_key: str = Field(default="manttoai-dev-secret")
     mqtt_broker_host: str = "localhost"
     mqtt_broker_port: int = 1883
@@ -40,12 +40,15 @@ class Settings(BaseSettings):
     smtp_from_email: str = ""
     smtp_to_email: str = ""
     smtp_use_ssl: bool = False
+    smtp_use_starttls: bool = True
+    smtp_require_auth: bool = False
     smtp_timeout: int = 10
     smtp_retry_attempts: int = 3
     smtp_retry_backoff: float = 0.5
     enable_prediction_scheduler: bool = True
-    prediction_interval_seconds: int = 300
+    prediction_interval_seconds: int = 30
     prediction_scheduler_max_workers: int = 4
+    ml_auto_train_on_missing: bool = True
     # Simulador de sensores IoT para demo (genera lecturas MQTT automáticas)
     simulator_enabled: bool = False
     simulator_interval_seconds: int = 30
@@ -76,18 +79,59 @@ class Settings(BaseSettings):
 
         non_dev_envs = {"staging", "stage", "production", "prod"}
         app_env_normalized = self.app_env.strip().lower()
+        database_url_normalized = self.database_url.strip().lower()
 
-        if self.secret_key == "manttoai-dev-secret":
+        if not self.secret_key or self.secret_key == "manttoai-dev-secret":
             if app_env_normalized in non_dev_envs:
                 raise ValueError(
-                    "SECRET_KEY por defecto no permitido fuera de desarrollo. "
+                    "SECRET_KEY vacío o por defecto no permitido fuera de desarrollo. "
                     "Generá una clave segura con: openssl rand -hex 32"
                 )
             # Advertencia en desarrollo para que el equipo no olvide cambiarla
             _log.warning(
-                "SECRET_KEY usa el valor por defecto de desarrollo. "
+                "SECRET_KEY usa valor por defecto o está vacío en desarrollo. "
                 "Definí SECRET_KEY en backend/.env antes de desplegar."
             )
+
+        if app_env_normalized in non_dev_envs:
+            if database_url_normalized.startswith("sqlite"):
+                raise ValueError(
+                    "DATABASE_URL usa SQLite. No se permite SQLite fuera de desarrollo. "
+                    "Definí DATABASE_URL apuntando a MySQL antes de desplegar."
+                )
+
+            if "manttoai_root" in database_url_normalized:
+                raise ValueError(
+                    "DATABASE_URL usa credenciales demo por defecto. "
+                    "Definí credenciales reales antes de desplegar fuera de desarrollo."
+                )
+
+        if app_env_normalized in non_dev_envs and self.mqtt_enabled:
+            if not self.mqtt_username or not self.mqtt_password:
+                raise ValueError(
+                    "MQTT está habilitado fuera de desarrollo pero faltan credenciales "
+                    "(MQTT_USERNAME o MQTT_PASSWORD). Definí ambas en backend/.env"
+                )
+
+            if self.mqtt_password == "manttoai_mqtt_dev":
+                raise ValueError(
+                    "MQTT_PASSWORD por defecto no permitido fuera de desarrollo. "
+                    "Definí una contraseña MQTT segura antes de desplegar."
+                )
+
+        if app_env_normalized in non_dev_envs and self.smtp_require_auth:
+            if not self.smtp_user or not self.smtp_password:
+                raise ValueError(
+                    "SMTP requiere autenticación fuera de desarrollo, pero faltan "
+                    "SMTP_USER o SMTP_PASSWORD en backend/.env"
+                )
+
+        if app_env_normalized in non_dev_envs and self.smtp_host:
+            if not self.smtp_from_email or not self.smtp_to_email:
+                raise ValueError(
+                    "SMTP está configurado fuera de desarrollo pero faltan "
+                    "SMTP_FROM_EMAIL o SMTP_TO_EMAIL en backend/.env"
+                )
 
         return self
 

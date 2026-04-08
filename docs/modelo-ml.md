@@ -15,12 +15,21 @@ El proyecto usa un pipeline reproducible basado en Random Forest para soportar l
 
 La generación es reproducible con semilla fija para facilitar repetición en informe y demo.
 
+Tamaño por defecto del dataset sintético: **12.000 registros**.
+
+Si existe un dataset previo con menos registros, el pipeline lo regenera automáticamente
+para cumplir el mínimo configurado.
+
 ## Entrenamiento
 
 - Script: `backend/app/ml/train.py`
 - Modelo: `RandomForestClassifier`
 - Artefacto: `backend/app/ml/modelo.joblib` (ignorado por git)
 - Checksum sidecar: `backend/app/ml/modelo.joblib.sha256`
+
+> En Docker, el build del backend **omite** entrenamiento por defecto (`SKIP_TRAIN=true`) para mantener builds rápidos.
+> Si necesitás artefacto embebido en imagen, build con `--build-arg SKIP_TRAIN=false`.
+> En runtime, si el artefacto falta y `ML_AUTO_TRAIN_ON_MISSING=true`, se reentrena automáticamente.
 
 Comando:
 
@@ -48,6 +57,26 @@ Comando:
 cd backend/app/ml
 ../../.venv/bin/python evaluate.py
 ```
+
+## Evidencia automática de métricas (recomendado para defensa)
+
+Se puede generar un reporte reproducible (JSON + Markdown) con:
+
+```bash
+make ml-report
+```
+
+Artefactos generados:
+
+- `backend/reports/ml-evaluation-latest.json`
+- `backend/reports/ml-evaluation-latest.md`
+
+El reporte incluye:
+
+- timestamp UTC de ejecución,
+- tamaño real de muestras evaluadas,
+- accuracy/F1 y métricas CV,
+- validación explícita del gate académico (`accuracy >= 0.80` y `f1 >= 0.80`).
 
 ## Generación de dataset
 

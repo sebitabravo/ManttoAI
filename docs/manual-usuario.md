@@ -12,6 +12,10 @@ Manual operativo para usar el MVP web de ManttoAI durante demo académica.
 > Si las credenciales cambiaron en seed, usar las definidas en `backend/.env` (`SEED_ADMIN_*`).
 > Estas credenciales son solo para entorno académico/demo.
 
+**Captura — pantalla de login**
+
+![Pantalla de login](./screenshots/login-page.png)
+
 ## 2) Dashboard
 
 En la vista principal se muestran:
@@ -26,6 +30,10 @@ Uso recomendado:
 1. Confirmar que `total_equipos` sea mayor a 0.
 2. Revisar si `equipos_en_riesgo` cambió tras simulación o predicción.
 
+**Captura — dashboard principal**
+
+![Dashboard principal](./screenshots/dashboard-page.png)
+
 ## 3) Equipos y detalle
 
 Desde **Equipos**:
@@ -34,6 +42,10 @@ Desde **Equipos**:
 2. Verificar lecturas recientes (temperatura, humedad, vibración).
 3. Revisar última predicción y mantenciones asociadas.
 
+**Captura — listado de equipos**
+
+![Listado de equipos](./screenshots/equipos-page.png)
+
 ## 4) Alertas
 
 Desde **Alertas**:
@@ -41,6 +53,10 @@ Desde **Alertas**:
 1. Revisar alertas no leídas.
 2. Abrir detalle contextual (tipo y mensaje).
 3. Marcar alertas como leídas para limpiar bandeja operativa.
+
+**Captura — panel de alertas**
+
+![Panel de alertas](./screenshots/alertas-page.png)
 
 ## 5) Historial
 

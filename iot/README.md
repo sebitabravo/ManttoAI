@@ -39,7 +39,7 @@ Parámetros recomendados para demo local:
 - `MQTT_HOST`: IP del host con Mosquitto accesible desde el ESP32.
 - `MQTT_PORT`: `1883`.
 - `MQTT_USERNAME` / `MQTT_PASSWORD`: requeridos cuando Mosquitto está configurado con `allow_anonymous false`.
-- `MQTT_PUBLISH_INTERVAL_MS`: `5000` (una lectura cada 5 segundos).
+- `MQTT_PUBLISH_INTERVAL_MS`: `10000` (una lectura cada 10 segundos).
 
 El archivo de credenciales del broker (`mosquitto/passwd`) se genera con:
 
@@ -60,6 +60,7 @@ manttoai/equipo/{EQUIPO_ID}/lecturas
 ## Pinout y armado
 
 - Ver detalle actualizado en `iot/wiring/pinout.md`
+- Diagrama visual: `iot/wiring/diagrama_conexion.svg`
 - Resumen rápido:
   - DHT22 DATA -> GPIO4
   - MPU-6050 SDA -> GPIO21

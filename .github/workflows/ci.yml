@@ -93,7 +93,7 @@ jobs:
           SMTP_PORT: "587"
           SMTP_USER: ""
           SMTP_PASSWORD: ""
-        run: pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=60
+        run: pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=80
 
   frontend:
     name: Frontend — Lint & Build

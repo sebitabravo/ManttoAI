@@ -6,7 +6,7 @@ import { getMantenciones, updateMantencion } from "../api/mantenciones";
 import MantencionForm from "../components/mantenciones/MantencionForm";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
-import LoadingSpinner from "../components/ui/LoadingSpinner";
+import { SkeletonTable } from "../components/ui/Skeleton";
 import { getApiErrorMessage } from "../utils/errorHandling";
 import { formatDate } from "../utils/formatDate";
 import { formatMetric, resolveMaxVibration } from "../utils/metrics";
@@ -115,11 +115,19 @@ export default function HistorialPage() {
         </Button>
       </div>
 
-      {loading ? <LoadingSpinner label="Cargando historial desde backend..." /> : null}
+      {loading ? (
+        <div className="grid gap-4" aria-label="Cargando historial">
+          <SkeletonTable rows={6} cols={5} />
+          <SkeletonTable rows={5} cols={6} />
+        </div>
+      ) : null}
 
       {error ? (
-        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
-          No se pudo cargar historial real de lecturas y mantenciones.
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
+          <p className="m-0">No se pudo cargar historial real de lecturas y mantenciones.</p>
+          <Button type="button" variant="outline" onClick={loadHistorial} disabled={loading || isSavingMantencion}>
+            {loading ? "Reintentando..." : "Reintentar"}
+          </Button>
         </div>
       ) : null}
 
@@ -127,7 +135,11 @@ export default function HistorialPage() {
         <EmptyState
           title="Sin historial cargado"
           description="Acá conviven lecturas y mantenciones reales cuando ya existen datos en backend."
-        />
+        >
+          <Button type="button" variant="outline" onClick={loadHistorial} disabled={loading || isSavingMantencion}>
+            {loading ? "Actualizando..." : "Actualizar historial"}
+          </Button>
+        </EmptyState>
       ) : null}
 
       <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">

@@ -1,5 +1,5 @@
 import Button from "../ui/Button";
-import LoadingSpinner from "../ui/LoadingSpinner";
+import { SkeletonTable } from "../ui/Skeleton";
 
 export default function EquipoUmbralesSection({
   loadUmbrales,
@@ -32,7 +32,7 @@ export default function EquipoUmbralesSection({
         Los cambios impactan en la evaluación de alertas para próximas lecturas de este equipo.
       </p>
 
-      {umbralesLoading ? <LoadingSpinner label="Cargando umbrales del equipo..." /> : null}
+      {umbralesLoading ? <SkeletonTable rows={3} cols={4} className="mt-2" /> : null}
 
       {umbralesErrorMessage ? (
         <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">

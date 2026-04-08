@@ -5,7 +5,7 @@ import AlertaBadge from "../components/alertas/AlertaBadge";
 import AlertaItem from "../components/alertas/AlertaItem";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
-import LoadingSpinner from "../components/ui/LoadingSpinner";
+import { SkeletonCard } from "../components/ui/Skeleton";
 import usePolling from "../hooks/usePolling";
 import { ALERTAS_POLLING_INTERVAL_MS } from "../utils/constants";
 
@@ -77,11 +77,20 @@ export default function AlertasPage() {
         </div>
       </div>
 
-      {isInitialLoading ? <LoadingSpinner label="Cargando alertas desde backend..." /> : null}
+      {isInitialLoading ? (
+        <div className="grid gap-3" aria-label="Cargando alertas">
+          {Array.from({ length: 4 }, (_, index) => (
+            <SkeletonCard key={index} />
+          ))}
+        </div>
+      ) : null}
 
       {error ? (
-        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
-          No se pudieron cargar o actualizar alertas. Se mantienen los últimos datos disponibles.
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
+          <p className="m-0">No se pudieron cargar o actualizar alertas. Se mantienen los últimos datos disponibles.</p>
+          <Button type="button" variant="outline" onClick={refresh} disabled={loading}>
+            {loading ? "Reintentando..." : "Reintentar"}
+          </Button>
         </div>
       ) : null}
 
@@ -95,7 +104,11 @@ export default function AlertasPage() {
         <EmptyState
           title="Sin alertas registradas"
           description="Cuando se detecten desvíos de umbrales o predicciones críticas aparecerán aquí."
-        />
+        >
+          <Button type="button" variant="outline" onClick={refresh} disabled={loading}>
+            {loading ? "Actualizando..." : "Actualizar alertas"}
+          </Button>
+        </EmptyState>
       ) : null}
 
       {alertasNoLeidas.length > 0 ? (

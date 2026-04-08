@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
+
 import ResumenCards from "../components/dashboard/ResumenCards";
 import GraficoTemperatura from "../components/dashboard/GraficoTemperatura";
 import GraficoVibracion from "../components/dashboard/GraficoVibracion";
 import TablaEstadoEquipos from "../components/dashboard/TablaEstadoEquipos";
 import TablaUltimasLecturas from "../components/dashboard/TablaUltimasLecturas";
 import { SkeletonMetric, SkeletonTable, SkeletonChart } from "../components/ui/Skeleton";
+import Button from "../components/ui/Button";
 import { getDashboardData } from "../api/dashboard";
 import usePolling from "../hooks/usePolling";
 import { DASHBOARD_POLLING_INTERVAL_MS } from "../utils/constants";
@@ -18,12 +21,27 @@ const resumenInicial = {
 };
 
 export default function DashboardPage() {
-  const { data, loading, error } = usePolling(getDashboardData, DASHBOARD_POLLING_INTERVAL_MS, null);
+  const { data, loading, error, refresh } = usePolling(getDashboardData, DASHBOARD_POLLING_INTERVAL_MS, null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
 
   const resumen = data?.resumen || resumenInicial;
   const lecturas = Array.isArray(data?.lecturas) ? data.lecturas : [];
 
   const isInitialLoading = loading && !data;
+
+  useEffect(() => {
+    if (data) {
+      setLastUpdatedAt(new Date());
+    }
+  }, [data]);
+
+  const lastUpdatedLabel = lastUpdatedAt
+    ? lastUpdatedAt.toLocaleTimeString("es-CL", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : "sin sincronización";
 
   return (
     <section className="grid gap-8">
@@ -38,7 +56,14 @@ export default function DashboardPage() {
             </span>
           ) : null}
         </div>
-        <p className="text-sm text-neutral-500">Resumen operativo del prototipo de mantenimiento predictivo.</p>
+        <p className="text-sm text-neutral-500">
+          Resumen operativo del prototipo de mantenimiento predictivo.
+          <span className="ml-2 text-xs text-neutral-500">Última actualización: {lastUpdatedLabel}</span>
+        </p>
+      </div>
+
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        Dashboard actualizado a las {lastUpdatedLabel}.
       </div>
 
       {/* Bloque crítico: resumen operativo */}
@@ -57,8 +82,14 @@ export default function DashboardPage() {
       </section>
 
       {error ? (
-        <div className="rounded-lg border border-warning-500 bg-warning-50 px-4 py-3 text-sm text-warning-700">
-          No se pudo actualizar el backend. Se mantienen los últimos datos disponibles.
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-500 bg-warning-50 px-4 py-3 text-sm text-warning-700">
+          <p className="m-0">
+            No se pudo actualizar el backend.
+            <span className="ml-1">Se muestran los últimos datos válidos ({lastUpdatedLabel}).</span>
+          </p>
+          <Button type="button" variant="outline" onClick={refresh} disabled={loading}>
+            {loading ? "Reintentando..." : "Reintentar"}
+          </Button>
         </div>
       ) : null}
 

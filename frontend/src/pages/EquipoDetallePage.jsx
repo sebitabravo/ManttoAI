@@ -5,8 +5,8 @@ import EquipoPrediccionCard from "../components/equipos/EquipoPrediccionCard";
 import EquipoResumenCard from "../components/equipos/EquipoResumenCard";
 import EquipoUmbralesSection from "../components/equipos/EquipoUmbralesSection";
 import EmptyState from "../components/ui/EmptyState";
-import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Button from "../components/ui/Button";
+import { SkeletonCard, SkeletonTable } from "../components/ui/Skeleton";
 import useEquipoDetalle, { formatVariableLabel } from "../hooks/useEquipoDetalle";
 
 export default function EquipoDetallePage() {
@@ -119,11 +119,20 @@ export default function EquipoDetallePage() {
         </div>
       </div>
 
-      {isInitialLoading ? <LoadingSpinner label="Cargando detalle de equipo..." /> : null}
+      {isInitialLoading ? (
+        <div className="grid gap-4" aria-label="Cargando detalle de equipo">
+          <SkeletonCard />
+          <SkeletonTable rows={4} cols={4} />
+          <SkeletonTable rows={4} cols={5} />
+        </div>
+      ) : null}
 
       {error ? (
-        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
-          No pudimos obtener datos reales del equipo solicitado. Se mantienen los últimos datos disponibles.
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
+          <p className="m-0">No pudimos obtener datos reales del equipo solicitado. Se mantienen los últimos datos disponibles.</p>
+          <Button type="button" variant="outline" onClick={handleRefresh} disabled={loading}>
+            {loading ? "Reintentando..." : "Reintentar"}
+          </Button>
         </div>
       ) : null}
 
@@ -131,7 +140,11 @@ export default function EquipoDetallePage() {
         <EmptyState
           title="Equipo no disponible"
           description="El backend no devolvió información para este equipo o todavía no existe."
-        />
+        >
+          <Button type="button" variant="outline" onClick={handleRefresh} disabled={loading}>
+            {loading ? "Actualizando..." : "Actualizar detalle"}
+          </Button>
+        </EmptyState>
       ) : null}
 
       <EquipoResumenCard equipo={equipo} />

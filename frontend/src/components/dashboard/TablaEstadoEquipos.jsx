@@ -82,9 +82,7 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
                     </td>
                     <td className="py-3 text-sm">
                       <span 
-                        role="status" 
-                        aria-live="polite" 
-                        aria-label={`Telemetría ${telemetryStatus.toLowerCase()}`}
+                        aria-label={`Estado de telemetría: ${telemetryStatus.toLowerCase()}`}
                         className={`rounded-sm px-2 py-1 text-xs font-medium ${
                           telemetryStatus === "Activa"
                             ? "bg-success-50 text-success-700"

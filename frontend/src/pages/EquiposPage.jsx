@@ -5,8 +5,8 @@ import { createEquipo, getEquipos } from "../api/equipos";
 import EquipoCard from "../components/equipos/EquipoCard";
 import EquipoForm from "../components/equipos/EquipoForm";
 import EmptyState from "../components/ui/EmptyState";
-import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Button from "../components/ui/Button";
+import { SkeletonCard } from "../components/ui/Skeleton";
 import usePolling from "../hooks/usePolling";
 import { getApiErrorMessage } from "../utils/errorHandling";
 import { formatMetric, formatProbability } from "../utils/metrics";
@@ -142,11 +142,20 @@ export default function EquiposPage() {
         </section>
       ) : null}
 
-      {isInitialLoading ? <LoadingSpinner label="Cargando equipos desde backend..." /> : null}
+      {isInitialLoading ? (
+        <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]" aria-label="Cargando equipos">
+          {Array.from({ length: 6 }, (_, index) => (
+            <SkeletonCard key={index} />
+          ))}
+        </div>
+      ) : null}
 
       {error ? (
-        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
-          No se pudieron cargar equipos. Se mantienen los últimos datos disponibles.
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
+          <p className="m-0">No se pudieron cargar equipos. Se mantienen los últimos datos disponibles.</p>
+          <Button type="button" variant="outline" onClick={refresh} disabled={loading || isCreating}>
+            {loading ? "Reintentando..." : "Reintentar"}
+          </Button>
         </div>
       ) : null}
 
@@ -154,7 +163,11 @@ export default function EquiposPage() {
         <EmptyState
           title="No hay equipos cargados"
           description="Usá el botón 'Nuevo equipo' para cargar activos y habilitar monitoreo en la interfaz."
-        />
+        >
+          <Button type="button" variant="outline" onClick={openCreateForm}>
+            Registrar primer equipo
+          </Button>
+        </EmptyState>
       ) : null}
 
       <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">

@@ -1,4 +1,7 @@
-# AUDITORÍA TÉCNICA COMPLETA — ManttoAI Predictivo
+# [ARCHIVADO] AUDITORÍA TÉCNICA COMPLETA — ManttoAI Predictivo
+
+> ⚠️ Documento archivado por redundancia con `docs/auditoria-tecnica-final-v2.0.md` y `docs/verificacion-e2e-final.md`.
+> Estado vigente: revisar `docs/README.md`.
 
 **Fecha**: 2026-04-07  
 **Auditor**: Sebastián Bravo (Senior Architect + IA)  

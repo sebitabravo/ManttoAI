@@ -23,7 +23,7 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
   const rows = Array.isArray(equipos) ? equipos : [];
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-6">
+    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
       <h2 className="mb-4 mt-0 text-lg font-semibold text-neutral-800">Estado por equipo</h2>
       
       {rows.length === 0 ? (
@@ -64,7 +64,7 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
                 const hasAlerts = Number(equipo.alertas_activas || 0) > 0;
 
                 return (
-                  <tr key={equipo.id} className="transition-colors duration-150 hover:bg-neutral-50">
+                  <tr key={equipo.id} className="transition-colors duration-150 ease-out-quart hover:bg-neutral-50">
                     <td className="py-3 pr-4 tabular-nums text-sm text-neutral-700">
                       {equipo.id}
                     </td>
@@ -82,9 +82,7 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
                     </td>
                     <td className="py-3 text-sm">
                       <span 
-                        role="status" 
-                        aria-live="polite" 
-                        aria-label={`Telemetría ${telemetryStatus.toLowerCase()}`}
+                        aria-label={`Estado de telemetría: ${telemetryStatus.toLowerCase()}`}
                         className={`rounded-sm px-2 py-1 text-xs font-medium ${
                           telemetryStatus === "Activa"
                             ? "bg-success-50 text-success-700"

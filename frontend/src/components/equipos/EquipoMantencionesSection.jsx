@@ -18,7 +18,7 @@ export default function EquipoMantencionesSection({
   updateMantencionErrorMessage,
 }) {
   return (
-    <section className="grid gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+    <section className="grid grid-cols-1 gap-3 rounded-lg border border-neutral-300 bg-neutral-100 p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Mantenciones recientes</h2>
         <Button
@@ -32,7 +32,7 @@ export default function EquipoMantencionesSection({
       </div>
 
       {showCreateMantencionForm ? (
-        <section className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+        <div className="border-t border-neutral-200 pt-3">
           <h3 className="mt-0 text-base font-semibold text-neutral-900">Registrar mantención</h3>
           <MantencionForm
             onSubmit={handleCreateMantencion}
@@ -41,7 +41,7 @@ export default function EquipoMantencionesSection({
             isSubmitting={isCreatingMantencion}
             errorMessage={createMantencionErrorMessage}
           />
-        </section>
+        </div>
       ) : null}
 
       {mantencionesRecientes.length === 0 ? (
@@ -63,12 +63,12 @@ export default function EquipoMantencionesSection({
                 <th scope="col" className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-neutral-200">
               {mantencionesRecientes.map((mantencion) => {
                 const isEditing = Number(editingMantencionId) === Number(mantencion.id);
 
                 return (
-                  <tr key={mantencion.id} className="hover:bg-neutral-50 transition-colors duration-150">
+                  <tr key={mantencion.id} className="hover:bg-neutral-50 transition-colors duration-150 ease-out-quart">
                     <td className="py-2 pr-4 text-sm tabular-nums text-neutral-900">{mantencion.id}</td>
                     <td className="py-2 pr-4 text-sm text-neutral-900">{mantencion.tipo}</td>
                     <td className="py-2 pr-4 text-sm text-neutral-700">{mantencion.descripcion}</td>
@@ -92,7 +92,7 @@ export default function EquipoMantencionesSection({
       )}
 
       {selectedMantencion ? (
-        <section className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+        <div className="border-t border-neutral-200 pt-3">
           <h3 className="mt-0 text-base font-semibold text-neutral-900">Editar mantención #{selectedMantencion.id}</h3>
           <MantencionForm
             initialValues={{
@@ -106,7 +106,7 @@ export default function EquipoMantencionesSection({
             isSubmitting={isSavingMantencion}
             errorMessage={updateMantencionErrorMessage}
           />
-        </section>
+        </div>
       ) : null}
     </section>
   );

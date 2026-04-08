@@ -84,6 +84,18 @@ export default {
           800: "oklch(34% 0.150 25)",
           900: "oklch(27% 0.120 25)",
         },
+        info: {
+          50: "oklch(96% 0.018 240)",
+          100: "oklch(92% 0.032 240)",
+          200: "oklch(86% 0.050 240)",
+          300: "oklch(78% 0.075 240)",
+          400: "oklch(68% 0.095 240)",
+          500: "oklch(58% 0.110 240)",
+          600: "oklch(50% 0.118 240)",
+          700: "oklch(42% 0.105 240)",
+          800: "oklch(34% 0.085 240)",
+          900: "oklch(27% 0.070 240)",
+        },
       },
       borderRadius: {
         sm: "6px",   // chips, badges, nav items
@@ -92,12 +104,12 @@ export default {
         lg: "12px",  // cards principales, modales
       },
       fontSize: {
-        xs: ["0.75rem", { lineHeight: "1rem", letterSpacing: "0" }],        // 12px - badges, labels
-        sm: ["0.8125rem", { lineHeight: "1.25rem", letterSpacing: "0" }],   // 13px - secondary text
-        base: ["0.875rem", { lineHeight: "1.375rem", letterSpacing: "0" }], // 14px - UI text
-        md: ["1rem", { lineHeight: "1.5rem", letterSpacing: "-0.01em" }],   // 16px - sidebar titles
-        lg: ["1.125rem", { lineHeight: "1.625rem", letterSpacing: "-0.01em" }], // 18px - page headers
-        xl: ["1.375rem", { lineHeight: "1.875rem", letterSpacing: "-0.02em" }], // 22px - dashboard title
+        // Escala fija (4 niveles visuales) para UI densa de operación.
+        xs: ["0.75rem", { lineHeight: "1rem", letterSpacing: "0" }],
+        sm: ["0.875rem", { lineHeight: "1.375rem", letterSpacing: "0" }],
+        base: ["0.875rem", { lineHeight: "1.375rem", letterSpacing: "0" }],
+        lg: ["1.125rem", { lineHeight: "1.625rem", letterSpacing: "-0.01em" }],
+        xl: ["1.875rem", { lineHeight: "2.25rem", letterSpacing: "-0.02em" }],
       },
       fontWeight: {
         normal: "400",

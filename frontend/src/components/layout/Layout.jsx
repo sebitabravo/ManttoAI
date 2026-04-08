@@ -41,6 +41,13 @@ export default function Layout() {
 
   return (
     <div className="layout-root">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[120] focus:rounded-sm focus:bg-neutral-100 focus:px-3 focus:py-2 focus:text-sm focus:text-neutral-800 focus:ring-2 focus:ring-primary-500"
+      >
+        Saltar al contenido principal
+      </a>
+
       {/* Overlay semitransparente: cierra el sidebar al hacer clic fuera en tablet */}
       {sidebarAbierto && (
         <div
@@ -53,17 +60,18 @@ export default function Layout() {
       <Sidebar
         className={sidebarAbierto ? "layout-sidebar--abierto" : ""}
         sidebarAbierto={sidebarAbierto}
+        onClose={cerrarSidebar}
         onNavClick={cerrarSidebar}
         retornarFocoRef={menuBtnRef}
       />
 
-      <div className="flex flex-col">
+      <div className="flex min-w-0 flex-col">
         <Header
           onMenuToggle={toggleSidebar}
           sidebarAbierto={sidebarAbierto}
           menuBtnRef={menuBtnRef}
         />
-        <main className="bg-neutral-50 p-6">
+        <main id="main-content" tabIndex={-1} className="bg-neutral-50 px-4 py-5 md:px-6 md:py-6 xl:px-8 xl:py-7">
           <Outlet />
         </main>
       </div>

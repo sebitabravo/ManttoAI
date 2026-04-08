@@ -99,7 +99,7 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
 
   // Verificar redirección al dashboard
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Centro de control operacional/i })).toBeVisible();
 
   // Verificar que el payload del login fue correcto
   expect(loginPayload).toEqual({

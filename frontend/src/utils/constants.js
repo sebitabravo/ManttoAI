@@ -4,10 +4,11 @@ export const ESTADOS = {
   detenido: "Detenido",
 };
 
+// Severidad de nivel de alerta — usar tokens semánticos del design system
 export const NIVELES_ALERTA = {
-  bajo: "#10b981",
-  medio: "#f59e0b",
-  alto: "#ef4444",
+  bajo: "success",
+  medio: "warning",
+  alto: "danger",
 };
 
 // === Intervalos de polling por página ===

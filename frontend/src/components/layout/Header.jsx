@@ -1,7 +1,8 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import Button from "../ui/Button";
 import Logo from "../ui/Logo";
+import TopbarNotifications from "./TopbarNotifications";
 import useAuth from "../../hooks/useAuth";
 
 /**
@@ -19,15 +20,21 @@ import useAuth from "../../hooks/useAuth";
  */
 export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate("/login", { replace: true });
+  }
 
   return (
-    <header className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100 px-5 py-4">
+    <header className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100 px-3 py-3 sm:px-5 sm:py-4">
       <div className="flex items-center gap-3">
         {/* Botón hamburguesa: visible solo en tablet/mobile via CSS (.btn-menu-tablet) */}
         <button
           type="button"
           ref={menuBtnRef}
-          className="btn-menu-tablet flex items-center justify-center rounded-sm bg-transparent p-1 text-neutral-600 transition-colors duration-150 hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="btn-menu-tablet flex items-center justify-center rounded-sm bg-transparent p-1 text-neutral-600 transition-all duration-150 ease-out-quart hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
           onClick={onMenuToggle}
           aria-label={sidebarAbierto ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
           aria-expanded={sidebarAbierto}
@@ -48,11 +55,12 @@ export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
       </div>
 
       {/* Usuario + botón salir */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-neutral-600">{user?.nombre || "Invitado"}</span>
-        <Link to="/login" onClick={logout}>
-          <Button variant="outline">Salir</Button>
-        </Link>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <TopbarNotifications />
+        <span className="hidden text-sm text-neutral-600 md:inline">{user?.nombre || "Invitado"}</span>
+        <Button type="button" variant="outline" onClick={handleLogout} className="px-3 sm:px-4">
+          Salir
+        </Button>
       </div>
     </header>
   );

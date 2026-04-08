@@ -13,8 +13,8 @@
  */
 export default function EmptyState({ title, description, children }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center">
-      <h3 className="text-md font-semibold text-neutral-700">
+    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-neutral-300 bg-neutral-100 px-6 py-10 text-center shadow-sm">
+      <h3 className="text-lg font-semibold text-neutral-700">
         {title}
       </h3>
       {description && (

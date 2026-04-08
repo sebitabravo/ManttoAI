@@ -1,18 +1,42 @@
 import { formatProbability } from "../../utils/metrics";
+import InfoTooltip from "../ui/InfoTooltip";
 
 /**
  * Cards de resumen con jerarquía visual asimétrica.
- * 
+ *
  * Principio de diseño: Data is the Hero
  * - Alertas activas y Equipos en riesgo son PROMINENTES (críticas para decisiones)
  * - Métricas secundarias (total equipos, clasificación, probabilidad) son compactas
  * - Layout asimétrico con variación de tamaño según importancia operativa
- * 
+ *
  * Grid adaptativo:
- * - Desktop: 2 grandes (alertas, riesgo) + 3 pequeñas apiladas
+ * - Desktop: 2 grandes (alertas, riesgo) + row de métricas compactas
  * - Tablet: 2 columnas
  * - Mobile: 1 columna
+ *
+ * NOTA: Las clases de color se resuelven con un mapa explícito porque Tailwind JIT
+ * no detecta clases construidas con interpolación dinámica (ej. `bg-${variable}-50`).
  */
+
+// Mapa explícito de clases por severidad — Tailwind JIT necesita ver las clases completas
+const SEVERITY_CLASSES = {
+  success: {
+    card: "bg-success-50 border-success-500",
+    label: "text-success-700",
+    value: "text-success-700",
+  },
+  warning: {
+    card: "bg-warning-50 border-warning-500",
+    label: "text-warning-700",
+    value: "text-warning-700",
+  },
+  danger: {
+    card: "bg-danger-50 border-danger-500",
+    label: "text-danger-700",
+    value: "text-danger-700",
+  },
+};
+
 export default function ResumenCards({ resumen }) {
   const alertasActivas = resumen.alertas_activas || 0;
   const equiposEnRiesgo = resumen.equipos_en_riesgo || 0;
@@ -24,26 +48,22 @@ export default function ResumenCards({ resumen }) {
   const alertasSeveridad = alertasActivas === 0 ? "success" : alertasActivas >= 5 ? "danger" : "warning";
   const riesgoSeveridad = equiposEnRiesgo === 0 ? "success" : equiposEnRiesgo >= 3 ? "danger" : "warning";
 
+  const alertasClasses = SEVERITY_CLASSES[alertasSeveridad];
+  const riesgoClasses = SEVERITY_CLASSES[riesgoSeveridad];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* ALERTA ACTIVAS — card GRANDE prominente */}
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+      {/* ALERTAS ACTIVAS — card hero primaria */}
       <article
-        className={`
-          lg:col-span-2 lg:row-span-2
-          rounded-lg border-2 p-6
-          bg-${alertasSeveridad}-50
-          border-${alertasSeveridad}-500
-          transition-all duration-200 ease-out-quart
-          hover:shadow-md
-        `}
+        className={`resumen-hero rounded-lg border-2 p-6 md:p-7 xl:col-span-7 ${alertasClasses.card} transition-colors duration-150 ease-out-quart`}
       >
-        <div className={`text-sm font-medium uppercase tracking-wide text-${alertasSeveridad}-700 mb-2`}>
+        <div className={`resumen-hero__label mb-2 text-xs font-semibold uppercase tracking-wide ${alertasClasses.label}`}>
           Alertas activas
         </div>
-        <div className={`metric-value text-6xl font-semibold text-${alertasSeveridad}-700 mb-3`}>
+        <div className={`resumen-hero__value metric-value mb-2 text-5xl font-semibold ${alertasClasses.value}`}>
           {alertasActivas}
         </div>
-        <div className="text-sm text-neutral-600">
+        <div className="text-sm text-neutral-700">
           {alertasActivas === 0
             ? "Sistema operando dentro de parámetros normales"
             : alertasActivas === 1
@@ -52,24 +72,17 @@ export default function ResumenCards({ resumen }) {
         </div>
       </article>
 
-      {/* EQUIPOS EN RIESGO — card GRANDE prominente */}
+      {/* EQUIPOS EN RIESGO — card hero secundaria */}
       <article
-        className={`
-          lg:col-span-2 lg:row-span-2
-          rounded-lg border-2 p-6
-          bg-${riesgoSeveridad}-50
-          border-${riesgoSeveridad}-500
-          transition-all duration-200 ease-out-quart
-          hover:shadow-md
-        `}
+        className={`resumen-hero rounded-lg border-2 p-6 md:p-7 xl:col-span-5 ${riesgoClasses.card} transition-colors duration-150 ease-out-quart`}
       >
-        <div className={`text-sm font-medium uppercase tracking-wide text-${riesgoSeveridad}-700 mb-2`}>
+        <div className={`resumen-hero__label mb-2 text-xs font-semibold uppercase tracking-wide ${riesgoClasses.label}`}>
           Equipos en riesgo
         </div>
-        <div className={`metric-value text-6xl font-semibold text-${riesgoSeveridad}-700 mb-3`}>
+        <div className={`resumen-hero__value metric-value mb-2 text-5xl font-semibold ${riesgoClasses.value}`}>
           {equiposEnRiesgo}
         </div>
-        <div className="text-sm text-neutral-600">
+        <div className="text-sm text-neutral-700">
           {equiposEnRiesgo === 0
             ? "Todos los equipos en condiciones óptimas"
             : totalEquipos > 0
@@ -78,30 +91,40 @@ export default function ResumenCards({ resumen }) {
         </div>
       </article>
 
-      {/* TOTAL EQUIPOS — card pequeña secundaria */}
-      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-200 ease-out-quart hover:shadow">
-        <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-1">
-          Total equipos
+      {/* Métricas secundarias compactas */}
+      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
+        <div className="mb-1 flex items-center gap-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">Total equipos</span>
+          <InfoTooltip
+            label="Ayuda: total equipos"
+            text="Cantidad de equipos registrados y actualmente monitoreados por la plataforma."
+          />
         </div>
-        <div className="metric-value text-3xl font-semibold text-neutral-700">
+        <div className="metric-value text-2xl font-semibold text-neutral-700">
           {totalEquipos}
         </div>
       </article>
 
-      {/* CLASIFICACIÓN — card pequeña secundaria */}
-      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-200 ease-out-quart hover:shadow">
-        <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-1">
-          Clasificación
+      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
+        <div className="mb-1 flex items-center gap-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">Clasificación</span>
+          <InfoTooltip
+            label="Ayuda: clasificación"
+            text="Estado global estimado según telemetría reciente y evaluación del modelo predictivo."
+          />
         </div>
         <div className="text-2xl font-semibold text-neutral-700 capitalize">
           {clasificacion}
         </div>
       </article>
 
-      {/* PROBABILIDAD FALLA — card pequeña secundaria */}
-      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-200 ease-out-quart hover:shadow md:col-span-2 lg:col-span-1">
-        <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-1">
-          Probabilidad de falla
+      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
+        <div className="mb-1 flex items-center gap-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">Probabilidad de falla</span>
+          <InfoTooltip
+            label="Ayuda: probabilidad de falla"
+            text="Probabilidad estimada de falla en el estado actual de operación (valor de 0% a 100%)."
+          />
         </div>
         <div className="metric-value text-2xl font-semibold text-neutral-700">
           {probabilidad}

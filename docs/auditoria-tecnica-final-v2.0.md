@@ -4,7 +4,9 @@
 **Auditor**: Sebastián Bravo (Senior Architect + IA)  
 **Proyecto**: ManttoAI Predictive Maintenance v1.0.0 (INACAP — Capstone)  
 **Objetivo**: Verificar estado FINAL del proyecto antes de la defensa de título  
-**Último commit**: `9dfca8b` - Merge PR #84 (UI/UX design rescue)
+**Último commit (snapshot de auditoría)**: `9dfca8b` - Merge PR #84 (UI/UX design rescue)
+
+> ⚠️ Este documento es un snapshot puntual del 2026-04-07. Para estado vigente y operativo usar `docs/verificacion-e2e-final.md` + `docs/checklist-defensa.md`.
 
 ---
 
@@ -651,7 +653,7 @@ Solo si quieren tener el repo 100% limpio antes de la defensa:
    ```bash
    git add docs/decisiones/ADR-*.md
    git add .github/workflows/deploy.yml
-   git add docs/auditoria-final.md
+   git add docs/archive/auditoria-final.md
    git commit -m "docs: add final documentation for v1.0.0 release"
    ```
 

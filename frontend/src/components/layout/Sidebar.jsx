@@ -25,10 +25,17 @@ const items = [
  * Props:
  *  - className: clases CSS adicionales (usadas por Layout para el drawer en tablet)
  *  - sidebarAbierto: estado del drawer (para atributos ARIA y gestión de foco)
+ *  - onClose: callback para cerrar drawer desde botón interno mobile
  *  - onNavClick: callback al hacer clic en un ítem de nav (cierra el drawer en tablet)
  *  - retornarFocoRef: ref al botón que abrió el drawer (para devolver foco al cerrar)
  */
-export default function Sidebar({ className = "", sidebarAbierto = false, onNavClick, retornarFocoRef }) {
+export default function Sidebar({
+  className = "",
+  sidebarAbierto = false,
+  onNavClick,
+  onClose,
+  retornarFocoRef,
+}) {
   const asideRef = useRef(null);
 
   useEffect(() => {
@@ -77,10 +84,26 @@ export default function Sidebar({ className = "", sidebarAbierto = false, onNavC
       aria-modal={sidebarAbierto ? "true" : undefined}
       aria-label="Menú de navegación"
     >
-      {/* Logo + branding */}
-      <div className="mb-6 flex items-center gap-2">
-        <Logo size={28} />
-        <span className="text-md font-semibold text-neutral-800">ManttoAI</span>
+      {/* Logo + branding + cierre explícito en drawer mobile */}
+      <div className="mb-6 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Logo size={28} />
+          <span className="text-md font-semibold text-neutral-800">ManttoAI</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar menú de navegación"
+          className={`rounded-sm p-1 text-neutral-600 transition-all duration-150 ease-out-quart hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500 md:hidden ${
+            sidebarAbierto ? "inline-flex" : "hidden"
+          }`}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <line x1="6" y1="6" x2="18" y2="18" />
+            <line x1="18" y1="6" x2="6" y2="18" />
+          </svg>
+        </button>
       </div>
 
       {/* Navegación principal */}
@@ -98,8 +121,8 @@ export default function Sidebar({ className = "", sidebarAbierto = false, onNavC
                 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset
                 ${
                   isActive
-                    ? "bg-primary-50 font-semibold text-primary-600"
-                    : "font-normal text-neutral-600 hover:bg-neutral-100 hover:text-neutral-800"
+                    ? "bg-primary-50 font-semibold text-primary-600 border-l-2 border-primary-500 -ml-[2px] pl-[calc(0.75rem+2px)]"
+                    : "font-normal text-neutral-600 hover:bg-neutral-100 hover:text-neutral-800 border-l-2 border-transparent"
                 }
               `.trim()
             }

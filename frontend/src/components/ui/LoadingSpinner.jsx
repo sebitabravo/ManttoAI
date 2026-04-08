@@ -1,7 +1,7 @@
 /**
  * Indicador de carga del sistema de diseño ManttoAI.
  * 
- * Spinner visual animado + label semántico para lectores de pantalla.
+ * Placeholder skeleton + label semántico para lectores de pantalla.
  * 
  * Uso:
  * - Estado de carga inicial (página completa)
@@ -19,11 +19,11 @@ export default function LoadingSpinner({ label = "Cargando..." }) {
       aria-busy="true"
       className="flex flex-col items-center justify-center gap-3 py-12"
     >
-      {/* Spinner visual animado */}
-      <div 
-        className="h-10 w-10 animate-spin rounded-full border-4 border-neutral-200 border-t-primary-600"
-        aria-hidden="true"
-      />
+      {/* Skeleton visual: evita spinner genérico y mantiene jerarquía sobria */}
+      <div className="w-full max-w-56 space-y-2" aria-hidden="true">
+        <div className="h-2 w-full animate-pulse rounded bg-neutral-200" />
+        <div className="h-2 w-4/5 animate-pulse rounded bg-neutral-200" />
+      </div>
       
       {/* Label visible y para lectores de pantalla */}
       <span className="text-sm font-medium text-neutral-600">

@@ -5,7 +5,7 @@ import AlertaBadge from "../components/alertas/AlertaBadge";
 import AlertaItem from "../components/alertas/AlertaItem";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
-import LoadingSpinner from "../components/ui/LoadingSpinner";
+import { SkeletonCard } from "../components/ui/Skeleton";
 import usePolling from "../hooks/usePolling";
 import { ALERTAS_POLLING_INTERVAL_MS } from "../utils/constants";
 
@@ -50,10 +50,18 @@ export default function AlertasPage() {
   const isInitialLoading = loading && alertas.length === 0;
 
   return (
-    <section className="grid gap-4">
+    <section className="grid grid-cols-1 gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="m-0 text-xl font-semibold text-neutral-900">Alertas</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="m-0 text-xl font-semibold text-neutral-900">Alertas</h1>
+            {loading && alertas.length > 0 ? (
+              <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" aria-hidden="true" />
+                Actualizando
+              </span>
+            ) : null}
+          </div>
           <p className="mb-0 mt-1.5 text-sm text-neutral-600">
             Monitoreo de alertas activas y trazabilidad de alertas leídas.
             <span className="ml-2 text-xs text-neutral-500">
@@ -69,18 +77,20 @@ export default function AlertasPage() {
         </div>
       </div>
 
-      {/* Indicador de actualización en segundo plano */}
-      {loading && alertas.length > 0 ? (
-        <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
-          Actualizando alertas...
+      {isInitialLoading ? (
+        <div className="grid grid-cols-1 gap-3" aria-label="Cargando alertas">
+          {Array.from({ length: 4 }, (_, index) => (
+            <SkeletonCard key={index} />
+          ))}
         </div>
       ) : null}
 
-      {isInitialLoading ? <LoadingSpinner label="Cargando alertas desde backend..." /> : null}
-
       {error ? (
-        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
-          No se pudieron cargar o actualizar alertas. Se mantienen los últimos datos disponibles.
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
+          <p className="m-0">No se pudieron cargar o actualizar alertas. Se mantienen los últimos datos disponibles.</p>
+          <Button type="button" variant="outline" onClick={refresh} disabled={loading}>
+            {loading ? "Reintentando..." : "Reintentar"}
+          </Button>
         </div>
       ) : null}
 
@@ -94,11 +104,15 @@ export default function AlertasPage() {
         <EmptyState
           title="Sin alertas registradas"
           description="Cuando se detecten desvíos de umbrales o predicciones críticas aparecerán aquí."
-        />
+        >
+          <Button type="button" variant="outline" onClick={refresh} disabled={loading}>
+            {loading ? "Actualizando..." : "Actualizar alertas"}
+          </Button>
+        </EmptyState>
       ) : null}
 
       {alertasNoLeidas.length > 0 ? (
-        <section className="grid gap-3">
+        <section className="grid grid-cols-1 gap-3">
           <h2 className="mb-0 text-lg font-semibold text-neutral-900">No leídas</h2>
           {alertasNoLeidas.map((alerta) => (
             <AlertaItem
@@ -112,7 +126,7 @@ export default function AlertasPage() {
       ) : null}
 
       {alertasLeidas.length > 0 ? (
-        <section className="grid gap-3">
+        <section className="grid grid-cols-1 gap-3">
           <h2 className="mb-0 text-lg font-semibold text-neutral-900">Leídas recientemente</h2>
           {alertasLeidas.slice(0, 20).map((alerta) => (
             <AlertaItem key={alerta.id} alerta={alerta} />

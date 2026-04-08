@@ -106,9 +106,9 @@ test("dashboard consume API real y reemplaza placeholders", async ({ page }) => 
 
   await page.goto("/dashboard");
 
-  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-  await expect(page.getByText("Probabilidad de falla")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Centro de control operacional/i })).toBeVisible();
   const probabilidadCard = page.locator("article").filter({ hasText: "Probabilidad de falla" });
+  await expect(probabilidadCard).toBeVisible();
   await expect(probabilidadCard.getByText("68.0 %")).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "Temperatura" })).toBeVisible();

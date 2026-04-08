@@ -5,8 +5,8 @@ import { createEquipo, getEquipos } from "../api/equipos";
 import EquipoCard from "../components/equipos/EquipoCard";
 import EquipoForm from "../components/equipos/EquipoForm";
 import EmptyState from "../components/ui/EmptyState";
-import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Button from "../components/ui/Button";
+import { SkeletonCard } from "../components/ui/Skeleton";
 import usePolling from "../hooks/usePolling";
 import { getApiErrorMessage } from "../utils/errorHandling";
 import { formatMetric, formatProbability } from "../utils/metrics";
@@ -95,10 +95,18 @@ export default function EquiposPage() {
   const isInitialLoading = loading && equipos.length === 0;
 
   return (
-    <section className="grid gap-4">
+    <section className="grid grid-cols-1 gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="m-0 text-xl font-semibold text-neutral-900">Equipos</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="m-0 text-xl font-semibold text-neutral-900">Equipos</h1>
+            {loading && equipos.length > 0 ? (
+              <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" aria-hidden="true" />
+                Actualizando
+              </span>
+            ) : null}
+          </div>
           <p className="mb-0 mt-1.5 text-sm text-neutral-600">
             Activos registrados en el sistema de monitoreo.
             <span className="ml-2 text-xs text-neutral-500">
@@ -122,7 +130,7 @@ export default function EquiposPage() {
       </div>
 
       {showCreateForm ? (
-        <section className="rounded-lg border border-neutral-200 bg-white p-4">
+        <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
           <h2 className="mt-0 text-lg font-semibold text-neutral-900">Alta de equipo</h2>
           <EquipoForm
             submitLabel="Crear equipo"
@@ -134,18 +142,20 @@ export default function EquiposPage() {
         </section>
       ) : null}
 
-      {/* Indicador de actualización en segundo plano */}
-      {loading && equipos.length > 0 ? (
-        <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
-          Actualizando equipos...
+      {isInitialLoading ? (
+        <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]" aria-label="Cargando equipos">
+          {Array.from({ length: 6 }, (_, index) => (
+            <SkeletonCard key={index} />
+          ))}
         </div>
       ) : null}
 
-      {isInitialLoading ? <LoadingSpinner label="Cargando equipos desde backend..." /> : null}
-
       {error ? (
-        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
-          No se pudieron cargar equipos. Se mantienen los últimos datos disponibles.
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
+          <p className="m-0">No se pudieron cargar equipos. Se mantienen los últimos datos disponibles.</p>
+          <Button type="button" variant="outline" onClick={refresh} disabled={loading || isCreating}>
+            {loading ? "Reintentando..." : "Reintentar"}
+          </Button>
         </div>
       ) : null}
 
@@ -153,7 +163,11 @@ export default function EquiposPage() {
         <EmptyState
           title="No hay equipos cargados"
           description="Usá el botón 'Nuevo equipo' para cargar activos y habilitar monitoreo en la interfaz."
-        />
+        >
+          <Button type="button" variant="outline" onClick={openCreateForm}>
+            Registrar primer equipo
+          </Button>
+        </EmptyState>
       ) : null}
 
       <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">

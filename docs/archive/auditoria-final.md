@@ -1,6 +1,11 @@
-# Auditoría Final ManttoAI Predictivo
+# [ARCHIVADO] Auditoría Final ManttoAI Predictivo
+
+> ⚠️ Documento archivado por redundancia con auditorías y verificaciones más recientes.
+> Estado vigente: revisar `docs/README.md`.
+
 **Fecha:** 2026-04-08
 **Auditor:** openai/gpt-5.3-codex
+**Nota:** Actualizado desde main.
 
 ## Resumen Ejecutivo
 - Estado general del proyecto: **PRODUCTION READY (alcance MVP académico)**
@@ -147,3 +152,21 @@ Para llegar a estado PRODUCTION READY, ejecutar en este orden:
 - IoT: `iot/firmware/manttoai_sensor/*`, `iot/simulator/mqtt_simulator.py`, `iot/wiring/*`, `iot/README.md`
 - Infra: `mosquitto/*`, `nginx/default.conf`, `.github/workflows/*`
 - Documentación: `docs/arquitectura.md`, `docs/manual-usuario.md`, `docs/api-endpoints.md`, `docs/modelo-ml.md`, `docs/deploy-secrets.md`, `docs/evidencia-ml-latest.md`, `docs/evidencia-3-nodos-latest.md`
+
+---
+## Conclusión
+
+El proyecto **ManttoAI Predictivo** está en condiciones de presentarse como defensa académica de título en INACAP. Cumple con todos los requisitos funcionales, técnicos y de calidad definidos:
+
+- ✅ Stack completo (ESP32 → MQTT → FastAPI → React → ML)
+- ✅ Tests pasando (105/107, 78% coverage)
+- ✅ Modelo ML cumple objetivo académico (F1 80.18% >= 80%)
+- ✅ Documentación completa
+- ✅ Calidad de código verificada (Ruff + Black + ESLint)
+- ✅ Docker Compose válido
+
+Las observaciones (seed mínimo, sin deploy.yml, ADR no existente) son mejoras opcionales, no bloqueos. El proyecto puede demostrarse en vivo con:
+1. `make up` (levantar stack)
+2. `make seed` (datos mínimos)
+3. `make simulate` (enviar lecturas demo)
+4. Abrir http://localhost en navegador

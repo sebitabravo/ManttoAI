@@ -95,7 +95,7 @@ export default function EquipoForm({
   const resolvedErrorMessage = errorMessage || submitError;
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-3">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
       <Input
         label="Nombre del equipo"
         name="nombre"

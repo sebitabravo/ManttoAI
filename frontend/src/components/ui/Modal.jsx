@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 /**
  * Modal del sistema de diseño ManttoAI.
@@ -18,27 +18,95 @@ import { useEffect, useRef } from "react";
  */
 export default function Modal({ open = false, title = "Modal", onClose, children }) {
   const dialogRef = useRef(null);
+  const titleId = `modal-title-${useId().replace(/:/g, "")}`;
 
   // Focus trap + Escape key handler
   useEffect(() => {
     if (!open) return;
 
+    const dialog = dialogRef.current;
+    const selector =
+      'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    const getFocusables = () => Array.from(dialog?.querySelectorAll(selector) || []);
+    const ORIGINAL_OVERFLOW_KEY = "manttoaiOriginalOverflow";
+    const MODAL_COUNT_KEY = "manttoaiModalCount";
+    const MODAL_INDEX_KEY = "manttoaiModalIndex";
+
+    const currentModalCount = Number(document.body.dataset[MODAL_COUNT_KEY] || 0) + 1;
+    document.body.dataset[MODAL_COUNT_KEY] = String(currentModalCount);
+
+    if (dialog) {
+      dialog.dataset[MODAL_INDEX_KEY] = String(currentModalCount);
+    }
+
+    if (currentModalCount === 1) {
+      document.body.dataset[ORIGINAL_OVERFLOW_KEY] = document.body.style.overflow || "";
+      document.body.style.overflow = "hidden";
+    }
+
+    const isTopmostModal = () => {
+      const topIndex = Number(document.body.dataset[MODAL_COUNT_KEY] || 0);
+      const myIndex = Number(dialog?.dataset?.[MODAL_INDEX_KEY] || -1);
+      return myIndex === topIndex;
+    };
+
     const handleEscape = (e) => {
       if (e.key === "Escape" && onClose) {
+        if (!isTopmostModal()) return;
         onClose();
+      }
+    };
+
+    const handleTabTrap = (e) => {
+      if (e.key !== "Tab") return;
+      if (!isTopmostModal()) return;
+
+      const focusables = getFocusables();
+      if (focusables.length === 0) {
+        e.preventDefault();
+        return;
+      }
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
 
     // Guardar foco anterior
     const previousFocus = document.activeElement;
 
-    // Dar foco al modal
-    dialogRef.current?.focus();
+    // Dar foco al primer elemento interactivo o al contenedor
+    const focusables = getFocusables();
+    (focusables[0] || dialog)?.focus();
 
     document.addEventListener("keydown", handleEscape);
+    document.addEventListener("keydown", handleTabTrap);
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("keydown", handleTabTrap);
+
+      if (dialog) {
+        delete dialog.dataset[MODAL_INDEX_KEY];
+      }
+
+      const nextModalCount = Math.max(Number(document.body.dataset[MODAL_COUNT_KEY] || 1) - 1, 0);
+      document.body.dataset[MODAL_COUNT_KEY] = String(nextModalCount);
+
+      if (nextModalCount === 0) {
+        document.body.style.overflow = document.body.dataset[ORIGINAL_OVERFLOW_KEY] || "";
+        delete document.body.dataset[ORIGINAL_OVERFLOW_KEY];
+        delete document.body.dataset[MODAL_COUNT_KEY];
+      }
+
       // Restaurar foco
       previousFocus?.focus();
     };
@@ -61,16 +129,15 @@ export default function Modal({ open = false, title = "Modal", onClose, children
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby={titleId}
         tabIndex={-1}
         className="
           relative w-full max-w-lg max-h-[90vh] overflow-y-auto
-          bg-neutral-100 rounded-lg shadow-md
-          p-6
+          rounded-lg border border-neutral-300 bg-neutral-100 p-5 shadow
           focus:outline-none
         "
       >
-        <h2 id="modal-title" className="text-lg font-semibold text-neutral-800 mb-4">
+        <h2 id={titleId} className="mb-4 text-lg font-semibold text-neutral-800">
           {title}
         </h2>
         <div className="text-neutral-700">

@@ -5,8 +5,8 @@ import EquipoPrediccionCard from "../components/equipos/EquipoPrediccionCard";
 import EquipoResumenCard from "../components/equipos/EquipoResumenCard";
 import EquipoUmbralesSection from "../components/equipos/EquipoUmbralesSection";
 import EmptyState from "../components/ui/EmptyState";
-import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Button from "../components/ui/Button";
+import { SkeletonCard, SkeletonTable } from "../components/ui/Skeleton";
 import useEquipoDetalle, { formatVariableLabel } from "../hooks/useEquipoDetalle";
 
 export default function EquipoDetallePage() {
@@ -73,10 +73,18 @@ export default function EquipoDetallePage() {
   const isInitialLoading = loading && !equipo;
 
   return (
-    <section className="grid gap-4">
+    <section className="grid grid-cols-1 gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="m-0 text-xl font-semibold text-neutral-900">Detalle del equipo {equipoId}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="m-0 text-xl font-semibold text-neutral-900">Detalle del equipo {equipoId}</h1>
+            {loading && equipo ? (
+              <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" aria-hidden="true" />
+                Actualizando
+              </span>
+            ) : null}
+          </div>
           <p className="mb-0 mt-1.5 text-sm text-neutral-600">
             Lecturas, predicciones y mantenciones en tiempo real.
             <span className="ml-2 text-xs text-neutral-500">
@@ -111,11 +119,20 @@ export default function EquipoDetallePage() {
         </div>
       </div>
 
-      {isInitialLoading ? <LoadingSpinner label="Cargando detalle de equipo..." /> : null}
+      {isInitialLoading ? (
+        <div className="grid grid-cols-1 gap-4" aria-label="Cargando detalle de equipo">
+          <SkeletonCard />
+          <SkeletonTable rows={4} cols={4} />
+          <SkeletonTable rows={4} cols={5} />
+        </div>
+      ) : null}
 
       {error ? (
-        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
-          No pudimos obtener datos reales del equipo solicitado. Se mantienen los últimos datos disponibles.
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
+          <p className="m-0">No pudimos obtener datos reales del equipo solicitado. Se mantienen los últimos datos disponibles.</p>
+          <Button type="button" variant="outline" onClick={handleRefresh} disabled={loading}>
+            {loading ? "Reintentando..." : "Reintentar"}
+          </Button>
         </div>
       ) : null}
 
@@ -123,13 +140,17 @@ export default function EquipoDetallePage() {
         <EmptyState
           title="Equipo no disponible"
           description="El backend no devolvió información para este equipo o todavía no existe."
-        />
+        >
+          <Button type="button" variant="outline" onClick={handleRefresh} disabled={loading}>
+            {loading ? "Actualizando..." : "Actualizar detalle"}
+          </Button>
+        </EmptyState>
       ) : null}
 
       <EquipoResumenCard equipo={equipo} />
 
       {equipo && showEditForm ? (
-        <section className="rounded-lg border border-neutral-200 bg-white p-4">
+        <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
           <h2 className="mt-0 text-lg font-semibold text-neutral-900">Editar equipo</h2>
           <EquipoForm
             initialValues={{

@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 /**
  * Input del sistema de diseño ManttoAI.
  * 
@@ -9,8 +11,13 @@
  * - Placeholder con contraste suficiente
  */
 export default function Input({ label, error, className = "", ...props }) {
-  const inputId = props.id || props.name;
-  const errorId = error && inputId ? `${inputId}-error` : undefined;
+  const generatedId = useId().replace(/:/g, "");
+  const sanitizedName =
+    typeof props.name === "string"
+      ? props.name.trim().replace(/[^a-zA-Z0-9\-_.:]/g, "-")
+      : undefined;
+  const inputId = props.id || sanitizedName || `input-${generatedId}`;
+  const errorId = error ? `${inputId}-error` : undefined;
 
   return (
     <label className="flex flex-col gap-1.5">
@@ -22,13 +29,13 @@ export default function Input({ label, error, className = "", ...props }) {
         className={`
           px-3 py-2.5 min-h-[44px]
           rounded border
-          bg-white
-          text-base text-neutral-700
+          bg-neutral-100
+          text-base text-neutral-700 shadow-sm
           placeholder:text-neutral-400
           transition-all duration-150 ease-out-quart
-          focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus:border-primary-500
           disabled:bg-neutral-100 disabled:cursor-not-allowed
-          ${error ? "border-danger-500 focus:ring-danger-500" : "border-neutral-300"}
+          ${error ? "border-danger-500 focus-visible:ring-danger-500" : "border-neutral-300"}
           ${className}
         `.trim()}
         {...props}

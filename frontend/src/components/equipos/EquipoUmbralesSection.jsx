@@ -1,5 +1,5 @@
 import Button from "../ui/Button";
-import LoadingSpinner from "../ui/LoadingSpinner";
+import { SkeletonTable } from "../ui/Skeleton";
 
 export default function EquipoUmbralesSection({
   loadUmbrales,
@@ -16,7 +16,7 @@ export default function EquipoUmbralesSection({
   formatVariableLabel,
 }) {
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-4">
+    <section className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Umbrales operativos</h2>
         <Button
@@ -32,7 +32,7 @@ export default function EquipoUmbralesSection({
         Los cambios impactan en la evaluación de alertas para próximas lecturas de este equipo.
       </p>
 
-      {umbralesLoading ? <LoadingSpinner label="Cargando umbrales del equipo..." /> : null}
+      {umbralesLoading ? <SkeletonTable rows={3} cols={4} className="mt-2" /> : null}
 
       {umbralesErrorMessage ? (
         <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
@@ -60,7 +60,7 @@ export default function EquipoUmbralesSection({
                 <th scope="col" className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-neutral-200">
               {umbrales.map((umbral) => {
                 const resolvedUmbralId = Number(umbral.id);
                 const draft = umbralDrafts[resolvedUmbralId] || {
@@ -72,7 +72,7 @@ export default function EquipoUmbralesSection({
                 const umbralSuccessMessage = umbralSuccessById[resolvedUmbralId];
 
                 return (
-                  <tr key={umbral.id} className="hover:bg-neutral-50 transition-colors duration-150">
+                  <tr key={umbral.id} className="hover:bg-neutral-50 transition-colors duration-150 ease-out-quart">
                     <td className="py-2 pr-4 text-sm font-medium text-neutral-900">{formatVariableLabel(umbral.variable)}</td>
                     <td className="py-2 pr-4">
                       <input
@@ -84,7 +84,7 @@ export default function EquipoUmbralesSection({
                         }
                         disabled={isSaving}
                         aria-label={`Valor mínimo para ${umbral.variable}`}
-                        className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm tabular-nums transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
+                        className="w-full min-h-[44px] rounded border border-neutral-300 bg-neutral-100 px-3 py-2.5 text-sm tabular-nums shadow-sm transition-all duration-150 ease-out-quart focus:border-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
                       />
                     </td>
                     <td className="py-2 pr-4">
@@ -97,11 +97,11 @@ export default function EquipoUmbralesSection({
                         }
                         disabled={isSaving}
                         aria-label={`Valor máximo para ${umbral.variable}`}
-                        className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm tabular-nums transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
+                        className="w-full min-h-[44px] rounded border border-neutral-300 bg-neutral-100 px-3 py-2.5 text-sm tabular-nums shadow-sm transition-all duration-150 ease-out-quart focus:border-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
                       />
                     </td>
                     <td className="py-2">
-                      <div className="grid gap-1.5">
+                      <div className="grid grid-cols-1 gap-1.5">
                         <Button
                           type="button"
                           variant="outline"

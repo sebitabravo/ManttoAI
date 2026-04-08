@@ -16,10 +16,15 @@ export function formatMetric(value, unit, fallback = "—") {
 }
 
 export function formatProbability(value, fallback = "Sin predicción") {
+  if (value === null || value === undefined) {
+    return fallback;
+  }
+
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) {
     return fallback;
   }
 
-  return `${(numericValue * 100).toFixed(1)} %`;
+  const clampedValue = Math.min(Math.max(numericValue, 0), 1);
+  return `${(clampedValue * 100).toFixed(1)} %`;
 }

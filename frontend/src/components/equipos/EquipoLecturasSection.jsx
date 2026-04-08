@@ -3,7 +3,7 @@ import { formatMetric, resolveMaxVibration } from "../../utils/metrics";
 
 export default function EquipoLecturasSection({ lecturas }) {
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-4">
+    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
       <h2 className="mt-0 text-lg font-semibold text-neutral-900">Últimas lecturas</h2>
       {lecturas.length === 0 ? (
         <p className="mb-0 text-sm text-neutral-600">
@@ -25,7 +25,7 @@ export default function EquipoLecturasSection({ lecturas }) {
             </thead>
             <tbody className="divide-y divide-neutral-100">
               {lecturas.map((lectura) => (
-                <tr key={lectura.id || lectura.timestamp} className="hover:bg-neutral-50 transition-colors duration-150">
+                <tr key={lectura.id || lectura.timestamp} className="hover:bg-neutral-50 transition-colors duration-150 ease-out-quart">
                   <td className="py-2 pr-4 text-sm text-neutral-600">{formatDate(lectura.timestamp)}</td>
                   <td className="py-2 pr-4 text-sm tabular-nums text-neutral-900">{formatMetric(lectura.temperatura, "°C")}</td>
                   <td className="py-2 pr-4 text-sm tabular-nums text-neutral-900">{formatMetric(lectura.humedad, "%")}</td>

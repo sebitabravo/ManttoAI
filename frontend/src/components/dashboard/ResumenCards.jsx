@@ -51,80 +51,72 @@ export default function ResumenCards({ resumen }) {
   const riesgoClasses = SEVERITY_CLASSES[riesgoSeveridad];
 
   return (
-    <div className="grid gap-4">
-      {/* Fila superior: cards hero de alertas y riesgo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* ALERTAS ACTIVAS — card hero prominente */}
-        <article
-          className={`rounded-lg border-2 p-6 ${alertasClasses.card} transition-all duration-150 ease-out-quart hover:shadow-md`}
-        >
-          <div className={`text-sm font-medium uppercase tracking-wide ${alertasClasses.label} mb-2`}>
-            Alertas activas
-          </div>
-          <div className={`metric-value text-5xl font-semibold ${alertasClasses.value} mb-3`}>
-            {alertasActivas}
-          </div>
-          <div className="text-sm text-neutral-600">
-            {alertasActivas === 0
-              ? "Sistema operando dentro de parámetros normales"
-              : alertasActivas === 1
-              ? "1 alerta requiere atención"
-              : `${alertasActivas} alertas requieren atención`}
-          </div>
-        </article>
+    <div className="grid gap-5 xl:grid-cols-12">
+      {/* ALERTAS ACTIVAS — card hero primaria */}
+      <article
+        className={`resumen-hero rounded-lg border-2 p-6 md:p-7 xl:col-span-7 ${alertasClasses.card} transition-colors duration-150 ease-out-quart`}
+      >
+        <div className={`resumen-hero__label mb-2 text-xs font-semibold uppercase tracking-wide ${alertasClasses.label}`}>
+          Alertas activas
+        </div>
+        <div className={`resumen-hero__value metric-value mb-2 text-5xl font-semibold ${alertasClasses.value}`}>
+          {alertasActivas}
+        </div>
+        <div className="text-sm text-neutral-700">
+          {alertasActivas === 0
+            ? "Sistema operando dentro de parámetros normales"
+            : alertasActivas === 1
+            ? "1 alerta requiere atención"
+            : `${alertasActivas} alertas requieren atención`}
+        </div>
+      </article>
 
-        {/* EQUIPOS EN RIESGO — card hero prominente */}
-        <article
-          className={`rounded-lg border-2 p-6 ${riesgoClasses.card} transition-all duration-150 ease-out-quart hover:shadow-md`}
-        >
-          <div className={`text-sm font-medium uppercase tracking-wide ${riesgoClasses.label} mb-2`}>
-            Equipos en riesgo
-          </div>
-          <div className={`metric-value text-5xl font-semibold ${riesgoClasses.value} mb-3`}>
-            {equiposEnRiesgo}
-          </div>
-          <div className="text-sm text-neutral-600">
-            {equiposEnRiesgo === 0
-              ? "Todos los equipos en condiciones óptimas"
-              : totalEquipos > 0
-              ? `${Math.round((equiposEnRiesgo / totalEquipos) * 100)}% del total monitoreado`
-              : "Monitoreo activo"}
-          </div>
-        </article>
-      </div>
+      {/* EQUIPOS EN RIESGO — card hero secundaria */}
+      <article
+        className={`resumen-hero rounded-lg border-2 p-6 md:p-7 xl:col-span-5 ${riesgoClasses.card} transition-colors duration-150 ease-out-quart`}
+      >
+        <div className={`resumen-hero__label mb-2 text-xs font-semibold uppercase tracking-wide ${riesgoClasses.label}`}>
+          Equipos en riesgo
+        </div>
+        <div className={`resumen-hero__value metric-value mb-2 text-5xl font-semibold ${riesgoClasses.value}`}>
+          {equiposEnRiesgo}
+        </div>
+        <div className="text-sm text-neutral-700">
+          {equiposEnRiesgo === 0
+            ? "Todos los equipos en condiciones óptimas"
+            : totalEquipos > 0
+            ? `${Math.round((equiposEnRiesgo / totalEquipos) * 100)}% del total monitoreado`
+            : "Monitoreo activo"}
+        </div>
+      </article>
 
-      {/* Fila inferior: métricas secundarias compactas */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* TOTAL EQUIPOS */}
-        <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-150 ease-out-quart hover:shadow">
-          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-1">
-            Total equipos
-          </div>
-          <div className="metric-value text-2xl font-semibold text-neutral-700">
-            {totalEquipos}
-          </div>
-        </article>
+      {/* Métricas secundarias compactas */}
+      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
+        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-neutral-500">
+          Total equipos
+        </div>
+        <div className="metric-value text-2xl font-semibold text-neutral-700">
+          {totalEquipos}
+        </div>
+      </article>
 
-        {/* CLASIFICACIÓN */}
-        <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-150 ease-out-quart hover:shadow">
-          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-1">
-            Clasificación
-          </div>
-          <div className="text-2xl font-semibold text-neutral-700 capitalize">
-            {clasificacion}
-          </div>
-        </article>
+      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
+        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-neutral-500">
+          Clasificación
+        </div>
+        <div className="text-2xl font-semibold text-neutral-700 capitalize">
+          {clasificacion}
+        </div>
+      </article>
 
-        {/* PROBABILIDAD FALLA */}
-        <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 transition-all duration-150 ease-out-quart hover:shadow">
-          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-1">
-            Probabilidad de falla
-          </div>
-          <div className="metric-value text-2xl font-semibold text-neutral-700">
-            {probabilidad}
-          </div>
-        </article>
-      </div>
+      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
+        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-neutral-500">
+          Probabilidad de falla
+        </div>
+        <div className="metric-value text-2xl font-semibold text-neutral-700">
+          {probabilidad}
+        </div>
+      </article>
     </div>
   );
 }

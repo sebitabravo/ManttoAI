@@ -63,7 +63,7 @@ export default function Layout() {
           sidebarAbierto={sidebarAbierto}
           menuBtnRef={menuBtnRef}
         />
-        <main className="bg-neutral-50 p-6">
+        <main className="bg-neutral-50 px-4 py-5 md:px-6 md:py-6 xl:px-8 xl:py-7">
           <Outlet />
         </main>
       </div>

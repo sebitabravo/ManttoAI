@@ -129,6 +129,25 @@ table th {
   font-feature-settings: "tnum";
 }
 
+/*
+ * Container queries para cards críticas del dashboard.
+ * Ajustan escala tipográfica según ancho real del card.
+ */
+.resumen-hero {
+  container-type: inline-size;
+}
+
+@container (max-width: 22rem) {
+  .resumen-hero__value {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .resumen-hero__label {
+    letter-spacing: 0.02em;
+  }
+}
+
 /* ─── Layout principal ─────────────────────────────────────────────────────── */
 
 /*

@@ -4,7 +4,6 @@ import ResumenCards from "../components/dashboard/ResumenCards";
 import GraficoTemperatura from "../components/dashboard/GraficoTemperatura";
 import GraficoVibracion from "../components/dashboard/GraficoVibracion";
 import TablaEstadoEquipos from "../components/dashboard/TablaEstadoEquipos";
-import TablaUltimasLecturas from "../components/dashboard/TablaUltimasLecturas";
 import { SkeletonMetric, SkeletonTable, SkeletonChart } from "../components/ui/Skeleton";
 import Button from "../components/ui/Button";
 import { getDashboardData } from "../api/dashboard";
@@ -95,18 +94,10 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      {/* Bloque analítico: estado + últimas lecturas */}
-      <section className="grid grid-cols-1 gap-5 xl:grid-cols-12" aria-label="Estado y lecturas recientes">
-        <div className="min-w-0 xl:col-span-7">
+      {/* Bloque analítico: estado equipos */}
+      <section className="w-full" aria-label="Estado general de equipos">
+        <div className="min-w-0">
           {isInitialLoading ? <SkeletonTable rows={5} cols={6} /> : <TablaEstadoEquipos equipos={resumen.equipos || []} />}
-        </div>
-
-        <div className="min-w-0 xl:col-span-5">
-          {isInitialLoading ? (
-            <SkeletonTable rows={5} cols={4} />
-          ) : (
-            <TablaUltimasLecturas lecturas={lecturas} equipos={resumen.equipos || []} />
-          )}
         </div>
       </section>
 

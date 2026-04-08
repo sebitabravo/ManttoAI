@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 /**
  * Input del sistema de diseño ManttoAI.
  * 
@@ -9,8 +11,9 @@
  * - Placeholder con contraste suficiente
  */
 export default function Input({ label, error, className = "", ...props }) {
-  const inputId = props.id || props.name;
-  const errorId = error && inputId ? `${inputId}-error` : undefined;
+  const generatedId = useId().replace(/:/g, "");
+  const inputId = props.id || props.name || `input-${generatedId}`;
+  const errorId = error ? `${inputId}-error` : undefined;
 
   return (
     <label className="flex flex-col gap-1.5">

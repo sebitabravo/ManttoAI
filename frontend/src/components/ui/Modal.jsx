@@ -28,6 +28,7 @@ export default function Modal({ open = false, title = "Modal", onClose, children
       'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
     const getFocusables = () => Array.from(dialog?.querySelectorAll(selector) || []);
+    const previousOverflow = document.body.style.overflow;
 
     const handleEscape = (e) => {
       if (e.key === "Escape" && onClose) {
@@ -62,6 +63,7 @@ export default function Modal({ open = false, title = "Modal", onClose, children
     // Dar foco al primer elemento interactivo o al contenedor
     const focusables = getFocusables();
     (focusables[0] || dialog)?.focus();
+    document.body.style.overflow = "hidden";
 
     document.addEventListener("keydown", handleEscape);
     document.addEventListener("keydown", handleTabTrap);
@@ -69,6 +71,7 @@ export default function Modal({ open = false, title = "Modal", onClose, children
     return () => {
       document.removeEventListener("keydown", handleEscape);
       document.removeEventListener("keydown", handleTabTrap);
+      document.body.style.overflow = previousOverflow;
       // Restaurar foco
       previousFocus?.focus();
     };

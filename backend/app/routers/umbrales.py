@@ -1,6 +1,6 @@
 """Endpoints de umbrales."""
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
@@ -17,10 +17,23 @@ router = APIRouter(prefix="/umbrales", tags=["umbrales"])
 
 
 @router.get("", response_model=list[UmbralResponse])
-def get_umbrales(db: Session = Depends(get_db)) -> list[UmbralResponse]:
-    """Lista umbrales persistidos."""
+def get_umbrales(
+    equipo_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+) -> list[UmbralResponse]:
+    """Lista umbrales persistidos con filtro opcional por equipo."""
 
-    return list_umbrales(db)
+    return list_umbrales(db, equipo_id=equipo_id)
+
+
+@router.get("/equipo/{equipo_id}", response_model=list[UmbralResponse])
+def get_umbrales_by_equipo(
+    equipo_id: int,
+    db: Session = Depends(get_db),
+) -> list[UmbralResponse]:
+    """Lista umbrales asociados a un equipo específico."""
+
+    return list_umbrales(db, equipo_id=equipo_id)
 
 
 @router.get("/{umbral_id}", response_model=UmbralResponse)
@@ -43,6 +56,28 @@ def post_umbral(
     """Crea un umbral persistido."""
 
     umbral = create_umbral(db, payload)
+    response.headers["Location"] = str(
+        request.url_for("get_umbral_by_id", umbral_id=str(umbral.id))
+    )
+    return umbral
+
+
+@router.post(
+    "/equipo/{equipo_id}",
+    response_model=UmbralResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def post_umbral_by_equipo(
+    equipo_id: int,
+    payload: UmbralCreate,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> UmbralResponse:
+    """Crea un umbral asegurando asociación al equipo de la ruta."""
+
+    normalized_payload = payload.model_copy(update={"equipo_id": equipo_id})
+    umbral = create_umbral(db, normalized_payload)
     response.headers["Location"] = str(
         request.url_for("get_umbral_by_id", umbral_id=str(umbral.id))
     )

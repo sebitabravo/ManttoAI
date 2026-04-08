@@ -4,7 +4,7 @@ import logging
 import threading
 
 from collections.abc import Callable
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -134,6 +134,24 @@ def list_alertas(
         query = query.limit(limite)
 
     return list(db.scalars(query))
+
+
+def count_alertas(
+    db: Session,
+    equipo_id: int | None = None,
+) -> dict[str, int]:
+    """Cuenta alertas totales y no leídas para badges de UI."""
+
+    total_query = select(func.count(Alerta.id))
+    unread_query = select(func.count(Alerta.id)).where(Alerta.leida.is_(False))
+
+    if equipo_id is not None:
+        total_query = total_query.where(Alerta.equipo_id == equipo_id)
+        unread_query = unread_query.where(Alerta.equipo_id == equipo_id)
+
+    total = int(db.scalar(total_query) or 0)
+    no_leidas = int(db.scalar(unread_query) or 0)
+    return {"total": total, "no_leidas": no_leidas}
 
 
 def get_active_prediction_failure_alert(db: Session, equipo_id: int) -> Alerta | None:

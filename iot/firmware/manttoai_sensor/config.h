@@ -13,7 +13,7 @@ static const char* MQTT_PASSWORD = "REEMPLAZAR_MQTT_PASSWORD";
 // Para demo con múltiples nodos, cada ESP32 debe usar un EQUIPO_ID distinto.
 static const int EQUIPO_ID = 1;
 
-static const unsigned long MQTT_PUBLISH_INTERVAL_MS = 5000;
+static const unsigned long MQTT_PUBLISH_INTERVAL_MS = 10000;
 static const unsigned long WIFI_RETRY_INTERVAL_MS = 5000;
 static const unsigned long MQTT_RETRY_INTERVAL_MS = 3000;
 static const unsigned long MAIN_LOOP_DELAY_MS = 1000;

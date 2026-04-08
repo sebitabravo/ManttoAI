@@ -10,7 +10,7 @@
 1. **Interpretabilidad**: Random Forest ofrece feature importance, permitiendo explicar qué variables (temperatura, vibración) contribuyen más al riesgo. Esto es crucial para el informe académico.
 2. **Robustez**: No requiere normalización de features, menos sensible a outliers que otros modelos.
 3. **Scikit-learn**: Se integra fácilmente con el backend FastAPI usando joblib para serialización.
-4. **Dataset pequeño**: Con 1200 registros sintéticos, modelos complejos (deep learning) sobreajustarían.
+4. **Dataset sintético controlado**: Con 12.000 registros sintéticos reproducibles, priorizamos un modelo explicable sobre complejidad innecesaria.
 5. **Objetivo académico**: Random Forest con F1 >= 80% es alcanzable y demostrable.
 
 **Consecuencias:**

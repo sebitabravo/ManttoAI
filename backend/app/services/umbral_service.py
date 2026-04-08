@@ -20,10 +20,15 @@ def _validate_umbral_limits(valor_min: float, valor_max: float) -> None:
         )
 
 
-def list_umbrales(db: Session) -> list[Umbral]:
-    """Lista umbrales persistidos en la base de datos."""
+def list_umbrales(db: Session, equipo_id: int | None = None) -> list[Umbral]:
+    """Lista umbrales persistidos opcionalmente filtrando por equipo."""
 
-    return list(db.scalars(select(Umbral).order_by(Umbral.id)))
+    query = select(Umbral)
+    if equipo_id is not None:
+        query = query.where(Umbral.equipo_id == equipo_id)
+
+    query = query.order_by(Umbral.equipo_id.asc(), Umbral.id.asc())
+    return list(db.scalars(query))
 
 
 def get_umbral_or_404(db: Session, umbral_id: int) -> Umbral:

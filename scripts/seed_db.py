@@ -164,6 +164,34 @@ def seed_admin_user(db: Session) -> tuple[str, bool]:
     return admin_email, created
 
 
+def seed_tecnico_user(db: Session) -> tuple[str, bool]:
+    """Crea o actualiza un usuario técnico para la demo de roles."""
+
+    tecnico_name = os.getenv("SEED_TECNICO_NAME", "Tecnico ManttoAI")
+    tecnico_email = os.getenv("SEED_TECNICO_EMAIL", "tecnico@manttoai.local")
+    tecnico_password = os.getenv("SEED_TECNICO_PASSWORD", "Tecnico123!")
+    reset_tecnico_password = _env_bool("SEED_RESET_TECNICO_PASSWORD", default=False)
+
+    usuario = db.scalars(select(Usuario).where(Usuario.email == tecnico_email)).first()
+    created = usuario is None
+
+    if usuario is None:
+        usuario = Usuario(
+            nombre=tecnico_name,
+            email=tecnico_email,
+            password_hash=hash_password(tecnico_password),
+            rol="tecnico",
+        )
+        db.add(usuario)
+    else:
+        usuario.nombre = tecnico_name
+        usuario.rol = "tecnico"
+        if reset_tecnico_password:
+            usuario.password_hash = hash_password(tecnico_password)
+
+    return tecnico_email, created
+
+
 def seed_equipos(db: Session) -> tuple[list[Equipo], int, int]:
     """Crea o actualiza equipos demo para la maqueta."""
 
@@ -486,17 +514,25 @@ def seed_mantenciones_historicas(db: Session, equipos: list[Equipo]) -> tuple[in
             existing_count += 1
             continue
 
-        dias = mant_data["dias_atras"]
+        dias = int(mant_data["dias_atras"])
+        # Convención: dias_atras > 0 => evento pasado, dias_atras < 0 => evento futuro
         fecha_programada = (
-            datetime.now() + timedelta(days=dias)
+            datetime.now() - timedelta(days=dias)
             if dias > 0
-            else datetime.now() - timedelta(days=-dias)
+            else datetime.now() + timedelta(days=abs(dias))
+        )
+        fecha_ejecucion = (
+            fecha_programada
+            if mant_data["estado"] in {"ejecutada", "completada"}
+            else None
         )
 
         mant = Mantencion(
             equipo_id=equipo.id,
             tipo=mant_data["tipo"],
             descripcion=mant_data["descripcion"],
+            fecha_programada=fecha_programada,
+            fecha_ejecucion=fecha_ejecucion,
             estado=mant_data["estado"],
             created_at=datetime.now() - timedelta(days=abs(dias) + 5),
         )
@@ -504,6 +540,87 @@ def seed_mantenciones_historicas(db: Session, equipos: list[Equipo]) -> tuple[in
         created_count += 1
 
     return created_count, existing_count
+
+
+def seed_demo_story(db: Session, equipos: list[Equipo]) -> tuple[int, int, int]:
+    """Crea una narrativa de demo: normal → alerta → falla → mantención → normal."""
+
+    if not equipos:
+        return 0, 0, 0
+
+    equipo = next((item for item in equipos if "Compresor" in item.nombre), equipos[0])
+
+    story_tag = "[STORY-DEMO]"
+    existing_story = db.scalars(
+        select(Mantencion)
+        .where(Mantencion.equipo_id == equipo.id)
+        .where(Mantencion.descripcion.contains(story_tag))
+    ).first()
+    if existing_story:
+        return 0, 0, 0
+
+    base_time = datetime.now() - timedelta(days=2)
+
+    lecturas_story = [
+        # Estado inicial normal
+        (41.5, 52.0, 0.22, 0.18, 9.68, base_time),
+        # Aumento de temperatura/vibración (debería gatillar alerta)
+        (59.2, 48.0, 0.78, 0.61, 10.45, base_time + timedelta(hours=6)),
+        # Condición de falla crítica
+        (63.7, 45.5, 1.10, 0.97, 11.20, base_time + timedelta(hours=12)),
+        # Post mantención: vuelve a normal
+        (43.0, 53.4, 0.24, 0.21, 9.72, base_time + timedelta(hours=36)),
+    ]
+
+    lecturas_creadas = 0
+    for temp, hum, vib_x, vib_y, vib_z, timestamp in lecturas_story:
+        db.add(
+            Lectura(
+                equipo_id=equipo.id,
+                temperatura=temp,
+                humedad=hum,
+                vib_x=vib_x,
+                vib_y=vib_y,
+                vib_z=vib_z,
+                timestamp=timestamp,
+            )
+        )
+        lecturas_creadas += 1
+
+    predicciones_story = [
+        ("normal", 0.31, base_time + timedelta(hours=1)),
+        ("alerta", 0.68, base_time + timedelta(hours=7)),
+        ("falla", 0.89, base_time + timedelta(hours=13)),
+        ("normal", 0.21, base_time + timedelta(hours=37)),
+    ]
+
+    predicciones_creadas = 0
+    for clasificacion, probabilidad, created_at in predicciones_story:
+        db.add(
+            Prediccion(
+                equipo_id=equipo.id,
+                clasificacion=clasificacion,
+                probabilidad=probabilidad,
+                modelo_version="rf-demo-story",
+                created_at=created_at,
+            )
+        )
+        predicciones_creadas += 1
+
+    mantencion_story = Mantencion(
+        equipo_id=equipo.id,
+        tipo="correctiva",
+        descripcion=(
+            f"{story_tag} Intervención correctiva tras alerta crítica de vibración y temperatura"
+        ),
+        fecha_programada=base_time + timedelta(hours=20),
+        fecha_ejecucion=base_time + timedelta(hours=24),
+        estado="completada",
+        created_at=base_time + timedelta(hours=20),
+    )
+    db.add(mantencion_story)
+
+    return lecturas_creadas, predicciones_creadas, 1
 
 
 def initialize_database_with_retry(
@@ -534,6 +651,7 @@ def main() -> None:
     with SessionLocal() as db:
         # 1. Usuario admin
         admin_email, admin_created = seed_admin_user(db)
+        tecnico_email, tecnico_created = seed_tecnico_user(db)
 
         # 2. Equipos
         equipos, equipos_creados, equipos_actualizados = seed_equipos(db)
@@ -555,11 +673,19 @@ def main() -> None:
             db, equipos
         )
 
+        # 8. Storyline explícita para defensa
+        story_lecturas, story_predicciones, story_mantenciones = seed_demo_story(
+            db, equipos
+        )
+
         db.commit()
 
     print("✅ Seed completado")
     print(
         f"  Usuario admin: {admin_email} ({'creado' if admin_created else 'actualizado'})"
+    )
+    print(
+        f"  Usuario técnico: {tecnico_email} ({'creado' if tecnico_created else 'actualizado'})"
     )
     print(f"  Equipos: {equipos_creados} creados, {equipos_actualizados} actualizados")
     print(
@@ -572,6 +698,10 @@ def main() -> None:
     print(f"  Alertas: {alertas_creadas} creadas, {alertas_existentes} ya existentes")
     print(
         f"  Mantenciones: {mantenciones_creadas} creadas, {mantenciones_existentes} ya existentes"
+    )
+    print(
+        "  Storyline demo: "
+        f"{story_lecturas} lecturas, {story_predicciones} predicciones, {story_mantenciones} mantención"
     )
     print("")
     print("📊 El dashboard ahora tiene datos históricos para la demo.")

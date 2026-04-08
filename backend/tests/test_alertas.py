@@ -142,8 +142,9 @@ def test_critical_alert_marks_email_enviado_false_when_send_fails(
 
     @contextmanager
     def fake_get_smtp_client_failing():
+        if False:  # pragma: no cover - mantiene firma de generator para contextmanager
+            yield
         raise RuntimeError("smtp unavailable")
-        yield  # noqa: unreachable — necesario para que sea generator
 
     monkeypatch.setattr(email_service, "get_smtp_client", fake_get_smtp_client_failing)
     monkeypatch.setattr(alerta_service, "get_smtp_client", fake_get_smtp_client_failing)
@@ -278,3 +279,34 @@ def test_patch_alerta_marks_record_as_read(client):
     )
     assert after_patch.status_code == 200
     assert after_patch.json() == []
+
+
+def test_get_alertas_count_returns_totals(client):
+    """Valida endpoint de conteo global y por equipo."""
+
+    equipo_id = _create_equipo(client, nombre="Equipo Count Alertas")
+    _create_umbral(
+        client,
+        equipo_id=equipo_id,
+        variable="temperatura",
+        valor_min=10.0,
+        valor_max=45.0,
+    )
+    _create_lectura(client, equipo_id=equipo_id, temperatura=58.0)
+
+    by_equipo = client.get("/alertas/count", params={"equipo_id": equipo_id})
+    assert by_equipo.status_code == 200
+    assert by_equipo.json()["total"] == 1
+    assert by_equipo.json()["no_leidas"] == 1
+
+    alerta_id = client.get(
+        "/alertas",
+        params={"equipo_id": equipo_id, "solo_no_leidas": True},
+    ).json()[0]["id"]
+    mark_read_response = client.patch(f"/alertas/{alerta_id}/leer")
+    assert mark_read_response.status_code == 200
+
+    by_equipo_after = client.get("/alertas/count", params={"equipo_id": equipo_id})
+    assert by_equipo_after.status_code == 200
+    assert by_equipo_after.json()["total"] == 1
+    assert by_equipo_after.json()["no_leidas"] == 0

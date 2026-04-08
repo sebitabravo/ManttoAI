@@ -25,6 +25,10 @@ Este repositorio tiene un MVP funcional para demo académica, respetando la arqu
 
 > Docker Compose carga automáticamente `docker-compose.override.yml` junto a `docker-compose.yml` para desarrollo local (hot-reload del backend y scripts montados). No necesitás exportar variables ni usar `-f` explícito.
 
+> En local, `docker-compose.override.yml` fuerza `APP_ENV=development` para permitir defaults de demo.
+> En despliegues sin override, el backend asume `APP_ENV=production` y valida que no uses secretos/credenciales por defecto.
+> Aun así, para credenciales controladas se recomienda ejecutar `make setup-env` antes.
+
 > ⚠️ Este flujo es **solo para desarrollo local/demo**. No uses `make seed` contra bases productivas.
 > Recomendado: Docker Compose V2 reciente, porque el `docker-compose.yml` usa `depends_on.condition` + `healthcheck` para endurecer el arranque local.
 
@@ -131,4 +135,5 @@ El proyecto usa **un solo `docker-compose.yml`** que funciona tanto en desarroll
 - Modelo ML: `docs/modelo-ml.md`
 - Guía de demo: `docs/demo.md`
 - Manual de usuario: `docs/manual-usuario.md`
+- Secrets de deploy: `docs/deploy-secrets.md`
 - Checklist final de entrega: `docs/checklist-entrega.md`

@@ -58,6 +58,30 @@ def test_list_umbrales_returns_persisted_records(client):
     assert {"temperatura", "humedad"}.issubset(variables)
 
 
+def test_get_umbrales_by_equipo_filter_and_route(client):
+    """Valida listado de umbrales filtrado por equipo en query y ruta dedicada."""
+
+    equipo_a = _create_equipo(client, "Equipo Umbral A")
+    equipo_b = _create_equipo(client, "Equipo Umbral B")
+
+    client.post(
+        "/umbrales",
+        json=_build_umbral_payload(equipo_id=equipo_a, variable="temperatura"),
+    )
+    client.post(
+        "/umbrales",
+        json=_build_umbral_payload(equipo_id=equipo_b, variable="vibracion"),
+    )
+
+    filtered_query = client.get("/umbrales", params={"equipo_id": equipo_a})
+    filtered_route = client.get(f"/umbrales/equipo/{equipo_a}")
+
+    assert filtered_query.status_code == 200
+    assert filtered_route.status_code == 200
+    assert all(item["equipo_id"] == equipo_a for item in filtered_query.json())
+    assert all(item["equipo_id"] == equipo_a for item in filtered_route.json())
+
+
 def test_create_umbral_rejects_unknown_equipo(client):
     """Valida que no se creen umbrales con equipo inexistente."""
 
@@ -98,6 +122,21 @@ def test_create_umbral_persists_and_can_be_retrieved(client):
     assert get_response.status_code == 200
     assert get_response.json()["id"] == created["id"]
     assert get_response.json()["variable"] == "vibracion"
+
+
+def test_create_umbral_by_equipo_path_overrides_payload_equipo(client):
+    """Valida POST /umbrales/equipo/{id} forzando consistencia de equipo."""
+
+    equipo_a = _create_equipo(client, "Equipo Ruta A")
+    equipo_b = _create_equipo(client, "Equipo Ruta B")
+
+    response = client.post(
+        f"/umbrales/equipo/{equipo_a}",
+        json=_build_umbral_payload(equipo_id=equipo_b, variable="temperatura"),
+    )
+
+    assert response.status_code == 201
+    assert response.json()["equipo_id"] == equipo_a
 
 
 def test_update_umbral_persists_changes(client):

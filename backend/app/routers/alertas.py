@@ -4,8 +4,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
-from app.schemas.alerta import AlertaMarkReadResponse, AlertaResponse
-from app.services.alerta_service import list_alertas, mark_as_read
+from app.schemas.alerta import (
+    AlertaCountResponse,
+    AlertaMarkReadResponse,
+    AlertaResponse,
+)
+from app.services.alerta_service import count_alertas, list_alertas, mark_as_read
 
 router = APIRouter(prefix="/alertas", tags=["alertas"])
 
@@ -35,3 +39,14 @@ def patch_alerta(
     """Marca una alerta como leída."""
 
     return mark_as_read(db, alerta_id)
+
+
+@router.get("/count", response_model=AlertaCountResponse)
+def get_alertas_count(
+    equipo_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+) -> AlertaCountResponse:
+    """Retorna conteo total y no leído de alertas."""
+
+    counts = count_alertas(db, equipo_id=equipo_id)
+    return AlertaCountResponse(**counts)

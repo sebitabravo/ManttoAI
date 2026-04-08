@@ -110,7 +110,8 @@ def load_or_generate_dataset(
     if dataset_path.exists():
         existing_dataset = pd.read_csv(dataset_path)
         validate_dataset_schema(existing_dataset)
-        return existing_dataset
+        if len(existing_dataset) >= size:
+            return existing_dataset
 
     generated = generate_synthetic_dataset(size=size, seed=seed)
     validate_dataset_schema(generated)

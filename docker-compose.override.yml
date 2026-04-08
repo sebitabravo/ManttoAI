@@ -7,8 +7,12 @@
 
 services:
   backend:
-    env_file:
-      - ./backend/.env
+    build:
+      context: ./backend
+      args:
+        INSTALL_DEV_REQS: "true"
+    environment:
+      APP_ENV: ${APP_ENV:-development}
     volumes:
       - ./backend:/app
       - ./scripts:/scripts:ro

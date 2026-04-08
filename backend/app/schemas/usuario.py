@@ -1,5 +1,7 @@
 """Schemas de usuario y autenticación."""
 
+from typing import Literal
+
 from pydantic import BaseModel, field_validator
 
 
@@ -23,7 +25,7 @@ class UsuarioBase(BaseModel):
 
     nombre: str
     email: str
-    rol: str = "visualizador"
+    rol: Literal["admin", "tecnico", "visualizador"] = "visualizador"
 
     @field_validator("email")
     def validate_email(cls, value: str) -> str:

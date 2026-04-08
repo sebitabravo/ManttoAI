@@ -1,13 +1,25 @@
 """Schemas de umbrales."""
 
+from typing import Literal
+
 from pydantic import BaseModel
+
+
+VariableUmbral = Literal[
+    "temperatura",
+    "humedad",
+    "vibracion",
+    "vib_x",
+    "vib_y",
+    "vib_z",
+]
 
 
 class UmbralBase(BaseModel):
     """Campos base de umbral."""
 
     equipo_id: int
-    variable: str
+    variable: VariableUmbral
     valor_min: float
     valor_max: float
 

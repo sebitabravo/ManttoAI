@@ -25,6 +25,7 @@
 ## Alertas
 
 - `GET /alertas`
+- `GET /alertas/count`
 - `PATCH /alertas/{alerta_id}/leer`
 
 ## Predicciones
@@ -121,3 +122,14 @@ Notas:
 
 - `equipo_id` se obtiene desde el topic.
 - `timestamp` puede ser opcional para compatibilidad con fuentes legacy.
+
+## Umbrales
+
+- `GET /umbrales`
+- `GET /umbrales?equipo_id={equipo_id}`
+- `GET /umbrales/equipo/{equipo_id}`
+- `GET /umbrales/{umbral_id}`
+- `POST /umbrales`
+- `POST /umbrales/equipo/{equipo_id}`
+- `PUT /umbrales/{umbral_id}`
+- `DELETE /umbrales/{umbral_id}`

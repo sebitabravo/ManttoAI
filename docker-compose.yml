@@ -7,16 +7,44 @@
 
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-manttoai_root}@mysql:3306/${MYSQL_DATABASE:-manttoai_db}}
+      DATABASE_AUTO_INIT: ${DATABASE_AUTO_INIT:-true}
+      SECRET_KEY: ${SECRET_KEY:-manttoai-dev-secret}
+      MQTT_BROKER_HOST: ${MQTT_BROKER_HOST:-mosquitto}
+      MQTT_BROKER_PORT: ${MQTT_BROKER_PORT:-1883}
+      MQTT_USERNAME: ${MQTT_USERNAME:-manttoai_mqtt}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-manttoai_mqtt_dev}
+      MQTT_BASE_TOPIC: ${MQTT_BASE_TOPIC:-manttoai/equipo}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-noreply@manttoai.local}
+      SMTP_TO_EMAIL: ${SMTP_TO_EMAIL:-alertas@manttoai.local}
+      SMTP_USE_STARTTLS: ${SMTP_USE_STARTTLS:-false}
+      SMTP_REQUIRE_AUTH: ${SMTP_REQUIRE_AUTH:-false}
+      ENABLE_PREDICTION_SCHEDULER: ${ENABLE_PREDICTION_SCHEDULER:-true}
+      PREDICTION_INTERVAL_SECONDS: ${PREDICTION_INTERVAL_SECONDS:-30}
+      PREDICTION_SCHEDULER_MAX_WORKERS: ${PREDICTION_SCHEDULER_MAX_WORKERS:-4}
+      ML_AUTO_TRAIN_ON_MISSING: ${ML_AUTO_TRAIN_ON_MISSING:-true}
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-Admin ManttoAI}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@manttoai.local}
+      SEED_TECNICO_NAME: ${SEED_TECNICO_NAME:-Tecnico ManttoAI}
+      SEED_TECNICO_EMAIL: ${SEED_TECNICO_EMAIL:-tecnico@manttoai.local}
+      SEED_ALLOW_NON_DEV: ${SEED_ALLOW_NON_DEV:-false}
     depends_on:
       mysql:
         condition: service_healthy
       mosquitto:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
       interval: 15s
@@ -45,12 +73,12 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD no definido en .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-manttoai_root}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-manttoai_db}
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"${MYSQL_ROOT_PASSWORD}\" || exit 1"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"${MYSQL_ROOT_PASSWORD:-manttoai_root}\" || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -68,6 +96,13 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.24
+    ports:
+      - "1025:1025"
+      - "8025:8025"
     restart: unless-stopped
 
   nginx:

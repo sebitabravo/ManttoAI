@@ -5,13 +5,14 @@ from pathlib import Path
 import joblib
 import pytest
 
-from app.ml.evaluate import evaluate_model
+from app.ml.evaluate import evaluate_model, load_or_generate_evaluation_dataset
 from app.ml.generate_dataset import FEATURES, TARGET_COLUMN, generate_synthetic_dataset
 from app.ml import train as train_module
 from app.ml.predict import predict_from_record
 from app.ml.train import (
     calculate_file_sha256,
     clear_model_artifact_cache,
+    load_or_generate_dataset,
     load_model_artifact_cached,
     resolve_artifact_checksum_path,
     save_model_artifact,
@@ -188,3 +189,37 @@ def test_verify_artifact_integrity_detects_checksum_mismatch(tmp_path: Path):
         verify_artifact_integrity(model_path)
 
     assert checksum_before != calculate_file_sha256(model_path)
+
+
+def test_train_loader_regenerates_dataset_when_existing_is_too_small(tmp_path: Path):
+    """Regenera dataset cuando el CSV existente no cumple tamaño mínimo."""
+
+    dataset_path = tmp_path / "small.csv"
+    small_dataset = generate_synthetic_dataset(size=25, seed=1)
+    small_dataset.to_csv(dataset_path, index=False)
+
+    loaded_dataset = load_or_generate_dataset(
+        dataset_path=dataset_path, size=80, seed=7
+    )
+
+    assert len(loaded_dataset) == 80
+    persisted_dataset = generate_synthetic_dataset(size=80, seed=7)
+    assert loaded_dataset.equals(persisted_dataset)
+
+
+def test_evaluate_loader_regenerates_dataset_when_existing_is_too_small(tmp_path: Path):
+    """Regenera dataset de evaluación si el archivo actual quedó chico."""
+
+    dataset_path = tmp_path / "small-eval.csv"
+    small_dataset = generate_synthetic_dataset(size=30, seed=2)
+    small_dataset.to_csv(dataset_path, index=False)
+
+    loaded_dataset = load_or_generate_evaluation_dataset(
+        dataset_path=dataset_path,
+        size=90,
+        seed=11,
+    )
+
+    assert len(loaded_dataset) == 90
+    persisted_dataset = generate_synthetic_dataset(size=90, seed=11)
+    assert loaded_dataset.equals(persisted_dataset)

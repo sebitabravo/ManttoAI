@@ -9,7 +9,7 @@ import pandas as pd
 FEATURES = ["temperatura", "humedad", "vib_x", "vib_y", "vib_z"]
 TARGET_COLUMN = "riesgo"
 EXPECTED_COLUMNS = [*FEATURES, TARGET_COLUMN]
-DEFAULT_DATASET_SIZE = 1200
+DEFAULT_DATASET_SIZE = 12000
 DEFAULT_DATASET_SEED = 42
 
 DATA_PATH = Path(__file__).resolve().parent / "data" / "synthetic_readings.csv"

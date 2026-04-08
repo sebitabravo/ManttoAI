@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 import { formatDate } from "../../utils/formatDate";
 import { formatMetric } from "../../utils/metrics";
 
@@ -93,7 +95,18 @@ export default function GraficoLineaBase({
   lineTone = "primary",
   emptyMessage,
 }) {
-  const isEmpty = series.length === 0;
+  const chartId = useId().replace(/:/g, "");
+  const titleId = `chart-title-${chartId}`;
+  const descId = `chart-desc-${chartId}`;
+
+  const normalizedSeries = (Array.isArray(series) ? series : [])
+    .map((point) => ({
+      timestamp: point?.timestamp,
+      value: Number(point?.value),
+    }))
+    .filter((point) => Number.isFinite(point.value));
+
+  const isEmpty = normalizedSeries.length === 0;
   const lineClass = LINE_TONE_CLASS[lineTone] || LINE_TONE_CLASS.primary;
 
   if (isEmpty) {
@@ -109,7 +122,7 @@ export default function GraficoLineaBase({
     );
   }
 
-  const values = series.map((point) => point.value);
+  const values = normalizedSeries.map((point) => point.value);
   const geometry = buildChartGeometry(values);
   const points = geometry.points;
   const linePoints = toPolylinePoints(points);
@@ -124,8 +137,12 @@ export default function GraficoLineaBase({
 
   const yTicks = [maxValue, minValue + geometry.range / 2, minValue];
 
-  const firstTimestamp = series[0].timestamp;
-  const lastTimestamp = series[series.length - 1].timestamp;
+  const firstTimestamp = normalizedSeries[0].timestamp;
+  const lastTimestamp = normalizedSeries[normalizedSeries.length - 1].timestamp;
+  const description = `Último ${formatMetric(latestValue, unit)}. Mínimo ${formatMetric(
+    minValue,
+    unit
+  )}. Máximo ${formatMetric(maxValue, unit)}.`;
 
   return (
     <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
@@ -136,10 +153,12 @@ export default function GraficoLineaBase({
         width="100%"
         viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
         role="img"
-        aria-label={`Serie temporal de ${title.toLowerCase()}`}
+        aria-labelledby={titleId}
+        aria-describedby={descId}
         className="mb-4"
       >
-        <title>{`Serie temporal de ${title.toLowerCase()}`}</title>
+        <title id={titleId}>{`Serie temporal de ${title.toLowerCase()}`}</title>
+        <desc id={descId}>{description}</desc>
 
         {/* Grilla horizontal + etiquetas de referencia */}
         {yTicks.map((tick, index) => {
@@ -208,7 +227,7 @@ export default function GraficoLineaBase({
           const isLatest = index === points.length - 1;
           return (
             <circle
-              key={`${point.x}-${point.y}`}
+              key={`pt-${index}`}
               cx={point.x}
               cy={point.y}
               r={isLatest ? 4 : 2}

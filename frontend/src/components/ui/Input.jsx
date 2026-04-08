@@ -12,7 +12,11 @@ import { useId } from "react";
  */
 export default function Input({ label, error, className = "", ...props }) {
   const generatedId = useId().replace(/:/g, "");
-  const inputId = props.id || props.name || `input-${generatedId}`;
+  const sanitizedName =
+    typeof props.name === "string"
+      ? props.name.trim().replace(/[^a-zA-Z0-9\-_.:]/g, "-")
+      : undefined;
+  const inputId = props.id || sanitizedName || `input-${generatedId}`;
   const errorId = error ? `${inputId}-error` : undefined;
 
   return (

@@ -28,7 +28,16 @@ export default function Modal({ open = false, title = "Modal", onClose, children
       'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
     const getFocusables = () => Array.from(dialog?.querySelectorAll(selector) || []);
-    const previousOverflow = document.body.style.overflow;
+    const ORIGINAL_OVERFLOW_KEY = "manttoaiOriginalOverflow";
+    const MODAL_COUNT_KEY = "manttoaiModalCount";
+
+    const currentModalCount = Number(document.body.dataset[MODAL_COUNT_KEY] || 0) + 1;
+    document.body.dataset[MODAL_COUNT_KEY] = String(currentModalCount);
+
+    if (currentModalCount === 1) {
+      document.body.dataset[ORIGINAL_OVERFLOW_KEY] = document.body.style.overflow || "";
+      document.body.style.overflow = "hidden";
+    }
 
     const handleEscape = (e) => {
       if (e.key === "Escape" && onClose) {
@@ -63,7 +72,6 @@ export default function Modal({ open = false, title = "Modal", onClose, children
     // Dar foco al primer elemento interactivo o al contenedor
     const focusables = getFocusables();
     (focusables[0] || dialog)?.focus();
-    document.body.style.overflow = "hidden";
 
     document.addEventListener("keydown", handleEscape);
     document.addEventListener("keydown", handleTabTrap);
@@ -71,7 +79,16 @@ export default function Modal({ open = false, title = "Modal", onClose, children
     return () => {
       document.removeEventListener("keydown", handleEscape);
       document.removeEventListener("keydown", handleTabTrap);
-      document.body.style.overflow = previousOverflow;
+
+      const nextModalCount = Math.max(Number(document.body.dataset[MODAL_COUNT_KEY] || 1) - 1, 0);
+      document.body.dataset[MODAL_COUNT_KEY] = String(nextModalCount);
+
+      if (nextModalCount === 0) {
+        document.body.style.overflow = document.body.dataset[ORIGINAL_OVERFLOW_KEY] || "";
+        delete document.body.dataset[ORIGINAL_OVERFLOW_KEY];
+        delete document.body.dataset[MODAL_COUNT_KEY];
+      }
+
       // Restaurar foco
       previousFocus?.focus();
     };

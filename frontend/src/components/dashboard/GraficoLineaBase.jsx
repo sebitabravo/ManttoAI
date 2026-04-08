@@ -98,6 +98,7 @@ export default function GraficoLineaBase({
   const chartId = useId().replace(/:/g, "");
   const titleId = `chart-title-${chartId}`;
   const descId = `chart-desc-${chartId}`;
+  const safeTitle = String(title || "Serie");
 
   const normalizedSeries = (Array.isArray(series) ? series : [])
     .map((point) => ({
@@ -157,7 +158,7 @@ export default function GraficoLineaBase({
         aria-describedby={descId}
         className="mb-4"
       >
-        <title id={titleId}>{`Serie temporal de ${title.toLowerCase()}`}</title>
+        <title id={titleId}>{`Serie temporal de ${safeTitle.toLowerCase()}`}</title>
         <desc id={descId}>{description}</desc>
 
         {/* Grilla horizontal + etiquetas de referencia */}
@@ -225,9 +226,10 @@ export default function GraficoLineaBase({
         {/* Puntos de muestra */}
         {points.map((point, index) => {
           const isLatest = index === points.length - 1;
+          const pointKey = normalizedSeries[index]?.timestamp || `pt-${Math.round(point.x)}-${Math.round(point.y)}`;
           return (
             <circle
-              key={`pt-${index}`}
+              key={pointKey}
               cx={point.x}
               cy={point.y}
               r={isLatest ? 4 : 2}

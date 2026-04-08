@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 /**
  * Modal del sistema de diseño ManttoAI.
@@ -18,6 +18,7 @@ import { useEffect, useRef } from "react";
  */
 export default function Modal({ open = false, title = "Modal", onClose, children }) {
   const dialogRef = useRef(null);
+  const titleId = `modal-title-${useId().replace(/:/g, "")}`;
 
   // Focus trap + Escape key handler
   useEffect(() => {
@@ -111,7 +112,7 @@ export default function Modal({ open = false, title = "Modal", onClose, children
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby={titleId}
         tabIndex={-1}
         className="
           relative w-full max-w-lg max-h-[90vh] overflow-y-auto
@@ -119,7 +120,7 @@ export default function Modal({ open = false, title = "Modal", onClose, children
           focus:outline-none
         "
       >
-        <h2 id="modal-title" className="text-lg font-semibold text-neutral-800 mb-4">
+        <h2 id={titleId} className="mb-4 text-lg font-semibold text-neutral-800">
           {title}
         </h2>
         <div className="text-neutral-700">

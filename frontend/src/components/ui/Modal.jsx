@@ -31,23 +31,36 @@ export default function Modal({ open = false, title = "Modal", onClose, children
     const getFocusables = () => Array.from(dialog?.querySelectorAll(selector) || []);
     const ORIGINAL_OVERFLOW_KEY = "manttoaiOriginalOverflow";
     const MODAL_COUNT_KEY = "manttoaiModalCount";
+    const MODAL_INDEX_KEY = "manttoaiModalIndex";
 
     const currentModalCount = Number(document.body.dataset[MODAL_COUNT_KEY] || 0) + 1;
     document.body.dataset[MODAL_COUNT_KEY] = String(currentModalCount);
+
+    if (dialog) {
+      dialog.dataset[MODAL_INDEX_KEY] = String(currentModalCount);
+    }
 
     if (currentModalCount === 1) {
       document.body.dataset[ORIGINAL_OVERFLOW_KEY] = document.body.style.overflow || "";
       document.body.style.overflow = "hidden";
     }
 
+    const isTopmostModal = () => {
+      const topIndex = Number(document.body.dataset[MODAL_COUNT_KEY] || 0);
+      const myIndex = Number(dialog?.dataset?.[MODAL_INDEX_KEY] || -1);
+      return myIndex === topIndex;
+    };
+
     const handleEscape = (e) => {
       if (e.key === "Escape" && onClose) {
+        if (!isTopmostModal()) return;
         onClose();
       }
     };
 
     const handleTabTrap = (e) => {
       if (e.key !== "Tab") return;
+      if (!isTopmostModal()) return;
 
       const focusables = getFocusables();
       if (focusables.length === 0) {
@@ -80,6 +93,10 @@ export default function Modal({ open = false, title = "Modal", onClose, children
     return () => {
       document.removeEventListener("keydown", handleEscape);
       document.removeEventListener("keydown", handleTabTrap);
+
+      if (dialog) {
+        delete dialog.dataset[MODAL_INDEX_KEY];
+      }
 
       const nextModalCount = Math.max(Number(document.body.dataset[MODAL_COUNT_KEY] || 1) - 1, 0);
       document.body.dataset[MODAL_COUNT_KEY] = String(nextModalCount);

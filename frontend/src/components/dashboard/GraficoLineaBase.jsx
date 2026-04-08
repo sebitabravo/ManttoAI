@@ -32,8 +32,17 @@ const LINE_TONE_CLASS = {
 };
 
 function buildChartGeometry(values) {
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
+  let minValue = Infinity;
+  let maxValue = -Infinity;
+
+  for (const value of values) {
+    if (value < minValue) minValue = value;
+    if (value > maxValue) maxValue = value;
+  }
+
+  if (minValue === Infinity) minValue = 0;
+  if (maxValue === -Infinity) maxValue = 0;
+
   const range = maxValue - minValue || 1;
 
   const innerWidth = CHART_WIDTH - CHART_PADDING.left - CHART_PADDING.right;
@@ -226,7 +235,10 @@ export default function GraficoLineaBase({
         {/* Puntos de muestra */}
         {points.map((point, index) => {
           const isLatest = index === points.length - 1;
-          const pointKey = normalizedSeries[index]?.timestamp || `pt-${Math.round(point.x)}-${Math.round(point.y)}`;
+          const pointTimestamp = normalizedSeries[index]?.timestamp;
+          const pointKey = pointTimestamp
+            ? `${pointTimestamp}-${index}`
+            : `pt-${index}-${Math.round(point.x)}-${Math.round(point.y)}`;
           return (
             <circle
               key={pointKey}

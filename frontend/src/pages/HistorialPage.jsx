@@ -3,11 +3,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getEquipos } from "../api/equipos";
 import { getLecturas } from "../api/lecturas";
 import { getMantenciones, updateMantencion } from "../api/mantenciones";
+import {
+  downloadInformeEjecutivoPdf,
+  downloadLecturasCsv,
+  downloadMantencionesCsv,
+} from "../api/reportes";
 import MantencionForm from "../components/mantenciones/MantencionForm";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import { SkeletonTable } from "../components/ui/Skeleton";
 import { getApiErrorMessage } from "../utils/errorHandling";
+import { triggerFileDownload } from "../utils/fileDownload";
 import { formatDate } from "../utils/formatDate";
 import { formatMetric, resolveMaxVibration } from "../utils/metrics";
 import { sortByTimestampDesc } from "../utils/time";
@@ -21,6 +27,8 @@ export default function HistorialPage() {
   const [editingMantencionId, setEditingMantencionId] = useState(null);
   const [isSavingMantencion, setIsSavingMantencion] = useState(false);
   const [updateMantencionErrorMessage, setUpdateMantencionErrorMessage] = useState("");
+  const [downloadingReport, setDownloadingReport] = useState(null);
+  const [downloadReportErrorMessage, setDownloadReportErrorMessage] = useState("");
 
   const loadHistorial = useCallback(async () => {
     setLoading(true);
@@ -101,6 +109,40 @@ export default function HistorialPage() {
     }
   }
 
+  async function handleDownloadReport(reportType) {
+    setDownloadReportErrorMessage("");
+    setDownloadingReport(reportType);
+
+    try {
+      let file;
+
+      switch (reportType) {
+        case "lecturas":
+          file = await downloadLecturasCsv({ limit: 5000 });
+          break;
+        case "mantenciones":
+          file = await downloadMantencionesCsv({ limit: 5000, order: "desc" });
+          break;
+        case "ejecutivo":
+          file = await downloadInformeEjecutivoPdf();
+          break;
+        default:
+          throw new Error("Tipo de reporte no soportado");
+      }
+
+      triggerFileDownload(file.blob, file.filename);
+    } catch (downloadError) {
+      setDownloadReportErrorMessage(
+        getApiErrorMessage(
+          downloadError,
+          "No pudimos descargar el reporte solicitado. Intentá de nuevo."
+        )
+      );
+    } finally {
+      setDownloadingReport(null);
+    }
+  }
+
   return (
     <section className="grid grid-cols-1 gap-4">
       <div className="flex items-center justify-between gap-3">
@@ -110,10 +152,42 @@ export default function HistorialPage() {
             Lecturas y mantenciones persistidas para trazabilidad del prototipo.
           </p>
         </div>
-        <Button type="button" variant="outline" onClick={loadHistorial} disabled={loading || isSavingMantencion}>
-          {loading ? "Actualizando..." : "Actualizar"}
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleDownloadReport("lecturas")}
+            disabled={loading || isSavingMantencion || Boolean(downloadingReport)}
+          >
+            {downloadingReport === "lecturas" ? "Descargando CSV..." : "Lecturas CSV"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleDownloadReport("mantenciones")}
+            disabled={loading || isSavingMantencion || Boolean(downloadingReport)}
+          >
+            {downloadingReport === "mantenciones" ? "Descargando CSV..." : "Mantenciones CSV"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleDownloadReport("ejecutivo")}
+            disabled={loading || isSavingMantencion || Boolean(downloadingReport)}
+          >
+            {downloadingReport === "ejecutivo" ? "Generando PDF..." : "Informe ejecutivo PDF"}
+          </Button>
+          <Button type="button" variant="outline" onClick={loadHistorial} disabled={loading || isSavingMantencion}>
+            {loading ? "Actualizando..." : "Actualizar"}
+          </Button>
+        </div>
       </div>
+
+      {downloadReportErrorMessage ? (
+        <div className="rounded-lg border border-danger-300 bg-danger-50 px-3 py-2 text-sm text-danger-800">
+          {downloadReportErrorMessage}
+        </div>
+      ) : null}
 
       {loading ? (
         <div className="grid grid-cols-1 gap-4" aria-label="Cargando historial">

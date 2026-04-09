@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { getAlertas, marcarLeida } from "../api/alertas";
+import { downloadAlertasCsv } from "../api/reportes";
 import AlertaBadge from "../components/alertas/AlertaBadge";
 import AlertaItem from "../components/alertas/AlertaItem";
 import Button from "../components/ui/Button";
@@ -8,10 +9,14 @@ import EmptyState from "../components/ui/EmptyState";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import usePolling from "../hooks/usePolling";
 import { ALERTAS_POLLING_INTERVAL_MS } from "../utils/constants";
+import { getApiErrorMessage } from "../utils/errorHandling";
+import { triggerFileDownload } from "../utils/fileDownload";
 
 export default function AlertasPage() {
   const [markingId, setMarkingId] = useState(null);
   const [markError, setMarkError] = useState(null);
+  const [downloadingCsv, setDownloadingCsv] = useState(false);
+  const [downloadErrorMessage, setDownloadErrorMessage] = useState("");
 
   // Fetcher estable para usePolling
   const fetchAlertas = useCallback(async () => {
@@ -47,6 +52,25 @@ export default function AlertasPage() {
     }
   }
 
+  async function handleDownloadCsv() {
+    setDownloadErrorMessage("");
+    setDownloadingCsv(true);
+
+    try {
+      const file = await downloadAlertasCsv({ limit: 5000 });
+      triggerFileDownload(file.blob, file.filename);
+    } catch (downloadError) {
+      setDownloadErrorMessage(
+        getApiErrorMessage(
+          downloadError,
+          "No pudimos descargar el CSV de alertas. Intentá nuevamente."
+        )
+      );
+    } finally {
+      setDownloadingCsv(false);
+    }
+  }
+
   const isInitialLoading = loading && alertas.length === 0;
 
   return (
@@ -71,11 +95,20 @@ export default function AlertasPage() {
         </div>
         <div className="flex items-center gap-2">
           <AlertaBadge total={alertasNoLeidas.length} />
+          <Button type="button" variant="outline" onClick={handleDownloadCsv} disabled={loading || downloadingCsv}>
+            {downloadingCsv ? "Descargando CSV..." : "Descargar CSV"}
+          </Button>
           <Button type="button" variant="outline" onClick={refresh} disabled={loading}>
             {loading ? "Actualizando..." : "Actualizar"}
           </Button>
         </div>
       </div>
+
+      {downloadErrorMessage ? (
+        <div className="rounded-lg border border-danger-300 bg-danger-50 px-3 py-2 text-sm text-danger-800">
+          {downloadErrorMessage}
+        </div>
+      ) : null}
 
       {isInitialLoading ? (
         <div className="grid grid-cols-1 gap-3" aria-label="Cargando alertas">

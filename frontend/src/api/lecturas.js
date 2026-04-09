@@ -9,7 +9,7 @@ export async function getLecturas(equipoId = null, limit = 100) {
     params.limit = limit;
   }
 
-  const { data } = await client.get("/lecturas", { params });
+  const { data } = await client.get("/api/v1/lecturas", { params });
   return data;
 }
 
@@ -18,6 +18,6 @@ export async function getUltimaLectura(equipoId) {
     throw new Error("getUltimaLectura requiere equipoId");
   }
 
-  const { data } = await client.get(`/lecturas/latest/${equipoId}`);
+  const { data } = await client.get(`/api/v1/lecturas/latest/${equipoId}`);
   return data;
 }

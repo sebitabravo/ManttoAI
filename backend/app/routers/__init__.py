@@ -8,6 +8,7 @@ from app.routers import (
     lecturas,
     mantenciones,
     predicciones,
+    reportes,
     umbrales,
 )
 
@@ -20,4 +21,5 @@ __all__ = [
     "mantenciones",
     "umbrales",
     "dashboard",
+    "reportes",
 ]

@@ -1,18 +1,23 @@
 """Dependencias reutilizables de FastAPI."""
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
+from datetime import datetime
+from typing import Annotated
 
+import bcrypt
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import SessionLocal
+from app.models.api_key import APIKey
 from app.models.usuario import Usuario
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 settings = get_settings()
 JWT_ALGORITHM = "HS256"
 
@@ -41,6 +46,15 @@ def get_current_user(
     )
 
     resolved_token = token or request.cookies.get(settings.auth_cookie_name)
+
+    # Soporte explícito para contextos sin Depends(oauth2_scheme),
+    # por ejemplo middleware de auditoría ejecutado en threadpool.
+    if not resolved_token:
+        authorization_header = request.headers.get("Authorization", "")
+        if authorization_header.lower().startswith("bearer "):
+            bearer_token = authorization_header.split(" ", 1)[1].strip()
+            if bearer_token:
+                resolved_token = bearer_token
     if not resolved_token:
         raise credentials_exception
 
@@ -71,3 +85,70 @@ def get_current_user(
         raise credentials_exception
 
     return usuario
+
+
+def require_role(*allowed_roles: str) -> Callable:
+    """
+    Decorator factory para requerir roles específicos.
+
+    Roles válidos: "admin", "tecnico", "visualizador"
+
+    Ejemplo:
+        @router.get("", dependencies=[Depends(require_role("admin", "tecnico"))])
+        def get_equipos(...):
+            ...
+    """
+
+    async def role_checker(
+        current_user: Usuario = Depends(get_current_user),
+    ) -> Usuario:
+        """Verifica que el usuario tenga uno de los roles permitidos."""
+
+        user_role = current_user.rol.lower() if current_user.rol else "visualizador"
+
+        if user_role not in [role.lower() for role in allowed_roles]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Se requiere uno de los siguientes roles: {', '.join(allowed_roles)}",
+            )
+
+        return current_user
+
+    return role_checker
+
+
+def get_api_key_user(
+    api_key: str | None = Depends(api_key_header),
+    db: Session = Depends(get_db),
+) -> APIKey | None:
+    """
+    Valida una API Key y retorna el objeto APIKey si es válida.
+
+    Se usa para autenticar dispositivos IoT (ESP32) vía MQTT o HTTP.
+    """
+
+    if not api_key:
+        return None
+
+    key_suffix = api_key[-8:] if len(api_key) >= 8 else api_key
+    candidates = db.scalars(
+        select(APIKey).where(
+            APIKey.key_prefix == key_suffix,
+            APIKey.is_active.is_(True),
+        )
+    ).all()
+
+    for api_key_obj in candidates:
+        try:
+            if not bcrypt.checkpw(
+                api_key.encode("utf-8"), api_key_obj.key_hash.encode("utf-8")
+            ):
+                continue
+
+            api_key_obj.last_used_at = datetime.utcnow()
+            db.commit()
+            return api_key_obj
+        except Exception:
+            continue
+
+    return None

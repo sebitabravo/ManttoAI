@@ -1,34 +1,57 @@
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
 import { formatDate } from "../../utils/formatDate";
 import { formatMetric } from "../../utils/metrics";
 
 /**
- * Gráfico de línea base para series temporales.
- * 
- * Usado por GraficoTemperatura y GraficoVibracion.
- * SVG nativo sin dependencias externas (Chart.js pesado para MVP).
- * 
- * Features:
- * - Escalado automático según min/max de valores
- * - Responsive con viewBox
- * - Métricas resumen: último, mínimo, máximo
- * - Range temporal visible (primer y último timestamp)
+ * Gráfico de línea enriquecido para series temporales.
+ *
+ * Inspirado en dashboards enterprise:
+ * - Línea suavizada + área degradada
+ * - Bandas de contexto por rangos operacionales
+ * - Tooltip contextual y crosshair
+ * - Métricas clave + estado actual
+ *
+ * Mantiene SVG nativo para evitar dependencias pesadas.
  */
-const CHART_WIDTH = 560;
-const CHART_HEIGHT = 240;
+const CHART_WIDTH = 620;
+const CHART_HEIGHT = 270;
 const CHART_PADDING = {
-  top: 20,
-  right: 20,
-  bottom: 26,
-  left: 54,
+  top: 26,
+  right: 24,
+  bottom: 34,
+  left: 68,
 };
 
-const LINE_TONE_CLASS = {
-  primary: "text-primary-600",
-  success: "text-success-600",
-  warning: "text-warning-600",
-  danger: "text-danger-600",
+const LINE_THEMES = {
+  primary: {
+    lineStart: "#2563eb",
+    lineEnd: "#06b6d4",
+    areaStart: "#60a5fa",
+    areaEnd: "#dbeafe",
+    accent: "#1d4ed8",
+  },
+  success: {
+    lineStart: "#059669",
+    lineEnd: "#10b981",
+    areaStart: "#34d399",
+    areaEnd: "#d1fae5",
+    accent: "#047857",
+  },
+  warning: {
+    lineStart: "#d97706",
+    lineEnd: "#f59e0b",
+    areaStart: "#fbbf24",
+    areaEnd: "#fef3c7",
+    accent: "#b45309",
+  },
+  danger: {
+    lineStart: "#dc2626",
+    lineEnd: "#f97316",
+    areaStart: "#fb7185",
+    areaEnd: "#fee2e2",
+    accent: "#b91c1c",
+  },
 };
 
 function buildChartGeometry(values) {
@@ -48,8 +71,10 @@ function buildChartGeometry(values) {
   const innerWidth = CHART_WIDTH - CHART_PADDING.left - CHART_PADDING.right;
   const innerHeight = CHART_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom;
 
-  const toY = (value) =>
-    CHART_PADDING.top + ((maxValue - value) / range) * innerHeight;
+  const toY =
+    range === 0
+      ? () => CHART_PADDING.top + innerHeight / 2
+      : (value) => CHART_PADDING.top + ((maxValue - value) / range) * innerHeight;
 
   const points = values.map((value, index) => {
     const denominator = values.length > 1 ? values.length - 1 : 1;
@@ -72,19 +97,38 @@ function buildChartGeometry(values) {
   };
 }
 
-function toPolylinePoints(points) {
-  return points.map((point) => `${point.x},${point.y}`).join(" ");
+function toSmoothLinePath(points, tension = 0.2) {
+  if (!Array.isArray(points) || points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+  let d = `M ${points[0].x} ${points[0].y}`;
+
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const p0 = points[index - 1] || points[index];
+    const p1 = points[index];
+    const p2 = points[index + 1];
+    const p3 = points[index + 2] || p2;
+
+    const cp1x = p1.x + (p2.x - p0.x) * tension;
+    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const cp2x = p2.x - (p3.x - p1.x) * tension;
+    const cp2y = p2.y - (p3.y - p1.y) * tension;
+
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+  }
+
+  return d;
 }
 
-function toAreaPath(points) {
-  if (points.length === 0) return "";
+function toSmoothAreaPath(points, tension = 0.2) {
+  if (!Array.isArray(points) || points.length === 0) return "";
 
-  const first = points[0];
-  const last = points[points.length - 1];
   const baselineY = CHART_HEIGHT - CHART_PADDING.bottom;
-  const line = points.map((point) => `L ${point.x} ${point.y}`).join(" ");
+  const topPath = toSmoothLinePath(points, tension);
+  const last = points[points.length - 1];
+  const first = points[0];
 
-  return `M ${first.x} ${baselineY} ${line} L ${last.x} ${baselineY} Z`;
+  return `${topPath} L ${last.x} ${baselineY} L ${first.x} ${baselineY} Z`;
 }
 
 function formatDelta(value, unit) {
@@ -94,6 +138,46 @@ function formatDelta(value, unit) {
 
   const sign = value > 0 ? "+" : "";
   return `${sign}${value.toFixed(2)} ${unit}`;
+}
+
+function formatCompact(value) {
+  if (!Number.isFinite(value)) return "—";
+  return Number(value).toFixed(1);
+}
+
+function formatZoneRange(zone, unit) {
+  const min = zone.min;
+  const max = zone.max;
+
+  if (max === Infinity) {
+    return `> ${formatCompact(min)} ${unit}`;
+  }
+  if (min === -Infinity) {
+    return `< ${formatCompact(max)} ${unit}`;
+  }
+  return `${formatCompact(min)} – ${formatCompact(max)} ${unit}`;
+}
+
+function sanitizeColor(input, fallback = "#cbd5e1") {
+  if (typeof input !== "string") {
+    return fallback;
+  }
+
+  const value = input.trim();
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value)) {
+    return value;
+  }
+
+  if (/^var\(--[a-z0-9-]+\)$/i.test(value)) {
+    return value;
+  }
+
+  const safeKeywords = new Set(["transparent", "currentColor"]);
+  if (safeKeywords.has(value.toLowerCase())) {
+    return value;
+  }
+
+  return fallback;
 }
 
 function clamp(value, min, max) {
@@ -119,6 +203,67 @@ function resolveClosestPointIndex(points, targetX) {
   return closestIndex;
 }
 
+function resolveXTicks(series) {
+  if (!Array.isArray(series) || series.length === 0) {
+    return [];
+  }
+
+  if (series.length <= 2) {
+    return [0, series.length - 1].filter(
+      (index, idx, arr) => index >= 0 && arr.indexOf(index) === idx
+    );
+  }
+
+  const last = series.length - 1;
+  const ticks = [0, Math.round(last * 0.25), Math.round(last * 0.5), Math.round(last * 0.75), last];
+  return ticks.filter((index, idx, arr) => arr.indexOf(index) === idx);
+}
+
+function resolveZoneForValue(zones, value) {
+  if (!Array.isArray(zones) || !Number.isFinite(value)) {
+    return null;
+  }
+
+  return (
+    zones.find((zone) => {
+      const min = Number.isFinite(zone.min) ? zone.min : -Infinity;
+      const max = Number.isFinite(zone.max) ? zone.max : Infinity;
+      return value >= min && value < max;
+    }) || null
+  );
+}
+
+function resolveVisibleZones(zones, minValue, maxValue, toY) {
+  if (!Array.isArray(zones) || zones.length === 0) {
+    return [];
+  }
+
+  return zones
+    .map((zone, index) => {
+      const zoneMin = Number.isFinite(zone.min) ? zone.min : -Infinity;
+      const zoneMax = Number.isFinite(zone.max) ? zone.max : Infinity;
+
+      const clippedMin = Math.max(zoneMin, minValue);
+      const clippedMax = Math.min(zoneMax, maxValue);
+
+      if (!Number.isFinite(clippedMin) || !Number.isFinite(clippedMax) || clippedMax <= clippedMin) {
+        return null;
+      }
+
+      const yTop = toY(clippedMax);
+      const yBottom = toY(clippedMin);
+
+      return {
+        id: `${zone.label}-${index}`,
+        label: zone.label,
+        color: zone.color,
+        y: yTop,
+        height: yBottom - yTop,
+      };
+    })
+    .filter(Boolean);
+}
+
 export default function GraficoLineaBase({
   title,
   subtitle,
@@ -126,41 +271,66 @@ export default function GraficoLineaBase({
   unit,
   lineTone = "primary",
   emptyMessage,
+  zones = [],
 }) {
   const [activeIndex, setActiveIndex] = useState(null);
+
   const chartId = useId().replace(/:/g, "");
   const titleId = `chart-title-${chartId}`;
   const descId = `chart-desc-${chartId}`;
-  const safeTitle = String(title || "Serie");
+  const gradientId = `chart-line-gradient-${chartId}`;
+  const areaGradientId = `chart-area-gradient-${chartId}`;
+  const glowId = `chart-glow-${chartId}`;
 
-  const normalizedSeries = (Array.isArray(series) ? series : [])
-    .map((point) => ({
-      timestamp: point?.timestamp,
-      value: Number(point?.value),
-    }))
-    .filter((point) => Number.isFinite(point.value));
+  const safeTitle = String(title || "Serie");
+  const theme = LINE_THEMES[lineTone] || LINE_THEMES.primary;
+
+  const normalizedSeries = useMemo(
+    () =>
+      (Array.isArray(series) ? series : [])
+        .map((point) => ({
+          timestamp: point?.timestamp,
+          value: Number(point?.value),
+        }))
+        .filter((point) => Number.isFinite(point.value)),
+    [series]
+  );
+
+  const normalizedZones = useMemo(
+    () =>
+      (Array.isArray(zones) ? zones : [])
+        .map((zone) => ({
+          label: String(zone?.label || "Rango"),
+          min: Number.isFinite(zone?.min) ? Number(zone.min) : -Infinity,
+          max: Number.isFinite(zone?.max) ? Number(zone.max) : Infinity,
+          color: sanitizeColor(zone?.color, "#cbd5e1"),
+        }))
+        .filter((zone) => zone.max > zone.min),
+    [zones]
+  );
 
   const isEmpty = normalizedSeries.length === 0;
-  const lineClass = LINE_TONE_CLASS[lineTone] || LINE_TONE_CLASS.primary;
 
   if (isEmpty) {
     return (
       <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
-        <h3 className="mb-2 mt-0 text-md font-semibold text-neutral-800">{title}</h3>
-        <p className="mt-0 text-sm text-neutral-500">{subtitle}</p>
-        {/* Placeholder visual — área del gráfico vacía */}
-        <div className="my-4 flex h-32 items-center justify-center rounded border border-dashed border-neutral-300 bg-neutral-50">
+        <h3 className="mb-1 mt-0 text-md font-semibold text-neutral-800">{title}</h3>
+        <p className="mb-4 mt-0 text-sm text-neutral-500">{subtitle}</p>
+        <div className="my-4 flex h-36 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50">
           <span className="text-sm text-neutral-400">{emptyMessage}</span>
         </div>
       </section>
     );
   }
 
-  const values = normalizedSeries.map((point) => point.value);
-  const geometry = buildChartGeometry(values);
+  const values = useMemo(
+    () => normalizedSeries.map((point) => point.value),
+    [normalizedSeries]
+  );
+  const geometry = useMemo(() => buildChartGeometry(values), [values]);
   const points = geometry.points;
-  const linePoints = toPolylinePoints(points);
-  const areaPath = toAreaPath(points);
+  const linePath = useMemo(() => toSmoothLinePath(points), [points]);
+  const areaPath = useMemo(() => toSmoothAreaPath(points), [points]);
 
   const latestValue = values[values.length - 1];
   const minValue = geometry.minValue;
@@ -168,10 +338,23 @@ export default function GraficoLineaBase({
   const previousValue = values.length > 1 ? values[values.length - 2] : NaN;
   const deltaValue = Number.isFinite(previousValue) ? latestValue - previousValue : NaN;
 
-  const yTicks = [maxValue, minValue + geometry.range / 2, minValue];
+  const yTicks = useMemo(
+    () => [maxValue, minValue + geometry.range * 0.66, minValue + geometry.range * 0.33, minValue],
+    [geometry.range, maxValue, minValue]
+  );
+  const xTickIndexes = useMemo(() => resolveXTicks(normalizedSeries), [normalizedSeries]);
+  const visibleZones = useMemo(
+    () => resolveVisibleZones(normalizedZones, minValue, maxValue, geometry.toY),
+    [normalizedZones, minValue, maxValue, geometry]
+  );
+  const currentZone = useMemo(
+    () => resolveZoneForValue(normalizedZones, latestValue),
+    [latestValue, normalizedZones]
+  );
 
   const firstTimestamp = normalizedSeries[0].timestamp;
   const lastTimestamp = normalizedSeries[normalizedSeries.length - 1].timestamp;
+
   const description = `Último ${formatMetric(latestValue, unit)}. Mínimo ${formatMetric(
     minValue,
     unit
@@ -180,18 +363,29 @@ export default function GraficoLineaBase({
   const resolvedActiveIndex =
     activeIndex === null ? null : clamp(activeIndex, 0, Math.max(points.length - 1, 0));
 
-  const activePoint =
-    resolvedActiveIndex === null ? null : points[resolvedActiveIndex];
-
+  const activePoint = resolvedActiveIndex === null ? null : points[resolvedActiveIndex];
   const activeSeriesPoint =
     resolvedActiveIndex === null ? null : normalizedSeries[resolvedActiveIndex];
+  const latestPoint = points[points.length - 1] || null;
+
+  const keyIndexes = useMemo(
+    () =>
+      new Set([
+        values.indexOf(minValue),
+        values.indexOf(maxValue),
+        Math.max(values.length - 1, 0),
+      ]),
+    [maxValue, minValue, values]
+  );
 
   let activeTooltip = null;
   if (activePoint && activeSeriesPoint) {
-    const tooltipWidth = 168;
-    const tooltipHeight = 46;
+    const tooltipWidth = 190;
+    const tooltipHeight = 58;
     const desiredX = activePoint.x + 10;
-    const desiredY = activePoint.y - tooltipHeight - 8;
+    const desiredY = activePoint.y - tooltipHeight - 10;
+
+    const zone = resolveZoneForValue(normalizedZones, activeSeriesPoint.value);
 
     activeTooltip = {
       x: clamp(
@@ -206,6 +400,7 @@ export default function GraficoLineaBase({
       ),
       valueLabel: formatMetric(activeSeriesPoint.value, unit),
       dateLabel: formatDate(activeSeriesPoint.timestamp),
+      zoneLabel: zone?.label || "Sin rango",
     };
   }
 
@@ -224,7 +419,9 @@ export default function GraficoLineaBase({
     const nextIndex = resolveClosestPointIndex(points, chartX);
 
     if (nextIndex !== null) {
-      setActiveIndex(nextIndex);
+      setActiveIndex((previousIndex) =>
+        previousIndex === nextIndex ? previousIndex : nextIndex
+      );
     }
   }
 
@@ -236,7 +433,10 @@ export default function GraficoLineaBase({
     event.preventDefault();
 
     if (event.key === "ArrowRight") {
-      const next = resolvedActiveIndex === null ? 0 : clamp(resolvedActiveIndex + 1, 0, points.length - 1);
+      const next =
+        resolvedActiveIndex === null
+          ? 0
+          : clamp(resolvedActiveIndex + 1, 0, points.length - 1);
       setActiveIndex(next);
       return;
     }
@@ -250,8 +450,27 @@ export default function GraficoLineaBase({
 
   return (
     <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
-      <h3 className="mb-2 mt-0 text-md font-semibold text-neutral-800">{title}</h3>
-      <p className="mt-0 mb-4 text-sm text-neutral-500">{subtitle}</p>
+      <h3 className="mb-1 mt-0 text-md font-semibold text-neutral-800">{title}</h3>
+      <p className="mb-3 mt-0 text-sm text-neutral-500">{subtitle}</p>
+
+      {normalizedZones.length > 0 ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {normalizedZones.map((zone) => (
+            <span
+              key={`${zone.label}-${zone.min}-${zone.max}`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-neutral-50 px-2.5 py-1 text-[11px] text-neutral-700"
+            >
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ backgroundColor: zone.color }}
+                aria-hidden="true"
+              />
+              {zone.label}
+              <span className="text-neutral-500">· {formatZoneRange(zone, unit)}</span>
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       <svg
         width="100%"
@@ -264,27 +483,61 @@ export default function GraficoLineaBase({
         <title id={titleId}>{`Serie temporal de ${safeTitle.toLowerCase()}`}</title>
         <desc id={descId}>{description}</desc>
 
-        {/* Grilla horizontal + etiquetas de referencia */}
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={theme.lineStart} />
+            <stop offset="100%" stopColor={theme.lineEnd} />
+          </linearGradient>
+
+          <linearGradient id={areaGradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={theme.areaStart} stopOpacity="0.35" />
+            <stop offset="100%" stopColor={theme.areaEnd} stopOpacity="0.05" />
+          </linearGradient>
+
+          <filter id={glowId} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2.2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Bandas de referencia por zona */}
+        {visibleZones.map((zone) => (
+          <rect
+            key={zone.id}
+            x={CHART_PADDING.left}
+            y={zone.y}
+            width={geometry.innerWidth}
+            height={zone.height}
+            fill={zone.color}
+            opacity="0.08"
+          />
+        ))}
+
+        {/* Grilla horizontal */}
         {yTicks.map((tick, index) => {
           const y = geometry.toY(tick);
 
           return (
-            <g key={index}>
+            <g key={`y-tick-${index}`}>
               <line
                 x1={CHART_PADDING.left}
                 y1={y}
                 x2={CHART_WIDTH - CHART_PADDING.right}
                 y2={y}
-                className="text-neutral-200"
-                stroke="currentColor"
+                stroke="#d4d4d8"
+                strokeDasharray="4 4"
                 strokeWidth="1"
               />
               <text
-                x={CHART_PADDING.left - 8}
+                x={CHART_PADDING.left - 10}
                 y={y + 4}
-                className="fill-neutral-500 tabular-nums"
+                fill="#737373"
                 textAnchor="end"
                 fontSize="11"
+                className="tabular-nums"
               >
                 {formatMetric(tick, unit)}
               </text>
@@ -292,14 +545,33 @@ export default function GraficoLineaBase({
           );
         })}
 
-        {/* Ejes del gráfico */}
+        {/* Grilla vertical (tick temporal) */}
+        {xTickIndexes.map((index) => {
+          const point = points[index];
+          if (!point) return null;
+
+          return (
+            <line
+              key={`x-grid-${index}`}
+              x1={point.x}
+              y1={CHART_PADDING.top}
+              x2={point.x}
+              y2={CHART_HEIGHT - CHART_PADDING.bottom}
+              stroke="#e5e7eb"
+              strokeDasharray="3 6"
+              strokeWidth="0.9"
+              opacity="0.55"
+            />
+          );
+        })}
+
+        {/* Ejes */}
         <line
           x1={CHART_PADDING.left}
           y1={CHART_HEIGHT - CHART_PADDING.bottom}
           x2={CHART_WIDTH - CHART_PADDING.right}
           y2={CHART_HEIGHT - CHART_PADDING.bottom}
-          className="text-neutral-300"
-          stroke="currentColor"
+          stroke="#a3a3a3"
           strokeWidth="1"
         />
         <line
@@ -307,26 +579,50 @@ export default function GraficoLineaBase({
           y1={CHART_PADDING.top}
           x2={CHART_PADDING.left}
           y2={CHART_HEIGHT - CHART_PADDING.bottom}
-          className="text-neutral-300"
-          stroke="currentColor"
+          stroke="#a3a3a3"
           strokeWidth="1"
         />
 
-        {/* Área de tendencia */}
-        <path className={`${lineClass} opacity-10`} d={areaPath} fill="currentColor" />
-
-        {/* Línea de datos */}
-        <polyline
-          className={lineClass}
+        {/* Área + línea principal */}
+        <path d={areaPath} fill={`url(#${areaGradientId})`} />
+        <path
+          d={linePath}
           fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
+          stroke={`url(#${gradientId})`}
+          strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
-          points={linePoints}
+          filter={`url(#${glowId})`}
         />
 
-        {/* Capa de interacción (hover/focus/teclado) */}
+        {/* Marcadores clave */}
+        {points.map((point, index) => {
+          if (!keyIndexes.has(index)) {
+            return null;
+          }
+
+          return (
+            <circle
+              key={`key-point-${index}`}
+              cx={point.x}
+              cy={point.y}
+              r="3.2"
+              fill="#ffffff"
+              stroke={theme.accent}
+              strokeWidth="2"
+            />
+          );
+        })}
+
+        {/* Punto actual con halo */}
+        {latestPoint ? (
+          <g pointerEvents="none">
+            <circle cx={latestPoint.x} cy={latestPoint.y} r="7" fill={theme.lineEnd} opacity="0.18" />
+            <circle cx={latestPoint.x} cy={latestPoint.y} r="4" fill={theme.lineEnd} stroke="#fff" strokeWidth="2" />
+          </g>
+        ) : null}
+
+        {/* Capa de interacción */}
         <rect
           x={CHART_PADDING.left}
           y={CHART_PADDING.top}
@@ -345,7 +641,7 @@ export default function GraficoLineaBase({
           onKeyDown={handleKeyDown}
         />
 
-        {/* Línea vertical + punto activo */}
+        {/* Crosshair */}
         {activePoint ? (
           <g pointerEvents="none">
             <line
@@ -353,69 +649,97 @@ export default function GraficoLineaBase({
               y1={CHART_PADDING.top}
               x2={activePoint.x}
               y2={CHART_HEIGHT - CHART_PADDING.bottom}
-              className="text-neutral-300"
-              stroke="currentColor"
+              stroke="#9ca3af"
               strokeWidth="1"
               strokeDasharray="4 3"
             />
-            <circle
-              cx={activePoint.x}
-              cy={activePoint.y}
-              r={4}
-              className={lineClass}
-              fill="currentColor"
-              stroke="white"
-              strokeWidth="2"
-            />
+            <circle cx={activePoint.x} cy={activePoint.y} r="4" fill={theme.accent} stroke="#ffffff" strokeWidth="2" />
           </g>
         ) : null}
 
-        {/* Tooltip contextual del punto activo */}
+        {/* Tooltip */}
         {activeTooltip ? (
           <g transform={`translate(${activeTooltip.x}, ${activeTooltip.y})`} pointerEvents="none">
-            <rect
-              width="168"
-              height="46"
-              rx="6"
-              className="fill-neutral-50 stroke-neutral-300"
-              strokeWidth="1"
-            />
-            <text x="8" y="17" className="fill-neutral-600 tabular-nums" fontSize="11">
+            <rect width="190" height="58" rx="8" fill="#fafafa" stroke="#d4d4d8" strokeWidth="1" />
+            <text x="10" y="17" fill="#525252" fontSize="11" className="tabular-nums">
               {activeTooltip.dateLabel}
             </text>
-            <text x="8" y="34" className={`fill-current text-sm font-semibold ${lineClass}`}>
+            <text x="10" y="35" fill={theme.accent} fontSize="13" fontWeight="700">
               {activeTooltip.valueLabel}
+            </text>
+            <text x="10" y="50" fill="#6b7280" fontSize="11">
+              Estado: {activeTooltip.zoneLabel}
             </text>
           </g>
         ) : null}
-  </svg>
 
-      {/* Live region para que lectores de pantalla reciban actualizaciones del tooltip activo */}
+        {/* Etiquetas de eje X */}
+        {xTickIndexes.map((index) => {
+          const point = points[index];
+          const raw = normalizedSeries[index]?.timestamp;
+          if (!point) return null;
+
+          return (
+            <text
+              key={`x-label-${index}`}
+              x={point.x}
+              y={CHART_HEIGHT - CHART_PADDING.bottom + 18}
+              fill="#737373"
+              textAnchor="middle"
+              fontSize="11"
+              className="tabular-nums"
+            >
+              {raw ? formatDate(raw) : ""}
+            </text>
+          );
+        })}
+      </svg>
+
+      {/* Live region para lectores de pantalla */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {activeTooltip ? `${activeTooltip.dateLabel} — ${activeTooltip.valueLabel}` : ""}
+        {activeTooltip
+          ? `${activeTooltip.dateLabel} — ${activeTooltip.valueLabel} — Estado: ${activeTooltip.zoneLabel}`
+          : ""}
       </div>
 
       {/* Métricas resumen */}
-      <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div>
+      <div className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
+        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
           <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Último</div>
           <strong className="metric-value text-lg text-neutral-800">{formatMetric(latestValue, unit)}</strong>
         </div>
-        <div>
+
+        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
           <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Variación</div>
-          <strong className="metric-value text-lg text-primary-700">{formatDelta(deltaValue, unit)}</strong>
+          <strong className="metric-value text-lg" style={{ color: theme.accent }}>
+            {formatDelta(deltaValue, unit)}
+          </strong>
         </div>
-        <div>
+
+        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
           <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Mínimo</div>
           <strong className="metric-value text-lg text-neutral-800">{formatMetric(minValue, unit)}</strong>
         </div>
-        <div>
+
+        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
           <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Máximo</div>
           <strong className="metric-value text-lg text-neutral-800">{formatMetric(maxValue, unit)}</strong>
         </div>
+
+        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
+          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Estado</div>
+          <strong className="metric-value inline-flex items-center gap-2 text-base text-neutral-800">
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: currentZone?.color || theme.accent }}
+              aria-hidden="true"
+            />
+            {currentZone?.label || "Sin clasificación"}
+          </strong>
+        </div>
       </div>
 
-      {/* Range temporal */}
+      {/* Rango temporal completo */}
       <div className="flex justify-between border-t border-neutral-200 pt-3 text-xs tabular-nums text-neutral-500">
         <span>{formatDate(firstTimestamp)}</span>
         <span>{formatDate(lastTimestamp)}</span>

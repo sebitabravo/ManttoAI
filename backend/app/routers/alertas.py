@@ -1,9 +1,10 @@
 """Endpoints de alertas."""
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
+from app.dependencies import get_db, require_role
+from app.middleware.rate_limit import limiter
 from app.schemas.alerta import (
     AlertaCountResponse,
     AlertaMarkReadResponse,
@@ -14,8 +15,14 @@ from app.services.alerta_service import count_alertas, list_alertas, mark_as_rea
 router = APIRouter(prefix="/alertas", tags=["alertas"])
 
 
-@router.get("", response_model=list[AlertaResponse])
+@router.get(
+    "",
+    response_model=list[AlertaResponse],
+    dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
+)
+@limiter.limit("200/hour")
 def get_alertas(
+    request: Request,
     equipo_id: int | None = Query(default=None),
     solo_no_leidas: bool = Query(default=False),
     limite: int | None = Query(default=50, ge=1, le=500),
@@ -31,9 +38,15 @@ def get_alertas(
     )
 
 
-@router.patch("/{alerta_id}/leer", response_model=AlertaMarkReadResponse)
+@router.patch(
+    "/{alerta_id}/leer",
+    response_model=AlertaMarkReadResponse,
+    dependencies=[Depends(require_role("admin", "tecnico"))],
+)
+@limiter.limit("100/hour")
 def patch_alerta(
     alerta_id: int,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> AlertaMarkReadResponse:
     """Marca una alerta como leída."""
@@ -41,8 +54,14 @@ def patch_alerta(
     return mark_as_read(db, alerta_id)
 
 
-@router.get("/count", response_model=AlertaCountResponse)
+@router.get(
+    "/count",
+    response_model=AlertaCountResponse,
+    dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
+)
+@limiter.limit("200/hour")
 def get_alertas_count(
+    request: Request,
     equipo_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> AlertaCountResponse:

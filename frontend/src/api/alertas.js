@@ -11,12 +11,12 @@ export async function getAlertas({ equipoId = null, soloNoLeidas = false, limite
     params.equipo_id = equipoId;
   }
 
-  const { data } = await client.get("/alertas", { params });
+  const { data } = await client.get("/api/v1/alertas", { params });
   return data;
 }
 
 export async function marcarLeida(id) {
-  const { data } = await client.patch(`/alertas/${id}/leer`);
+  const { data } = await client.patch(`/api/v1/alertas/${id}/leer`);
   return data;
 }
 
@@ -26,6 +26,6 @@ export async function getAlertasCount(equipoId = null) {
     params.equipo_id = equipoId;
   }
 
-  const { data } = await client.get("/alertas/count", { params });
+  const { data } = await client.get("/api/v1/alertas/count", { params });
   return data;
 }

@@ -5,7 +5,8 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
+from app.dependencies import get_db, require_role
+from app.middleware.rate_limit import limiter
 from app.schemas.mantencion import (
     MantencionCreate,
     MantencionResponse,
@@ -22,8 +23,14 @@ from app.services.mantencion_service import (
 router = APIRouter(prefix="/mantenciones", tags=["mantenciones"])
 
 
-@router.get("", response_model=list[MantencionResponse])
+@router.get(
+    "",
+    response_model=list[MantencionResponse],
+    dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
+)
+@limiter.limit("200/hour")
 def get_mantenciones(
+    request: Request,
     equipo_id: int | None = Query(default=None),
     limit: int | None = Query(default=None, ge=1, le=5000),
     order: Literal["asc", "desc"] = Query(default="asc"),
@@ -34,9 +41,15 @@ def get_mantenciones(
     return list_mantenciones(db, equipo_id=equipo_id, limit=limit, order=order)
 
 
-@router.get("/{mantencion_id}", response_model=MantencionResponse)
+@router.get(
+    "/{mantencion_id}",
+    response_model=MantencionResponse,
+    dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
+)
+@limiter.limit("200/hour")
 def get_mantencion_by_id(
     mantencion_id: int,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> MantencionResponse:
     """Obtiene una mantención por identificador."""
@@ -44,7 +57,13 @@ def get_mantencion_by_id(
     return get_mantencion_or_404(db, mantencion_id)
 
 
-@router.post("", response_model=MantencionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=MantencionResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role("admin", "tecnico"))],
+)
+@limiter.limit("100/hour")
 def post_mantencion(
     payload: MantencionCreate,
     request: Request,
@@ -60,10 +79,16 @@ def post_mantencion(
     return mantencion
 
 
-@router.put("/{mantencion_id}", response_model=MantencionResponse)
+@router.put(
+    "/{mantencion_id}",
+    response_model=MantencionResponse,
+    dependencies=[Depends(require_role("admin", "tecnico"))],
+)
+@limiter.limit("100/hour")
 def put_mantencion(
     mantencion_id: int,
     payload: MantencionUpdate,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> MantencionResponse:
     """Actualiza una mantención persistida."""
@@ -71,9 +96,15 @@ def put_mantencion(
     return update_mantencion(db, mantencion_id, payload)
 
 
-@router.delete("/{mantencion_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{mantencion_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_role("admin"))],
+)
+@limiter.limit("50/hour")
 def delete_mantencion_by_id(
     mantencion_id: int,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> Response:
     """Elimina una mantención por identificador."""

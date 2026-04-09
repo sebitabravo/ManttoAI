@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 
 import Header from "./Header";
+import OnboardingTour, { isOnboardingDone } from "../onboarding/OnboardingTour";
 import Sidebar from "./Sidebar";
 
 /**
@@ -20,6 +21,9 @@ import Sidebar from "./Sidebar";
 export default function Layout() {
   // Estado del drawer de navegación en resolución tablet
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
+
+  // Onboarding: se muestra solo la primera vez que el usuario ingresa
+  const [mostrarOnboarding, setMostrarOnboarding] = useState(() => !isOnboardingDone());
 
   // Ref al botón hamburguesa para devolver el foco al cerrarlo
   const menuBtnRef = useRef(null);
@@ -75,6 +79,11 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Tour de onboarding para nuevos usuarios */}
+      {mostrarOnboarding && (
+        <OnboardingTour onComplete={() => setMostrarOnboarding(false)} />
+      )}
     </div>
   );
 }

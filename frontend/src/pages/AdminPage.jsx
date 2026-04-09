@@ -117,7 +117,7 @@ function AdminPage() {
   }
 
   return (
-    <section className="grid grid-cols-1 gap-4">
+    <section data-tour="admin-contenido" className="grid grid-cols-1 gap-4">
       <div>
         <h1 className="m-0 text-xl font-semibold text-neutral-900">Panel de Administración</h1>
         <p className="mb-0 mt-1.5 text-sm text-neutral-600">

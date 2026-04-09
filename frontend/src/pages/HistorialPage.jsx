@@ -144,7 +144,7 @@ export default function HistorialPage() {
   }
 
   return (
-    <section className="grid grid-cols-1 gap-4">
+    <section data-tour="historial-contenido" className="grid grid-cols-1 gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="m-0 text-xl font-semibold text-neutral-900">Historial</h1>

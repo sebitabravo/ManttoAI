@@ -74,7 +74,7 @@ export default function AlertasPage() {
   const isInitialLoading = loading && alertas.length === 0;
 
   return (
-    <section className="grid grid-cols-1 gap-4">
+    <section data-tour="alertas-contenido" className="grid grid-cols-1 gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-3">

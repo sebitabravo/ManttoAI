@@ -68,7 +68,7 @@ export default function DashboardPage() {
       ) : null}
 
       {/* Bloque crítico: resumen operativo */}
-      <section className="grid grid-cols-1 gap-5" aria-label="Resumen operativo crítico">
+      <section data-tour="dashboard-resumen" className="grid grid-cols-1 gap-5" aria-label="Resumen operativo crítico">
         {isInitialLoading ? (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
             <SkeletonMetric className="xl:col-span-7" />
@@ -95,7 +95,7 @@ export default function DashboardPage() {
       ) : null}
 
       {/* Gráficos lado a lado — grid adaptativo */}
-      <section className="grid grid-cols-1 gap-5 lg:grid-cols-2" aria-label="Tendencias de sensores">
+      <section data-tour="dashboard-graficos" className="grid grid-cols-1 gap-5 lg:grid-cols-2" aria-label="Tendencias de sensores">
         {isInitialLoading ? (
           <>
             <SkeletonChart />

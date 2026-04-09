@@ -39,7 +39,7 @@ export async function downloadLecturasCsv({ equipoId = null, limit = 5000 } = {}
     params.equipo_id = equipoId;
   }
 
-  return downloadReportFile("/api/v1/reportes/lecturas.csv", {
+  return downloadReportFile("/reportes/lecturas.csv", {
     params,
     fallbackFilename: "manttoai_lecturas.csv",
   });
@@ -58,7 +58,7 @@ export async function downloadAlertasCsv({
     params.equipo_id = equipoId;
   }
 
-  return downloadReportFile("/api/v1/reportes/alertas.csv", {
+  return downloadReportFile("/reportes/alertas.csv", {
     params,
     fallbackFilename: "manttoai_alertas.csv",
   });
@@ -77,14 +77,14 @@ export async function downloadMantencionesCsv({
     params.equipo_id = equipoId;
   }
 
-  return downloadReportFile("/api/v1/reportes/mantenciones.csv", {
+  return downloadReportFile("/reportes/mantenciones.csv", {
     params,
     fallbackFilename: "manttoai_mantenciones.csv",
   });
 }
 
 export async function downloadInformeEjecutivoPdf() {
-  return downloadReportFile("/api/v1/reportes/ejecutivo.pdf", {
+  return downloadReportFile("/reportes/ejecutivo.pdf", {
     fallbackFilename: "manttoai_informe_ejecutivo.pdf",
   });
 }

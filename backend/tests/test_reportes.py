@@ -2,6 +2,8 @@
 
 from fastapi.testclient import TestClient
 
+from app.services.report_service import _build_simple_pdf
+
 
 def _create_equipo(client: TestClient, nombre: str = "Equipo Reporte") -> dict:
     """Crea un equipo de apoyo para tests de reportes."""
@@ -174,3 +176,12 @@ def test_export_csv_sanitiza_formulas_con_caracteres_invisibles(client: TestClie
 
     csv_text = response.text.lstrip("\ufeff")
     assert "'\u200e=SUM(1,2)" in csv_text
+
+
+def test_build_simple_pdf_agrega_aviso_si_excede_limite_lineas() -> None:
+    """Debe advertir truncamiento cuando el contenido supera una página."""
+
+    lines = [f"Linea {index} con contenido de prueba" for index in range(80)]
+    pdf_content = _build_simple_pdf(lines)
+
+    assert b"AVISO" in pdf_content

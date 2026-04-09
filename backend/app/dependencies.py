@@ -99,6 +99,7 @@ def require_role(*allowed_roles: str) -> Callable:
     """
 
     async def role_checker(
+        request: Request,
         current_user: Usuario = Depends(get_current_user),
     ) -> Usuario:
         """Verifica que el usuario tenga uno de los roles permitidos."""
@@ -110,6 +111,10 @@ def require_role(*allowed_roles: str) -> Callable:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Se requiere uno de los siguientes roles: {', '.join(allowed_roles)}",
             )
+
+        # Exponer rol/usuario en request.state para limit_by_role.
+        request.state.manttoai_user_role = user_role
+        request.state.manttoai_user_id = current_user.id
 
         return current_user
 

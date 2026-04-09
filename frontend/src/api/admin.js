@@ -11,7 +11,7 @@ export async function getUsers(filters = {}) {
   if (filters.page) params.append("page", filters.page);
   if (filters.per_page) params.append("per_page", filters.per_page);
 
-  const response = await client.get(`/api/v1/usuarios?${params.toString()}`);
+  const response = await client.get(`/usuarios?${params.toString()}`);
   return response.data;
 }
 
@@ -19,7 +19,7 @@ export async function getUsers(filters = {}) {
  * Crea un nuevo usuario.
  */
 export async function createUser(data) {
-  const response = await client.post("/api/v1/usuarios", data);
+  const response = await client.post("/usuarios", data);
   return response.data;
 }
 
@@ -27,7 +27,7 @@ export async function createUser(data) {
  * Actualiza un usuario existente.
  */
 export async function updateUser(userId, data) {
-  const response = await client.put(`/api/v1/usuarios/${userId}`, data);
+  const response = await client.put(`/usuarios/${userId}`, data);
   return response.data;
 }
 
@@ -35,7 +35,7 @@ export async function updateUser(userId, data) {
  * Elimina un usuario.
  */
 export async function deleteUser(userId) {
-  const response = await client.delete(`/api/v1/usuarios/${userId}`);
+  const response = await client.delete(`/usuarios/${userId}`);
   return response.data;
 }
 
@@ -47,7 +47,7 @@ export async function getApiKeys(filters = {}) {
   if (filters.include_inactive) params.append("include_inactive", "true");
   if (filters.device_id) params.append("device_id", filters.device_id);
 
-  const response = await client.get(`/api/v1/api-keys?${params.toString()}`);
+  const response = await client.get(`/api-keys?${params.toString()}`);
   return response.data;
 }
 
@@ -55,7 +55,7 @@ export async function getApiKeys(filters = {}) {
  * Crea una nueva API key.
  */
 export async function createApiKey(data) {
-  const response = await client.post("/api/v1/api-keys", data);
+  const response = await client.post("/api-keys", data);
   return response.data;
 }
 
@@ -63,7 +63,7 @@ export async function createApiKey(data) {
  * Revoca una API key.
  */
 export async function revokeApiKey(keyId) {
-  const response = await client.delete(`/api/v1/api-keys/${keyId}`);
+  const response = await client.delete(`/api-keys/${keyId}`);
   return response.data;
 }
 
@@ -79,6 +79,6 @@ export async function getAuditLogs(filters = {}) {
   if (filters.page) params.append("page", filters.page);
   if (filters.per_page) params.append("per_page", filters.per_page);
 
-  const response = await client.get(`/api/v1/audit-logs?${params.toString()}`);
+  const response = await client.get(`/audit-logs?${params.toString()}`);
   return response.data;
 }

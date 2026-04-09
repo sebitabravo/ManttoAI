@@ -17,6 +17,7 @@ from app.models.mantencion import Mantencion
 from app.services.dashboard_service import get_dashboard_summary
 
 _INVISIBLE_CHARS_RE = re.compile(r"^[\u200E\u200F\u202A-\u202E\s\t]+")
+_PDF_MAX_LINES = 45
 
 
 def _build_filename(prefix: str, extension: str) -> str:
@@ -86,10 +87,16 @@ def _build_simple_pdf(lines: list[str]) -> bytes:
     for line in lines:
         wrapped_lines.extend(textwrap.wrap(line, width=92) or [""])
 
-    # A4 vertical: 595x842, línea de 16pt permite ~45 líneas útiles
-    safe_lines = [
-        _escape_pdf_text(_normalize_pdf_text(line)) for line in wrapped_lines[:45]
-    ]
+    # A4 vertical: 595x842, línea de 16pt permite ~45 líneas útiles.
+    # Si se excede el límite, se reserva la última línea para advertencia explícita.
+    visible_lines = wrapped_lines
+    if len(wrapped_lines) > _PDF_MAX_LINES:
+        warning_line = (
+            "[AVISO] Informe resumido por limite de pagina. Revisa CSV para detalle."
+        )
+        visible_lines = wrapped_lines[: _PDF_MAX_LINES - 1] + [warning_line]
+
+    safe_lines = [_escape_pdf_text(_normalize_pdf_text(line)) for line in visible_lines]
 
     commands = ["BT", "/F1 12 Tf", "50 800 Td"]
     if safe_lines:

@@ -1,8 +1,10 @@
 """Endpoints de métricas y observabilidad."""
 
+from collections import deque
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from functools import wraps
+from threading import RLock
 from time import perf_counter
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -20,8 +22,10 @@ router = APIRouter(prefix="/metrics", tags=["metrics"])
 
 # Almacenamiento en memoria para métricas simples
 _request_count: dict[str, int] = {}
-_request_duration: dict[str, list[float]] = {}
+_MAX_DURATION_SAMPLES_PER_ENDPOINT = 1000
+_request_duration: dict[str, deque[float]] = {}
 _active_users: set[int] = set()
+_metrics_lock = RLock()
 
 
 def track_request_metrics(
@@ -34,19 +38,17 @@ def track_request_metrics(
         async def wrapper(*args, **kwargs):
             start_time = perf_counter()
             try:
-                result = await func(*args, **kwargs)
+                return await func(*args, **kwargs)
+            finally:
                 duration = perf_counter() - start_time
 
-                # Registrar métricas
-                _request_count[endpoint] = _request_count.get(endpoint, 0) + 1
-                _request_duration.setdefault(endpoint, []).append(duration)
-
-                return result
-            except Exception:
-                duration = perf_counter() - start_time
-                _request_count[endpoint] = _request_count.get(endpoint, 0) + 1
-                _request_duration.setdefault(endpoint, []).append(duration)
-                raise
+                # Registrar métricas (buffer acotado para evitar crecimiento infinito)
+                with _metrics_lock:
+                    _request_count[endpoint] = _request_count.get(endpoint, 0) + 1
+                    _request_duration.setdefault(
+                        endpoint,
+                        deque(maxlen=_MAX_DURATION_SAMPLES_PER_ENDPOINT),
+                    ).append(duration)
 
         return wrapper
 
@@ -56,12 +58,18 @@ def track_request_metrics(
 def get_average_duration(endpoint: str, last_n: int = 100) -> float | None:
     """Retorna el tiempo promedio de respuesta para un endpoint."""
 
-    durations = _request_duration.get(endpoint, [])
+    with _metrics_lock:
+        durations = _request_duration.get(endpoint)
+        if durations:
+            recent_durations = list(durations)[-last_n:]
+
     if not durations:
         return None
 
-    # Solo considerar los últimos N requests
-    recent_durations = durations[-last_n:]
+    # Deque no soporta slicing; se materializa un subconjunto acotado.
+    if not recent_durations:
+        return None
+
     return sum(recent_durations) / len(recent_durations)
 
 
@@ -86,15 +94,18 @@ async def get_metrics_summary(
     )
     total_usuarios = db.scalar(select(func.count(Usuario.id)))
 
+    with _metrics_lock:
+        request_count_snapshot = dict(_request_count)
+
     # Métricas de API
-    total_requests = sum(_request_count.values())
+    total_requests = sum(request_count_snapshot.values())
 
     # Calcular promedios de duración
     endpoint_metrics = {}
-    for endpoint in _request_count.keys():
+    for endpoint in request_count_snapshot.keys():
         avg_duration = get_average_duration(endpoint)
         endpoint_metrics[endpoint] = {
-            "count": _request_count.get(endpoint, 0),
+            "count": request_count_snapshot.get(endpoint, 0),
             "avg_duration_ms": round(avg_duration * 1000, 2) if avg_duration else None,
         }
 
@@ -168,8 +179,9 @@ async def reset_metrics(
         )
 
     global _request_count, _request_duration, _active_users
-    _request_count.clear()
-    _request_duration.clear()
-    _active_users.clear()
+    with _metrics_lock:
+        _request_count.clear()
+        _request_duration.clear()
+        _active_users.clear()
 
     return {"message": "Métricas reseteadas exitosamente"}

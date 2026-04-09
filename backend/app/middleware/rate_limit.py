@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 
+from fastapi import Request
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -36,6 +37,8 @@ _global_limiter = Limiter(
 # Limiter compartido para middleware global y decoradores por endpoint.
 limiter = _global_limiter
 
+_SUPPORTED_ROLES = {"admin", "tecnico", "visualizador"}
+
 
 def setup_rate_limiting(app) -> None:
     """Configura rate limiting global en la aplicación FastAPI."""
@@ -50,9 +53,45 @@ def limit_by_role(
     tecnico_limit: str = "500/hour",
     visualizador_limit: str = "200/hour",
 ):
-    """Decorator no-op mantenido por compatibilidad de imports."""
+    """Aplica rate limits dinámicos según rol autenticado.
+
+    Si no se puede resolver rol en request.state, se aplica el límite de
+    visualizador como fallback seguro.
+    """
+
+    role_limits = {
+        "admin": admin_limit,
+        "tecnico": tecnico_limit,
+        "visualizador": visualizador_limit,
+    }
+
+    def resolve_limit_for_key(key: str) -> str:
+        """Resuelve el límite a partir de la llave <rol>:<identificador>."""
+
+        role = key.split(":", 1)[0].strip().lower() if key else "visualizador"
+        return role_limits.get(role, visualizador_limit)
+
+    def resolve_role_limit_key(request: Request) -> str:
+        """Construye llave de rate limit con rol + usuario/ip."""
+
+        raw_role = getattr(request.state, "manttoai_user_role", None)
+        normalized_role = (
+            str(raw_role).strip().lower() if raw_role is not None else "visualizador"
+        )
+        if normalized_role not in _SUPPORTED_ROLES:
+            normalized_role = "visualizador"
+
+        user_id = getattr(request.state, "manttoai_user_id", None)
+        if user_id is not None:
+            return f"{normalized_role}:user:{user_id}"
+
+        return f"{normalized_role}:ip:{get_remote_address(request)}"
 
     def decorator(func: Callable):
-        return func
+        return limiter.limit(
+            resolve_limit_for_key,
+            key_func=resolve_role_limit_key,
+            override_defaults=False,
+        )(func)
 
     return decorator

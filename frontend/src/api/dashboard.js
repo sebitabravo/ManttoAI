@@ -1,12 +1,12 @@
 import client from "./client";
 
 export async function getDashboardResumen() {
-  const { data } = await client.get("/api/v1/dashboard/resumen");
+  const { data } = await client.get("/dashboard/resumen");
   return data;
 }
 
 export async function getDashboardLecturas(limit = 60) {
-  const { data } = await client.get("/api/v1/lecturas", {
+  const { data } = await client.get("/lecturas", {
     params: { limit },
   });
   if (!Array.isArray(data)) {

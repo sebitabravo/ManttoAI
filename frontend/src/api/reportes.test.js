@@ -33,7 +33,7 @@ describe("reportes API", () => {
 
     const result = await downloadLecturasCsv({ equipoId: 1, limit: 1000 });
 
-    expect(client.get).toHaveBeenCalledWith("/api/v1/reportes/lecturas.csv", {
+    expect(client.get).toHaveBeenCalledWith("/reportes/lecturas.csv", {
       params: { equipo_id: 1, limit: 1000 },
       responseType: "blob",
     });
@@ -47,7 +47,7 @@ describe("reportes API", () => {
 
     const result = await downloadAlertasCsv({ soloNoLeidas: true, limit: 200 });
 
-    expect(client.get).toHaveBeenCalledWith("/api/v1/reportes/alertas.csv", {
+    expect(client.get).toHaveBeenCalledWith("/reportes/alertas.csv", {
       params: { solo_no_leidas: true, limit: 200 },
       responseType: "blob",
     });
@@ -60,7 +60,7 @@ describe("reportes API", () => {
 
     await downloadMantencionesCsv({ equipoId: 2, order: "asc", limit: 300 });
 
-    expect(client.get).toHaveBeenCalledWith("/api/v1/reportes/mantenciones.csv", {
+    expect(client.get).toHaveBeenCalledWith("/reportes/mantenciones.csv", {
       params: { equipo_id: 2, limit: 300, order: "asc" },
       responseType: "blob",
     });
@@ -78,7 +78,7 @@ describe("reportes API", () => {
 
     const result = await downloadInformeEjecutivoPdf();
 
-    expect(client.get).toHaveBeenCalledWith("/api/v1/reportes/ejecutivo.pdf", {
+    expect(client.get).toHaveBeenCalledWith("/reportes/ejecutivo.pdf", {
       params: {},
       responseType: "blob",
     });

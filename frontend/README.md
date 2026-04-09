@@ -13,13 +13,13 @@ Frontend React + Vite para el dashboard de mantenimiento predictivo.
 Archivo: `.env.example`
 
 ```env
-VITE_API_URL=/api
+VITE_API_URL=/api/v1
 ```
 
 Para desarrollo local con backend directo:
 
 ```env
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:8000/api/v1
 ```
 
 ## Ejecutar local

@@ -51,6 +51,57 @@ def _create_session(request: Request) -> Session:
     return SessionLocal()
 
 
+def _resolve_user_id_and_log(
+    request: Request,
+    action: str,
+    entity_type: str,
+    entity_id: int | None,
+    response_status: int,
+) -> None:
+    """Resuelve usuario y persiste auditoría usando una única sesión DB."""
+
+    user_id: int | None = None
+    audit_db: Session = _create_session(request)
+    try:
+        try:
+            user = get_current_user(request, None, audit_db)
+            user_id = user.id
+        except HTTPException as exc:
+            # Casos esperados: request sin sesión o con credenciales inválidas.
+            if exc.status_code in {401, 403}:
+                logger.debug("Usuario no autenticado para auditoría: %s", exc.detail)
+                user_id = None
+            else:
+                logger.exception(
+                    "HTTPException inesperada al resolver usuario para auditoría"
+                )
+                user_id = None
+        except Exception:
+            logger.exception("Error inesperado al resolver usuario para auditoría")
+            user_id = None
+
+        if entity_type != "unknown" and (user_id is not None or entity_type == "auth"):
+            log_audit(
+                db=audit_db,
+                action=action,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                new_values={
+                    "request_path": request.url.path,
+                    "http_method": request.method,
+                    "response_status": response_status,
+                },
+                usuario_id=user_id,
+                ip_address=request.client.host if request.client else None,
+                user_agent=request.headers.get("user-agent"),
+            )
+    except Exception:
+        # No fallar el request si el audit log falla
+        logger.exception("Fallo al escribir audit log")
+    finally:
+        audit_db.close()
+
+
 async def audit_middleware(request: Request, call_next: Callable) -> Response:
     """
     Middleware que registra automáticamente acciones de auditoría.
@@ -65,58 +116,24 @@ async def audit_middleware(request: Request, call_next: Callable) -> Response:
     if not _should_audit_request(request.method, request.url.path):
         return await call_next(request)
 
-    # Obtener usuario autenticado si existe
-    user_id: int | None = None
-    auth_db: Session = _create_session(request)
-    try:
-        user = await run_in_threadpool(get_current_user, request, None, auth_db)
-        user_id = user.id
-    except HTTPException as exc:
-        # Casos esperados: request sin sesión o con credenciales inválidas.
-        if exc.status_code in {401, 403}:
-            logger.debug("Usuario no autenticado para auditoría: %s", exc.detail)
-            user_id = None
-        else:
-            logger.exception(
-                "HTTPException inesperada al resolver usuario para auditoría"
-            )
-            user_id = None
-    except Exception:
-        logger.exception("Error inesperado al resolver usuario para auditoría")
-        user_id = None
-    finally:
-        auth_db.close()
-
-    # Ejecutar el request
     response = await call_next(request)
 
     # Determinar acción y entidad basado en la ruta y método
     action = _get_action_from_method(request.method, request.url.path)
     entity_type, entity_id = _get_entity_from_path(request.url.path)
 
-    # Crear audit log
-    if entity_type != "unknown" and (user_id is not None or entity_type == "auth"):
-        audit_db: Session = _create_session(request)
-        try:
-            log_audit(
-                db=audit_db,
-                action=action,
-                entity_type=entity_type,
-                entity_id=entity_id,
-                new_values={
-                    "request_path": request.url.path,
-                    "http_method": request.method,
-                    "response_status": response.status_code,
-                },
-                usuario_id=user_id,
-                ip_address=request.client.host if request.client else None,
-                user_agent=request.headers.get("user-agent"),
-            )
-        except Exception:
-            # No fallar el request si el audit log falla
-            logger.exception("Fallo al escribir audit log")
-        finally:
-            audit_db.close()
+    if entity_type == "unknown":
+        return response
+
+    # Resolver usuario + persistir auditoría en threadpool (una sola sesión DB).
+    await run_in_threadpool(
+        _resolve_user_id_and_log,
+        request,
+        action,
+        entity_type,
+        entity_id,
+        response.status_code,
+    )
 
     return response
 

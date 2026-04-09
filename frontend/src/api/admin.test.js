@@ -33,7 +33,7 @@ describe("admin API", () => {
 
     await getUsers();
 
-    expect(client.get).toHaveBeenCalledWith("/api/v1/usuarios?");
+    expect(client.get).toHaveBeenCalledWith("/usuarios?");
   });
 
   it("getUsers aplica filtros en query string", async () => {
@@ -42,7 +42,7 @@ describe("admin API", () => {
     await getUsers({ rol: "admin", page: 2, per_page: 25 });
 
     expect(client.get).toHaveBeenCalledWith(
-      "/api/v1/usuarios?rol=admin&page=2&per_page=25"
+      "/usuarios?rol=admin&page=2&per_page=25"
     );
   });
 
@@ -57,7 +57,7 @@ describe("admin API", () => {
 
     const result = await createUser(payload);
 
-    expect(client.post).toHaveBeenCalledWith("/api/v1/usuarios", payload);
+    expect(client.post).toHaveBeenCalledWith("/usuarios", payload);
     expect(result.id).toBe(3);
   });
 
@@ -67,7 +67,7 @@ describe("admin API", () => {
 
     await updateUser(1, payload);
 
-    expect(client.put).toHaveBeenCalledWith("/api/v1/usuarios/1", payload);
+    expect(client.put).toHaveBeenCalledWith("/usuarios/1", payload);
   });
 
   it("deleteUser elimina usuario", async () => {
@@ -75,7 +75,7 @@ describe("admin API", () => {
 
     await deleteUser(1);
 
-    expect(client.delete).toHaveBeenCalledWith("/api/v1/usuarios/1");
+    expect(client.delete).toHaveBeenCalledWith("/usuarios/1");
   });
 
   it("getApiKeys consulta endpoint esperado", async () => {
@@ -83,7 +83,7 @@ describe("admin API", () => {
 
     await getApiKeys();
 
-    expect(client.get).toHaveBeenCalledWith("/api/v1/api-keys?");
+    expect(client.get).toHaveBeenCalledWith("/api-keys?");
   });
 
   it("getApiKeys permite incluir inactivas", async () => {
@@ -92,7 +92,7 @@ describe("admin API", () => {
     await getApiKeys({ include_inactive: true });
 
     expect(client.get).toHaveBeenCalledWith(
-      "/api/v1/api-keys?include_inactive=true"
+      "/api-keys?include_inactive=true"
     );
   });
 
@@ -104,7 +104,7 @@ describe("admin API", () => {
 
     const result = await createApiKey(payload);
 
-    expect(client.post).toHaveBeenCalledWith("/api/v1/api-keys", payload);
+    expect(client.post).toHaveBeenCalledWith("/api-keys", payload);
     expect(result.key).toBe("mttk_demo");
   });
 
@@ -113,7 +113,7 @@ describe("admin API", () => {
 
     await revokeApiKey(5);
 
-    expect(client.delete).toHaveBeenCalledWith("/api/v1/api-keys/5");
+    expect(client.delete).toHaveBeenCalledWith("/api-keys/5");
   });
 
   it("getAuditLogs consulta endpoint esperado", async () => {
@@ -121,7 +121,7 @@ describe("admin API", () => {
 
     await getAuditLogs();
 
-    expect(client.get).toHaveBeenCalledWith("/api/v1/audit-logs?");
+    expect(client.get).toHaveBeenCalledWith("/audit-logs?");
   });
 
   it("getAuditLogs aplica filtros", async () => {
@@ -135,7 +135,7 @@ describe("admin API", () => {
     });
 
     expect(client.get).toHaveBeenCalledWith(
-      "/api/v1/audit-logs?usuario_id=1&entity_type=equipo&action=create&page=2"
+      "/audit-logs?usuario_id=1&entity_type=equipo&action=create&page=2"
     );
   });
 });

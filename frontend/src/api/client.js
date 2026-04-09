@@ -1,9 +1,9 @@
 import axios from "axios";
 
-// En desarrollo (Vite dev server) VITE_API_URL apunta al backend directo.
-// En producción nginx hace proxy de /api/ al backend — se usa la ruta relativa.
+// En desarrollo (Vite dev server) VITE_API_URL puede apuntar al backend directo.
+// En producción nginx hace proxy de /api/v1/ al backend — se usa la ruta relativa.
 // La detección por puerto era frágil; ahora depende exclusivamente de VITE_API_URL.
-const defaultBaseURL = "/api";
+const defaultBaseURL = "/api/v1";
 
 function getCookieValue(cookieName) {
   const cookies = document.cookie.split(";").map((cookie) => cookie.trim());

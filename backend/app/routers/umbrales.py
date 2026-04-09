@@ -3,7 +3,8 @@
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
+from app.dependencies import get_db, require_role
+from app.middleware.rate_limit import limiter
 from app.schemas.umbral import UmbralCreate, UmbralResponse, UmbralUpdate
 from app.services.umbral_service import (
     create_umbral,
@@ -16,8 +17,14 @@ from app.services.umbral_service import (
 router = APIRouter(prefix="/umbrales", tags=["umbrales"])
 
 
-@router.get("", response_model=list[UmbralResponse])
+@router.get(
+    "",
+    response_model=list[UmbralResponse],
+    dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
+)
+@limiter.limit("200/hour")
 def get_umbrales(
+    request: Request,
     equipo_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> list[UmbralResponse]:
@@ -26,9 +33,15 @@ def get_umbrales(
     return list_umbrales(db, equipo_id=equipo_id)
 
 
-@router.get("/equipo/{equipo_id}", response_model=list[UmbralResponse])
+@router.get(
+    "/equipo/{equipo_id}",
+    response_model=list[UmbralResponse],
+    dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
+)
+@limiter.limit("200/hour")
 def get_umbrales_by_equipo(
     equipo_id: int,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> list[UmbralResponse]:
     """Lista umbrales asociados a un equipo específico."""
@@ -36,9 +49,15 @@ def get_umbrales_by_equipo(
     return list_umbrales(db, equipo_id=equipo_id)
 
 
-@router.get("/{umbral_id}", response_model=UmbralResponse)
+@router.get(
+    "/{umbral_id}",
+    response_model=UmbralResponse,
+    dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
+)
+@limiter.limit("200/hour")
 def get_umbral_by_id(
     umbral_id: int,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> UmbralResponse:
     """Obtiene un umbral por identificador."""
@@ -46,7 +65,13 @@ def get_umbral_by_id(
     return get_umbral_or_404(db, umbral_id)
 
 
-@router.post("", response_model=UmbralResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=UmbralResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role("admin"))],
+)
+@limiter.limit("50/hour")
 def post_umbral(
     payload: UmbralCreate,
     request: Request,
@@ -66,7 +91,9 @@ def post_umbral(
     "/equipo/{equipo_id}",
     response_model=UmbralResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role("admin"))],
 )
+@limiter.limit("50/hour")
 def post_umbral_by_equipo(
     equipo_id: int,
     payload: UmbralCreate,
@@ -84,10 +111,16 @@ def post_umbral_by_equipo(
     return umbral
 
 
-@router.put("/{umbral_id}", response_model=UmbralResponse)
+@router.put(
+    "/{umbral_id}",
+    response_model=UmbralResponse,
+    dependencies=[Depends(require_role("admin", "tecnico"))],
+)
+@limiter.limit("50/hour")
 def put_umbral(
     umbral_id: int,
     payload: UmbralUpdate,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> UmbralResponse:
     """Actualiza un umbral persistido."""
@@ -95,8 +128,17 @@ def put_umbral(
     return update_umbral(db, umbral_id, payload)
 
 
-@router.delete("/{umbral_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_umbral_by_id(umbral_id: int, db: Session = Depends(get_db)) -> Response:
+@router.delete(
+    "/{umbral_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_role("admin"))],
+)
+@limiter.limit("30/hour")
+def delete_umbral_by_id(
+    umbral_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
     """Elimina un umbral por identificador."""
 
     delete_umbral(db, umbral_id)

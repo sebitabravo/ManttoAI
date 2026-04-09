@@ -75,3 +75,29 @@ class Token(BaseModel):
 
     access_token: str
     token_type: str = "bearer"
+
+
+class UsuarioUpdate(BaseModel):
+    """Payload para actualizar usuario."""
+
+    nombre: str | None = None
+    email: str | None = None
+    rol: Literal["admin", "tecnico", "visualizador"] | None = None
+    is_active: bool | None = None
+
+    @field_validator("email")
+    def validate_email(cls, value: str | None) -> str | None:
+        """Valida formato de email si se proporciona."""
+
+        if value is None:
+            return None
+        return _normalize_and_validate_email(value)
+
+
+class UsuarioListResponse(BaseModel):
+    """Respuesta para lista de usuarios."""
+
+    usuarios: list[UsuarioResponse]
+    total: int
+    page: int
+    per_page: int

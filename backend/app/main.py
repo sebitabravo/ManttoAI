@@ -10,17 +10,26 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import get_settings
-from app.dependencies import get_current_user
 from app.database import check_database_connection, initialize_database_schema
+from app.dependencies import get_current_user, require_role
+from app.middleware.audit import audit_middleware
+from app.middleware.rate_limit import setup_rate_limiting
 from app.routers import (
     alertas,
+    api_keys,
+    audit_logs,
     auth,
     dashboard,
     equipos,
+    iot,
     lecturas,
+    legal,
     mantenciones,
+    metrics,
     predicciones,
+    reportes,
     umbrales,
+    usuarios,
 )
 from app.services.mqtt_service import start_mqtt_subscriber, stop_mqtt_subscriber
 from app.services.prediccion_scheduler_service import (
@@ -89,6 +98,20 @@ async def lifespan(app_instance: FastAPI):
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+API_V1_PREFIX = "/api/v1"
+
+
+def include_router_with_legacy_support(router, *, dependencies=None) -> None:
+    """Expone rutas en /api/v1 y también en raíz por compatibilidad."""
+
+    if dependencies is None:
+        app.include_router(router, prefix=API_V1_PREFIX)
+        app.include_router(router, include_in_schema=False)
+        return
+
+    app.include_router(router, prefix=API_V1_PREFIX, dependencies=dependencies)
+    app.include_router(router, dependencies=dependencies, include_in_schema=False)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -97,18 +120,56 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
-app.include_router(auth.router)
-protected_dependencies = [Depends(get_current_user)]
+# Configurar rate limiting para protección contra abuso
+setup_rate_limiting(app)
 
-app.include_router(equipos.router, dependencies=protected_dependencies)
-app.include_router(lecturas.router, dependencies=protected_dependencies)
-app.include_router(alertas.router, dependencies=protected_dependencies)
-app.include_router(predicciones.router, dependencies=protected_dependencies)
-app.include_router(mantenciones.router, dependencies=protected_dependencies)
-app.include_router(umbrales.router, dependencies=protected_dependencies)
-app.include_router(dashboard.router, dependencies=protected_dependencies)
+# Configurar audit logging automático
+app.middleware("http")(audit_middleware)
+
+# Auth expuesto en /api/v1 y raíz por compatibilidad con clientes legacy.
+include_router_with_legacy_support(auth.router)
+app.include_router(legal.router)  # Documentación legal pública
+
+# Router IoT (público pero con API key authentication)
+app.include_router(iot.router, prefix=API_V1_PREFIX)
+
+# Admin-only routers
+app.include_router(
+    usuarios.router,
+    dependencies=[Depends(require_role("admin"))],
+    prefix=API_V1_PREFIX,
+)
+app.include_router(
+    api_keys.router,
+    dependencies=[Depends(require_role("admin"))],
+    prefix=API_V1_PREFIX,
+)
+app.include_router(
+    audit_logs.router,
+    dependencies=[Depends(require_role("admin"))],
+    prefix=API_V1_PREFIX,
+)
+
+# Routers existentes con RBAC aplicado directamente en cada router
+# Se exponen también en raíz por compatibilidad con test suite legado.
+include_router_with_legacy_support(equipos.router)
+include_router_with_legacy_support(lecturas.router)
+include_router_with_legacy_support(alertas.router)
+include_router_with_legacy_support(predicciones.router)
+include_router_with_legacy_support(mantenciones.router)
+include_router_with_legacy_support(umbrales.router)
+include_router_with_legacy_support(dashboard.router)
+include_router_with_legacy_support(reportes.router)
+
+# Métricas (requiere auth)
+app.include_router(
+    metrics.router,
+    dependencies=[Depends(get_current_user)],
+    prefix=API_V1_PREFIX,
+)
 
 
 @app.get("/health", tags=["system"])

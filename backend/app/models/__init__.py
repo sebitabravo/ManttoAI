@@ -1,6 +1,8 @@
 """Modelos SQLAlchemy disponibles para ManttoAI."""
 
 from app.models.alerta import Alerta
+from app.models.api_key import APIKey
+from app.models.audit_log import AuditLog
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.mantencion import Mantencion
@@ -16,4 +18,6 @@ __all__ = [
     "Prediccion",
     "Mantencion",
     "Umbral",
+    "APIKey",
+    "AuditLog",
 ]

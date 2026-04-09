@@ -1,0 +1,108 @@
+{
+  "title": "Política de Privacidad - ManttoAI",
+  "version": "1.0",
+  "last_updated": "2025-04-08",
+  "effective_date": "2025-04-08",
+  "sections": [
+    {
+      "title": "1. Introducción",
+      "content": "Esta Política de Privacidad describe cómo ManttoAI recopila, utiliza y protege la información personal y de telemetría de nuestros usuarios."
+    },
+    {
+      "title": "2. Información que Recopilamos",
+      "content": [
+        {
+          "type": "Información de Cuenta",
+          "details": "Nombre, email, contraseña (hash), rol, fecha de creación"
+        },
+        {
+          "type": "Datos de Telemetría",
+          "details": "Temperatura, humedad, vibración (x/y/z), timestamps de lectura"
+        },
+        {
+          "type": "Datos de Equipo",
+          "details": "Nombre, ubicación, descripción, umbrales configurados"
+        },
+        {
+          "type": "Datos de Uso",
+          "details": "Logs de acceso, direcciones IP, user agent, acciones realizadas (audit trail)"
+        }
+      ]
+    },
+    {
+      "title": "3. Propósito de la Recolección",
+      "content": [
+        "Proporcionar el servicio de mantenimiento predictivo",
+        "Generar alertas y predicciones de fallas",
+        "Mejorar la precisión del modelo de ML",
+        "Soporte técnico y resolución de problemas",
+        "Cumplir con obligaciones legales y de seguridad"
+      ]
+    },
+    {
+      "title": "4. Compartición de Datos",
+      "content": "No vendemos, alquilamos ni compartimos datos personales con terceros, excepto:",
+        {
+          "excepciones": [
+            "Con proveedores de servicios necesarios para operar el servicio (ej: hosting de base de datos)",
+            "Cuando sea requerido por ley o autoridad competente",
+            "Para proteger nuestros derechos, propiedad o seguridad",
+            "Con consentimiento explícito del usuario"
+          ]
+        }
+    },
+    {
+      "title": "5. Seguridad de Datos",
+      "content": "Implementamos medidas de seguridad apropiadas incluyendo:",
+        {
+          "medidas": [
+            "Encriptación en tránsito (TLS/HTTPS)",
+            "Hashing de contraseñas con bcrypt",
+            "Control de acceso basado en roles (RBAC)",
+            "API keys para autenticación de dispositivos",
+            "Backups automatizados diarios con retención de 7 días",
+            "Audit trail de todas las acciones críticas"
+          ]
+        }
+    },
+    {
+      "title": "6. Retención de Datos",
+      "content": [
+        "Datos de cuenta: se mantienen mientras la cuenta esté activa y hasta 90 días después de cancelación",
+        "Datos de telemetría: se mantienen por 12 meses, luego se anonimizan o eliminan",
+        "Logs y audit trail: se mantienen por 6 meses",
+        "Datos anonimizados pueden usarse para mejorar el modelo de ML"
+      ]
+    },
+    {
+      "title": "7. Derechos del Usuario",
+      "content": "El usuario tiene derecho a:",
+        {
+          "derechos": [
+            "Acceder a sus datos personales",
+            "Solicitar corrección de datos inexactos",
+            "Solicitar eliminación de datos (derecho al olvido)",
+            "Oponerse al procesamiento de datos",
+            "Exportar sus datos en formato portátil",
+            "Revocar consentimiento en cualquier momento"
+          ]
+        }
+    },
+    {
+      "title": "8. Cookies y Tecnologías Similares",
+      "content": "Usamos cookies esenciales para autenticación y seguridad. No usamos cookies de terceros para publicidad o seguimiento."
+    },
+    {
+      "title": "9. Transferencias Internacionales",
+      "content": "Los datos se almacenan en servidores ubicados en Chile. No realizamos transferencias internacionales de datos sin consentimiento explícito."
+    },
+    {
+      "title": "10. Cambios a esta Política",
+      "content": "Podemos actualizar esta Política de Privacidad periódicamente. Notificaremos a los usuarios de cambios significativos con 30 días de anticipación."
+    },
+    {
+      "title": "11. Contacto",
+      "content": "Para ejercer tus derechos de privacidad o hacer preguntas: privacy@manttoai.cl"
+    }
+  ]
+}

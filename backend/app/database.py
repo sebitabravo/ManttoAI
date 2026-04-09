@@ -22,7 +22,17 @@ connect_args = (
     {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
 )
 
-engine = create_engine(settings.database_url, future=True, connect_args=connect_args)
+# Optimización para 50 usuarios concurrentes
+engine = create_engine(
+    settings.database_url,
+    future=True,
+    connect_args=connect_args,
+    pool_size=20,  # Número de conexiones permanentes
+    max_overflow=30,  # Conexiones adicionales en picos de carga
+    pool_pre_ping=True,  # Verificar conexiones antes de usarlas
+    pool_recycle=3600,  # Reciclar conexiones cada hora
+    echo=False,  # No loguear queries en producción
+)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
 

@@ -2,12 +2,13 @@
 
 import secrets
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.dependencies import get_current_user
 from app.dependencies import get_db
+from app.middleware.rate_limit import limiter
 from app.schemas.usuario import LoginRequest, Token, UsuarioCreate, UsuarioResponse
 from app.services.auth_service import login_user, register_user
 
@@ -18,8 +19,10 @@ settings = get_settings()
 @router.post(
     "/register", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED
 )
+@limiter.limit("5/minute")
 def register(
     payload: UsuarioCreate,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> UsuarioResponse:
     """Registra un usuario persistido."""
@@ -28,9 +31,11 @@ def register(
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("10/minute")
 def login(
     payload: LoginRequest,
     response: Response,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> Token:
     """Retorna un token JWT para credenciales válidas."""

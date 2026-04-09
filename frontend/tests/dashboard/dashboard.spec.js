@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 
 test("dashboard consume API real y reemplaza placeholders", async ({ page }) => {
   const pageErrors = [];
@@ -22,7 +22,7 @@ test("dashboard consume API real y reemplaza placeholders", async ({ page }) => 
     },
   ]);
 
-  await page.route("**/api/auth/me", async (route) => {
+  await page.route(/\/api(?:\/v1)?\/auth\/me$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -35,7 +35,7 @@ test("dashboard consume API real y reemplaza placeholders", async ({ page }) => 
     });
   });
 
-  await page.route("**/api/dashboard/resumen", async (route) => {
+  await page.route("**/api/v1/dashboard/resumen", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -65,7 +65,7 @@ test("dashboard consume API real y reemplaza placeholders", async ({ page }) => 
     });
   });
 
-  await page.route("**/api/lecturas**", async (route) => {
+  await page.route("**/api/v1/lecturas**", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -107,9 +107,9 @@ test("dashboard consume API real y reemplaza placeholders", async ({ page }) => 
   await page.goto("/dashboard");
 
   await expect(page.getByRole("heading", { name: /Centro de control operacional/i })).toBeVisible();
-  const probabilidadCard = page.locator("article").filter({ hasText: "Probabilidad de falla" });
+  const probabilidadCard = page.locator("article").filter({ has: page.locator("span", { hasText: "Probabilidad de falla" }) });
   await expect(probabilidadCard).toBeVisible();
-  await expect(probabilidadCard.getByText("68.0 %")).toBeVisible();
+  await expect(probabilidadCard.getByText("68.0 %", { exact: true })).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "Temperatura" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Vibración" })).toBeVisible();

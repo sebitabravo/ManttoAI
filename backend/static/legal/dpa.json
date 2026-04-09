@@ -1,0 +1,153 @@
+{
+  "title": "Data Processing Agreement (DPA) - ManttoAI",
+  "version": "1.0",
+  "last_updated": "2025-04-08",
+  "effective_date": "2025-04-08",
+  "parties": {
+    "data_controller": {
+      "name": "Nombre del Cliente (Compañía)",
+      "address": "Dirección del Cliente",
+      "contact": "contacto@cliente.com"
+    },
+    "data_processor": {
+      "name": "ManttoAI",
+      "address": "Santiago, Chile",
+      "contact": "dpo@manttoai.cl"
+    }
+  },
+  "sections": [
+    {
+      "title": "1. Objeto y Ámbito",
+      "content": "Este DPA regula el procesamiento de Datos Personales por parte de ManttoAI como Procesador de Datos en nombre del Controlador de Datos, conforme a la Ley de Protección de Datos Personales de Chile (Ley N° 19.628)."
+    },
+    {
+      "title": "2. Definiciones",
+      "content": {
+        "Datos Personales": "Cualquier información relacionada con una persona natural identificada o identificable",
+        "Datos de Telemetría": "Datos generados por sensores IoT (temperatura, vibración, humedad, etc.)",
+        "Controlador de Datos": "La entidad que determina los fines y medios del procesamiento de datos",
+        "Procesador de Datos": "La entidad que procesa datos en nombre del Controlador"
+      }
+    },
+    {
+      "title": "3. Categorías de Datos",
+      "content": [
+        "Datos de cuenta de usuarios: nombre, email, rol",
+        "Datos de telemetría de equipos: temperatura, humedad, vibración",
+        "Metadatos de auditoría: timestamps, acciones realizadas, direcciones IP"
+      ]
+    },
+    {
+      "title": "4. Propósito del Procesamiento",
+      "content": "El Procesador procesará los Datos Personales únicamente para:",
+        {
+          "propósitos": [
+            "Proporcionar el servicio de mantenimiento predictivo",
+            "Generar alertas y predicciones de fallas",
+            "Mejorar la precisión del modelo de ML con datos anonimizados",
+            "Soporte técnico y resolución de problemas"
+          ]
+        }
+    },
+    {
+      "title": "5. Obligaciones del Procesador",
+      "content": [
+        "Procesar datos solo bajo instrucciones documentadas del Controlador",
+        "Implementar medidas técnicas y organizativas apropiadas de seguridad",
+        "No subcontratar sin autorización previa del Controlador",
+        "Asistir al Controlador en el cumplimiento de obligaciones de privacidad",
+        "Notificar brechas de seguridad dentro de las 72 horas de detección",
+        "Eliminar o devolver todos los datos al término del contrato"
+      ]
+    },
+    {
+      "title": "6. Medidas de Seguridad",
+      "content": "El Procesador implementa las siguientes medidas:",
+        {
+          "medidas": [
+            "Encriptación TLS 1.3 para todas las comunicaciones",
+            "Encriptación AES-256 para datos en reposo",
+            "Control de acceso basado en roles (RBAC)",
+            "Autenticación de dos factores para acceso administrativo",
+            "Backups diarios con retención de 7 días",
+            "Audit trail inmutable de todas las operaciones",
+            "Evaluaciones de seguridad periódicas"
+          ]
+        }
+    },
+    {
+      "title": "7. Derechos de los Titulares de Datos",
+      "content": "El Procesador cooperará con el Controlador para facilitar:",
+        {
+          "derechos": [
+            "Acceso a los Datos Personales",
+            "Rectificación de datos inexactos",
+            "Supresión de datos (derecho al olvido)",
+            "Limitación del procesamiento",
+            "Portabilidad de datos",
+            "Oposición al procesamiento"
+          ]
+        }
+    },
+    {
+      "title": "8. Subprocesadores",
+      "content": "El Procesador no utilizará subprocesadores sin autorización previa del Controlador. Subprocesadores actuales:",
+        {
+          "autorizados": [
+            {
+              "nombre": "AWS/Google Cloud/Azure (según proveedor de hosting)",
+              "servicio": "Infraestructura de servidores",
+              "ubicación": "Chile"
+            },
+            {
+              "nombre": "Proveedor de Email (ej: SendGrid/Mailgun)",
+              "servicio": "Envío de notificaciones",
+              "ubicación": "Chile"
+            }
+          ]
+        }
+    },
+    {
+      "title": "9. Auditoría y Cumplimiento",
+      "content": [
+        "El Procesador permitirá auditorías del Controlador con aviso previo de 10 días",
+        "El Procesador mantendrá registros de todas las operaciones de procesamiento",
+        "El Procesador proporcionará certificados de cumplimiento anuales"
+      ]
+    },
+    {
+      "title": "10. Retorno o Eliminación de Datos",
+      "content": "Al término del contrato, el Procesador:",
+        {
+          "acciones": [
+            "Eliminará todos los Datos Personales de sus sistemas",
+            "Confirmará por escrito la eliminación",
+            "Mantendrá copias de seguridad solo durante el período de retención legal"
+          ]
+        }
+    },
+    {
+      "title": "11. Notificación de Brechas",
+      "content": "El Procesador notificará al Controlador cualquier brecha de seguridad:",
+        {
+          "plazo": "Dentro de las 72 horas de tener conocimiento",
+          "contenido": "Descripción de la brecha, categorías de datos afectados, medidas tomadas, consecuencias probables"
+        }
+    },
+    {
+      "title": "12. Duración y Terminación",
+      "content": "Este DPA permanece vigente mientras el Procesador procese Datos Personales del Controlador, y termina 12 meses después de la terminación del contrato principal o después de eliminar todos los Datos Personales, lo que sea posterior."
+    },
+    {
+      "title": "13. Ley Aplicable y Jurisdicción",
+      "content": "Este DPA se rige por la Ley de Protección de Datos Personales de Chile (Ley N° 19.628) y las leyes de Chile. Cualquier disputa será resuelta en los tribunales de Santiago, Chile."
+    },
+    {
+      "title": "14. Contacto",
+      "content": {
+        "para consultas DPA": "dpo@manttoai.cl",
+        "para notificaciones brecha": "security@manttoai.cl"
+      }
+    }
+  ]
+}

@@ -99,6 +99,34 @@ Notas:
 - Si no existen predicciones globales, se retorna `ultima_clasificacion: "normal"` y `probabilidad_falla: 0.0`.
 - El endpoint prioriza datos operativos del MVP y evita agregaciones históricas pesadas.
 
+#### Rate limiting por rol
+
+`GET /dashboard/resumen` aplica cuota diferenciada por usuario autenticado:
+
+- `admin`: `10/minute`
+- `tecnico`: `6/minute`
+- `visualizador`: `3/minute`
+
+Al exceder la cuota, la API responde `429 Too Many Requests`.
+
+## Reportes
+
+- `GET /reportes/lecturas.csv`
+- `GET /reportes/alertas.csv`
+- `GET /reportes/mantenciones.csv`
+- `GET /reportes/ejecutivo.pdf`
+
+Rate limiting por rol para endpoints de reportes:
+
+- CSV (`lecturas`, `alertas`, `mantenciones`):
+  - `admin`: `80/hour`
+  - `tecnico`: `60/hour`
+  - `visualizador`: `40/hour`
+- PDF (`ejecutivo`):
+  - `admin`: `40/hour`
+  - `tecnico`: `30/hour`
+  - `visualizador`: `20/hour`
+
 ## Contrato MQTT (ingesta de lecturas)
 
 ### Topic esperado

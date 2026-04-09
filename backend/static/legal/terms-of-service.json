@@ -1,0 +1,58 @@
+{
+  "title": "Términos de Servicio - ManttoAI",
+  "version": "1.0",
+  "last_updated": "2025-04-08",
+  "effective_date": "2025-04-08",
+  "sections": [
+    {
+      "title": "1. Aceptación de los Términos",
+      "content": "Al acceder y usar ManttoAI, aceptas estos Términos de Servicio y nuestra Política de Privacidad. Si no estás de acuerdo, no uses nuestro servicio."
+    },
+    {
+      "title": "2. Descripción del Servicio",
+      "content": "ManttoAI es un servicio de mantenimiento predictivo que permite monitorear equipos industriales mediante sensores IoT, análisis de datos y aprendizaje automático. El servicio incluye captura de telemetría, alertas, predicciones y gestión de mantenimientos."
+    },
+    {
+      "title": "3. Responsabilidades del Usuario",
+      "content": [
+        "Proporcionar información veraz y actualizada",
+        "Mantener seguras las credenciales de acceso",
+        "No usar el servicio para fines ilegales",
+        "No intentar eludir medidas de seguridad",
+        "Notificar inmediatamente cualquier uso no autorizado"
+      ]
+    },
+    {
+      "title": "4. Propiedad Intelectual",
+      "content": "ManttoAI y todo su contenido, incluyendo software, texto, gráficos, logos y diseños, son propiedad exclusiva de ManttoAI y están protegidos por leyes de propiedad intelectual."
+    },
+    {
+      "title": "5. Uso de Datos",
+      "content": "El usuario es el único propietario de los datos de telemetría y configuración de equipos. ManttoAI solo accede a estos datos para proporcionar el servicio contratado y bajo los términos de la Política de Privacidad."
+    },
+    {
+      "title": "6. Disponibilidad del Servicio",
+      "content": "Nos esforzamos por mantener el servicio disponible 24/7, pero no garantizamos disponibilidad ininterrumpida. Nos reservamos el derecho a realizar mantenimiento programado con notificación previa."
+    },
+    {
+      "title": "7. Limitación de Responsabilidad",
+      "content": "En la máxima medida permitida por la ley, ManttoAI no será responsable por daños directos, indirectos, incidentales, especiales o consecuentes que surjan del uso o la incapacidad de usar el servicio."
+    },
+    {
+      "title": "8. Terminación",
+      "content": "ManttoAI puede suspender o terminar el servicio en cualquier momento por violación de estos términos, uso inapropiado, o razones técnicas. El usuario puede cancelar el servicio en cualquier momento con 30 días de aviso previo."
+    },
+    {
+      "title": "9. Modificaciones",
+      "content": "Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor 30 días después de la notificación."
+    },
+    {
+      "title": "10. Ley Aplicable y Jurisdicción",
+      "content": "Estos términos se rigen por las leyes de Chile. Cualquier disputa será resuelta en los tribunales de Santiago, Chile."
+    },
+    {
+      "title": "11. Contacto",
+      "content": "Para consultas sobre estos términos, contáctanos en: legal@manttoai.cl"
+    }
+  ]
+}

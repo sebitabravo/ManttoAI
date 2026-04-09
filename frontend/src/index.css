@@ -232,3 +232,74 @@ table th {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── Onboarding tour ──────────────────────────────────────────────────────── */
+
+/*
+ * Animación de entrada del tooltip del tour.
+ * Fade-in + desplazamiento sutil desde abajo.
+ */
+.onboarding-tooltip {
+  animation: onboarding-fade-in 0.25s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/*
+ * Modal de bienvenida: centrado en pantalla con max-width.
+ */
+.onboarding-tooltip--welcome {
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%);
+  width: calc(100vw - 2rem);
+  max-width: 420px;
+  animation: onboarding-welcome-in 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.onboarding-spotlight {
+  animation: onboarding-spotlight-pulse 2s ease-in-out infinite;
+}
+
+@keyframes onboarding-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes onboarding-welcome-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes onboarding-spotlight-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/*
+ * Tooltip responsivo: en mobile (sidebar como drawer cerrado),
+ * el tooltip se posiciona en el centro de la pantalla.
+ */
+@media (max-width: 768px) {
+  .onboarding-tooltip:not(.onboarding-tooltip--welcome) {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+    width: calc(100vw - 2rem);
+    max-width: 360px;
+  }
+}

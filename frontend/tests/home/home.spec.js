@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 
 test("sin token no se puede acceder al dashboard", async ({ page }) => {
   // Simular que no hay sesión activa - el backend devuelve 401
-  await page.route("**/api/auth/me", async (route) => {
+  await page.route(/\/api(?:\/v1)?\/auth\/me$/, async (route) => {
     await route.fulfill({
       status: 401,
       contentType: "application/json",
@@ -21,8 +21,8 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
   let loginPayload = null;
   let isLoggedIn = false;
 
-  // Mock /api/auth/me: devuelve 401 hasta que el usuario haga login
-  await page.route("**/api/auth/me", async (route) => {
+  // Mock /api(/v1)/auth/me: devuelve 401 hasta que el usuario haga login
+  await page.route(/\/api(?:\/v1)?\/auth\/me$/, async (route) => {
     if (isLoggedIn) {
       await route.fulfill({
         status: 200,
@@ -43,8 +43,8 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
     }
   });
 
-  // Mock /api/auth/login: marca como logueado y devuelve token
-  await page.route("**/api/auth/login", async (route) => {
+  // Mock /api(/v1)/auth/login: marca como logueado y devuelve token
+  await page.route(/\/api(?:\/v1)?\/auth\/login$/, async (route) => {
     loginPayload = route.request().postDataJSON();
     isLoggedIn = true;
 
@@ -59,7 +59,7 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
   });
 
   // Mock endpoints del dashboard para que no fallen
-  await page.route("**/api/dashboard/resumen", async (route) => {
+  await page.route(/\/api(?:\/v1)?\/dashboard\/resumen$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -74,7 +74,7 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
     });
   });
 
-  await page.route("**/api/lecturas**", async (route) => {
+  await page.route(/\/api(?:\/v1)?\/lecturas(?:\?.*)?$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -82,7 +82,7 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
     });
   });
 
-  await page.route("**/api/auth/logout", async (route) => {
+  await page.route(/\/api(?:\/v1)?\/auth\/logout$/, async (route) => {
     isLoggedIn = false;
     await route.fulfill({ status: 204, body: "" });
   });

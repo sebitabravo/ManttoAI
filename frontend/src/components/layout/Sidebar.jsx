@@ -2,12 +2,14 @@ import { useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 
 import Logo from "../ui/Logo";
+import useAuth from "../../hooks/useAuth";
 
 const items = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/equipos", label: "Equipos" },
   { to: "/alertas", label: "Alertas" },
   { to: "/historial", label: "Historial" },
+  { to: "/admin", label: "Admin", adminOnly: true },
 ];
 
 /**
@@ -37,6 +39,15 @@ export default function Sidebar({
   retornarFocoRef,
 }) {
   const asideRef = useRef(null);
+  const { user } = useAuth();
+
+  // Filtrar items según el rol del usuario
+  const filteredItems = items.filter((item) => {
+    if (item.adminOnly) {
+      return user && user.rol === "admin";
+    }
+    return true;
+  });
 
   useEffect(() => {
     if (!sidebarAbierto) {
@@ -108,7 +119,7 @@ export default function Sidebar({
 
       {/* Navegación principal */}
       <nav className="flex flex-col gap-1">
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

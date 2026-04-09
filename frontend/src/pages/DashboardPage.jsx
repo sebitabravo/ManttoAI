@@ -68,7 +68,7 @@ export default function DashboardPage() {
       ) : null}
 
       {/* Bloque crítico: resumen operativo */}
-      <section className="grid grid-cols-1 gap-5" aria-label="Resumen operativo crítico">
+      <section data-tour="dashboard-resumen" className="grid grid-cols-1 gap-5" aria-label="Resumen operativo crítico">
         {isInitialLoading ? (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
             <SkeletonMetric className="xl:col-span-7" />
@@ -94,15 +94,8 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      {/* Bloque analítico: estado equipos */}
-      <section className="w-full" aria-label="Estado general de equipos">
-        <div className="min-w-0">
-          {isInitialLoading ? <SkeletonTable rows={5} cols={6} /> : <TablaEstadoEquipos equipos={resumen.equipos || []} />}
-        </div>
-      </section>
-
       {/* Gráficos lado a lado — grid adaptativo */}
-      <section className="grid grid-cols-1 gap-5 lg:grid-cols-2" aria-label="Tendencias de sensores">
+      <section data-tour="dashboard-graficos" className="grid grid-cols-1 gap-5 lg:grid-cols-2" aria-label="Tendencias de sensores">
         {isInitialLoading ? (
           <>
             <SkeletonChart />
@@ -114,6 +107,13 @@ export default function DashboardPage() {
             <GraficoVibracion lecturas={lecturas} />
           </>
         )}
+      </section>
+
+      {/* Bloque analítico: estado equipos (al final) */}
+      <section className="w-full" aria-label="Estado general de equipos">
+        <div className="min-w-0">
+          {isInitialLoading ? <SkeletonTable rows={5} cols={6} /> : <TablaEstadoEquipos equipos={resumen.equipos || []} />}
+        </div>
       </section>
     </section>
   );

@@ -309,20 +309,8 @@ export default function GraficoLineaBase({
     [zones]
   );
 
-  const isEmpty = normalizedSeries.length === 0;
-
-  if (isEmpty) {
-    return (
-      <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
-        <h3 className="mb-1 mt-0 text-md font-semibold text-neutral-800">{title}</h3>
-        <p className="mb-4 mt-0 text-sm text-neutral-500">{subtitle}</p>
-        <div className="my-4 flex h-36 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50">
-          <span className="text-sm text-neutral-400">{emptyMessage}</span>
-        </div>
-      </section>
-    );
-  }
-
+  // Todos los useMemo deben declararse antes de cualquier return condicional
+  // para cumplir con las reglas de hooks de React
   const values = useMemo(
     () => normalizedSeries.map((point) => point.value),
     [normalizedSeries]
@@ -352,6 +340,30 @@ export default function GraficoLineaBase({
     [latestValue, normalizedZones]
   );
 
+  const keyIndexes = useMemo(
+    () =>
+      new Set([
+        values.indexOf(minValue),
+        values.indexOf(maxValue),
+        Math.max(values.length - 1, 0),
+      ]),
+    [maxValue, minValue, values]
+  );
+
+  const isEmpty = normalizedSeries.length === 0;
+
+  if (isEmpty) {
+    return (
+      <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+        <h3 className="mb-1 mt-0 text-md font-semibold text-neutral-800">{title}</h3>
+        <p className="mb-4 mt-0 text-sm text-neutral-500">{subtitle}</p>
+        <div className="my-4 flex h-36 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50">
+          <span className="text-sm text-neutral-400">{emptyMessage}</span>
+        </div>
+      </section>
+    );
+  }
+
   const firstTimestamp = normalizedSeries[0].timestamp;
   const lastTimestamp = normalizedSeries[normalizedSeries.length - 1].timestamp;
 
@@ -367,16 +379,6 @@ export default function GraficoLineaBase({
   const activeSeriesPoint =
     resolvedActiveIndex === null ? null : normalizedSeries[resolvedActiveIndex];
   const latestPoint = points[points.length - 1] || null;
-
-  const keyIndexes = useMemo(
-    () =>
-      new Set([
-        values.indexOf(minValue),
-        values.indexOf(maxValue),
-        Math.max(values.length - 1, 0),
-      ]),
-    [maxValue, minValue, values]
-  );
 
   let activeTooltip = null;
   if (activePoint && activeSeriesPoint) {

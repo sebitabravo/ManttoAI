@@ -1,13 +1,11 @@
 """Servicio de negocio para gestión de Audit Logs."""
 
 from datetime import datetime
-from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.audit_log import AuditLog
-from app.models.usuario import Usuario
 
 
 def log_audit(

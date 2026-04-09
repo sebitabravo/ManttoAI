@@ -8,7 +8,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.api_key import APIKey
-from app.models.usuario import Usuario
 
 
 def generate_api_key() -> str:
@@ -88,7 +87,7 @@ def list_api_keys(
     query = select(APIKey)
 
     if not include_inactive:
-        query = query.where(APIKey.is_active == True)
+        query = query.where(APIKey.is_active.is_(True))
 
     if device_id:
         query = query.where(APIKey.device_id == device_id)

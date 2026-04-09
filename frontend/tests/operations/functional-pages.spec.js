@@ -125,7 +125,7 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
     });
   });
 
-  await page.route("**/api/dashboard/resumen", async (route) => {
+  await page.route("**/api/v1/dashboard/resumen", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -155,7 +155,7 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
     });
   });
 
-  await page.route("**/api/equipos**", async (route) => {
+  await page.route("**/api/v1/equipos**", async (route) => {
     const requestUrl = new URL(route.request().url());
     const maybeId = requestUrl.pathname.split("/").at(-1);
 
@@ -181,7 +181,7 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
     });
   });
 
-  await page.route("**/api/lecturas**", async (route) => {
+  await page.route("**/api/v1/lecturas**", async (route) => {
     const requestUrl = new URL(route.request().url());
     const equipoId = requestUrl.searchParams.get("equipo_id");
 
@@ -196,7 +196,7 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
     });
   });
 
-  await page.route("**/api/predicciones/**", async (route) => {
+  await page.route("**/api/v1/predicciones/**", async (route) => {
     const requestUrl = new URL(route.request().url());
     const maybeId = requestUrl.pathname.split("/").at(-1);
 
@@ -221,7 +221,15 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
     });
   });
 
-  await page.route("**/api/mantenciones**", async (route) => {
+  await page.route("**/api/v1/umbrales**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([]),
+    });
+  });
+
+  await page.route("**/api/v1/mantenciones**", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -229,7 +237,7 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
     });
   });
 
-  await page.route("**/api/alertas**", async (route) => {
+  await page.route("**/api/v1/alertas**", async (route) => {
     const request = route.request();
     const requestUrl = new URL(request.url());
 
@@ -261,7 +269,7 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
 
   await page.goto("/equipos");
 
-  await expect(page.getByRole("heading", { name: "Equipos" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Equipos", exact: true })).toBeVisible();
   await expect(page.getByText("Compresor principal")).toBeVisible();
   await expect(page.getByText("Bomba respaldo")).toBeVisible();
   await expect(page.getByText("51.20 °C")).toBeVisible();

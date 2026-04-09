@@ -1,8 +1,7 @@
 """Middleware automático de audit logging."""
 
-from collections.abc import Callable
-from typing import Any
 import logging
+from collections.abc import Callable
 
 from fastapi import HTTPException
 from fastapi import Request, Response

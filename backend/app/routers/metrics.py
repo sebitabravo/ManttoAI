@@ -4,9 +4,8 @@ from collections.abc import Callable
 from datetime import datetime, timedelta
 from functools import wraps
 from time import perf_counter
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -16,7 +15,6 @@ from app.models.alerta import Alerta
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.usuario import Usuario
-from app.utils.logging_config import setup_logging
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
@@ -44,7 +42,7 @@ def track_request_metrics(
                 _request_duration.setdefault(endpoint, []).append(duration)
 
                 return result
-            except Exception as e:
+            except Exception:
                 duration = perf_counter() - start_time
                 _request_count[endpoint] = _request_count.get(endpoint, 0) + 1
                 _request_duration.setdefault(endpoint, []).append(duration)
@@ -79,7 +77,7 @@ async def get_metrics_summary(
     # Métricas de base de datos
     total_equipos = db.scalar(select(func.count(Equipo.id)))
     total_alertas_activas = db.scalar(
-        select(func.count(Alerta.id)).where(Alerta.activa == True)
+        select(func.count(Alerta.id)).where(Alerta.activa)
     )
     total_lecturas_24h = db.scalar(
         select(func.count(Lectura.id)).where(

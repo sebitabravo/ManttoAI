@@ -2,7 +2,6 @@
 
 from collections.abc import Callable, Generator
 from datetime import datetime
-from typing import Annotated
 
 import bcrypt
 from fastapi import Depends, HTTPException, Request, status

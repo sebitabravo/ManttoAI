@@ -10,8 +10,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import get_settings
-from app.dependencies import get_current_user
 from app.database import check_database_connection, initialize_database_schema
+from app.dependencies import get_current_user, require_role
 from app.middleware.audit import audit_middleware
 from app.middleware.rate_limit import setup_rate_limiting
 from app.routers import (
@@ -134,9 +134,6 @@ app.include_router(legal.router)  # Documentación legal pública
 
 # Router IoT (público pero con API key authentication)
 app.include_router(iot.router, prefix=API_V1_PREFIX)
-
-# Routers protegidos con autenticación y RBAC
-from app.dependencies import require_role
 
 # Admin-only routers
 app.include_router(

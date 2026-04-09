@@ -3,9 +3,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db, require_role
+from app.dependencies import get_db, require_role
 from app.middleware.rate_limit import limiter
-from app.models.api_key import APIKey
 from app.models.usuario import Usuario
 from app.schemas.api_key import APIKeyCreate, APIKeyDetailResponse, APIKeyResponse
 from app.services.api_key_service import (

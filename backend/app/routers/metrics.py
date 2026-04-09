@@ -21,6 +21,9 @@ from app.models.usuario import Usuario
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
 # Almacenamiento en memoria para métricas simples
+# TODO: en despliegues con múltiples workers, cada proceso mantiene su propio
+# estado en memoria. Para métricas agregadas consistentes, migrar a backend
+# compartido/persistente (por ejemplo Redis).
 _request_count: dict[str, int] = {}
 _MAX_DURATION_SAMPLES_PER_ENDPOINT = 1000
 _request_duration: dict[str, deque[float]] = {}

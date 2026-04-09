@@ -46,6 +46,22 @@ def test_login_endpoint_returns_token_for_valid_credentials(unauthenticated_clie
     assert data["access_token"]
 
 
+def test_login_endpoint_v1_route_returns_token_for_valid_credentials(
+    unauthenticated_client,
+):
+    """Valida que login funcione también bajo prefijo /api/v1."""
+
+    response = unauthenticated_client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@manttoai.local", "password": "Admin123!"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["token_type"] == "bearer"
+    assert data["access_token"]
+
+
 def test_login_endpoint_sets_http_only_cookie_for_valid_credentials(
     unauthenticated_client,
 ):

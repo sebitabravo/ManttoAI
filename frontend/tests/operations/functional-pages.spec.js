@@ -112,7 +112,7 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
     },
   ]);
 
-  await page.route("**/api/auth/me", async (route) => {
+  await page.route(/\/api(?:\/v1)?\/auth\/me$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",

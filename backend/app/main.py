@@ -129,7 +129,8 @@ setup_rate_limiting(app)
 # Configurar audit logging automático
 app.middleware("http")(audit_middleware)
 
-app.include_router(auth.router)
+# Auth expuesto en /api/v1 y raíz por compatibilidad con clientes legacy.
+include_router_with_legacy_support(auth.router)
 app.include_router(legal.router)  # Documentación legal pública
 
 # Router IoT (público pero con API key authentication)

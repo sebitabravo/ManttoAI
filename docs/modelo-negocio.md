@@ -112,12 +112,18 @@ Incluye todo lo del Professional, más:
 ### 4.2 Segmento objetivo
 
 **Cliente ideal:**
-- Empresa industrial mediana en LATAM (Chile, Argentina, Perú, Colombia, México)
+- Empresa industrial mediana en LATAM (Fase 1: Chile; Fase 2: Argentina, Perú, Colombia, México; Fase 3: expansión regional)
 - 30 a 200 empleados
-- Sectores: manufactura, agroindustria, minería pequeña/mediana, alimentación, química
-- Tiene al menos 5-10 equipos críticos cuyas fallas generan paradas costosas
+- Sectores: manufactura, agroindustria, minería pequeña/mediana, alimentación, química, empresas estatales (Fase 3+)
+- Tiene al menos 5-10 equipos críticos cuyas fallas generan paradas costosas (USD 1.000-50.000 por evento)
 - Presupuesto operacional disponible pero no para soluciones enterprise tradicionales
-- Decisión de compra: gerente de operaciones o gerente de planta
+- Decisión de compra: gerente de operaciones o gerente de planta (buyer persona: "Roberto el Gerente de Planta")
+
+**Segmentación aplicada:**
+- **Geográfico:** Mercado doméstico → LATAM → Internacional
+- **Tamaño:** Medianas empresas (30-200 empleados) — sweet spot entre pymes y corporaciones
+- **Sectorial:** Industrias con equipos críticos donde el costo de parada es alto
+- **Necesidad:** Empresas que quieren pasar de reactivo a predictivo pero no pueden pagar SAP/IBM
 
 ### 4.3 Unit Economics realista (Plan Professional como referencia)
 
@@ -163,11 +169,129 @@ Una vez alcanzado el breakeven, cada cliente adicional contribuye USD 800/mes en
 
 ## 5. Análisis de Mercado
 
-### 5.1 Tamaño del mercado
+### 5.1 Segmentación de mercado
 
-El mercado global de mantenimiento predictivo está valorado en aproximadamente USD 15 mil millones para 2027, con un CAGR del 25%. El segmento de empresas medianas representa la parte de mayor crecimiento, ya que las grandes industrias ya están penetradas por los players enterprise.
+ManttoAI aplica una segmentación estratégica basada en cuatro criterios:
 
-**Mercado direccionable en LATAM:** Estimación conservadora de 30.000+ empresas industriales medianas potencialmente compradoras solo en los 5 países objetivo (Chile, Argentina, Perú, Colombia, México).
+1. **Geográfica:** Fase 1 (Chile) → Fase 2 (LATAM: Argentina, Perú, Colombia, México) → Fase 3 (expansión regional)
+2. **Tamaño de empresa:** Medianas empresas (30-200 empleados) — segmento desatendido por soluciones enterprise
+3. **Sectorial:** Manufactura, agroindustria, minería pequeña/mediana, alimentación, química
+4. **Perfil de necesidad:** Empresas con equipos críticos que generan paradas costosas pero sin presupuesto para soluciones enterprise tradicionales
+
+**Target (mercado objetivo):**
+- 30-200 empleados
+- Sectores mencionados
+- 5-10 equipos críticos monitoreados
+- Gerente de operaciones como decision maker
+- Presupuesto operativo disponible pero limitado (USD 500-3.000/mes)
+
+**Mercado potencial:**
+- Global: ~USD 15.000 millones en 2027, CAGR del 25%
+- LATAM: ~30.000+ empresas industriales medianas en los 5 países objetivo
+- Segmento mediano: parte de mayor crecimiento (grandes industrias ya están penetradas por players enterprise)
+
+### 5.2 Modelo de venta y canales de distribución
+
+**Venta directa (Fase 1 - MVP):**
+- Ventas directas B2B sin intermediarios
+- Equipo fundador hace el onboarding manual
+- Ventaja: control total del ciclo de ventas y feedback directo
+- Escalabilidad limitada a ~5-10 clientes sin riesgo de saturar al equipo
+
+**Mercado de distribución (Fase 2 - Escalamiento):**
+- Planificado para Milestone 4 (2026+): partnerships con distribuidores locales en cada país
+- Modelo de canales híbrido:
+  - Directo para clientes grandes (Enterprise, USD 3.000/mes)
+  - Distribuidores locales para segmento medianas en regiones específicas
+- Beneficios: expansión geográfica rápida, conocimiento local del mercado
+- Riesgo: menor control del margen, dependencia de terceros
+
+**Estrategia de internacionalización:**
+- Pricing en USD para consistencia regional
+- Soporte en español como ventaja competitiva
+- Localización progresiva: moneda, facturación tributaria por país, horarios de soporte
+
+### 5.3 Por qué NO es B2C
+
+ManttoAI es un producto B2B puro por las siguientes razones:
+
+1. **Naturaleza del problema:** El mantenimiento predictivo industrial es una necesidad organizacional, no personal. No hay "consumidor final" individual para este servicio.
+
+2. **Decisión de compra compleja:** Requiere evaluación de ROI, aprobación presupuestaria, involucra múltiples stakeholders (gerente de operaciones, IT, finanzas).
+
+3. **Contratación B2B:** Los contratos son entre empresas, hay términos de servicio corporativos, SLA, soporte prioritario, facturación con IVA/RUT.
+
+4. **Ciclo de venta largo:** Días a semanas de evaluación, demos técnicas, negociación de términos — características típicas de B2B, no B2C.
+
+**Conclusión:** Intentar un modelo B2C para mantenimiento predictivo sería estratégicamente incorrecto. El producto está diseñado explícitamente para el segmento B2B y esta decisión está alineada con el comportamiento del mercado industrial.
+
+### 5.4 Mercado de Gobierno (GuB) — Segmento potencial
+
+Aunque el MVP está enfocado en empresas privadas, el mercado de gobierno representa una oportunidad natural:
+
+**Entidades estatales con equipos críticos:**
+- Empresas públicas: Codelco, ENAP, empresas sanitarias
+- Municipalidades con plantas de tratamiento de aguas
+- Ministerios y servicios públicos con infraestructura crítica
+- Fuerzas armadas y organismos de defensa
+
+**Características del segmento GuB:**
+- Procesos de compra vía licitación pública (ChileCompra, Mercado Público)
+- Ciclos de venta más largos (6-18 meses)
+- Requisitos de certificación y cumplimiento regulatorio más estrictos
+- Presupuestos asignados anualmente, menor flexibilidad en contratación
+
+**Estrategia de entrada a GuB (Fase 3+):**
+- Certificar el producto en plataformas de licitación pública
+- Desarrollar casos de éxito en empresas privadas como prueba de concepto
+- Ofrecer pilotos en municipios medianos antes de abordar entidades grandes
+- Alinear pricing con marcos presupuestarios estatales
+
+**Estado actual:** No representado en el MVP, pero identificado como segmento de expansión de mediano plazo.
+
+### 5.5 Buyer Persona — "Roberto el Gerente de Planta"
+
+Para la venta B2B, definimos un buyer persona concreto que representa a nuestro cliente ideal:
+
+**Nombre ficticio:** Roberto Méndez
+
+**Rol:** Gerente de Planta / Gerente de Operaciones
+
+**Empresa:** Industria manufacturera mediana (80 empleados, 3 líneas de producción)
+
+**Ubicación:** Región Metropolitana, Chile (Fase 1); LATAM en fases posteriores
+
+**Pain points (problemas que le duelen):**
+1. Una parada no planificada le costó USD 12.000 el mes pasado y el gerente general lo presionó
+2. No tiene presupuesto para SAP PM (USD 8.000/mes) ni tiempo para implementaciones de 6 meses
+3. Sus técnicos usan planillas Excel para seguimiento de mantenciones, propenso a errores
+4. Necesita mostrar métricas y mejora continua a la dirección
+
+**Objetivos:**
+1. Reducir paradas no planificadas en un 30% en 12 meses
+2. Justificar ROI de inversión en tecnología a la dirección
+3. Dar visibilidad al equipo de mantenimiento
+4. Cumplir con normativas de seguridad industrial
+
+**Características demográficas:**
+- Edad: 35-50 años
+- Educación: Ingeniería Industrial o Mecánica
+- Experiencia: 8-15 años en operaciones industriales
+- Tecnología: Usuario medio de Excel, familiarizado con sistemas ERP básicos
+
+**Patrón de compra:**
+- Tiempo para evaluar: 2-4 semanas
+- Decision maker directo (no necesita aprobación de 5 niveles)
+- Prefiere demos técnicas a PowerPoint de ventas
+- Valora el soporte en español y foco LATAM
+
+**Por qué ManttoAI le conviene:**
+- Precio: USD 1.200/mes (Professional) es 7x más barato que SAP
+- Implementación: 1-2 semanas vs 6 meses
+- ROI tangible: una sola parada evitada paga varios meses del servicio
+- Sin consultores: su propio equipo técnico puede operar el sistema
+
+Este buyer persona guía el messaging de ventas, el onboarding y el roadmap del producto.
 
 ### 5.2 Competencia
 
@@ -183,12 +307,17 @@ El mercado global de mantenimiento predictivo está valorado en aproximadamente 
 - Hojas de Excel y planillas manuales
 - Consultoras de ingeniería que venden auditorías one-shot (USD 5.000-20.000 por auditoría)
 
-### 5.3 Ventaja competitiva
+### 5.6 Ventaja competitiva
 
 ManttoAI no compite contra SAP en el segmento enterprise — pierde de cabeza. Compite contra dos cosas:
 
 1. **El status quo del mantenimiento reactivo** en empresas que nunca van a pagar SAP
 2. **Players medianos como Fiix y UpKeep** ofreciendo mejor precio, foco LATAM y stack abierto
+
+**Posicionamiento estratégico:**
+- **B2B puro:** Especializado en venta B2B con ciclos de venta típicos de 2-4 semanas, no B2C impulsado por marketing de consumo
+- **Foco LATAM vs globales:** Fiix, UpKeep son empresas globales sin especialización regional; ManttoAI está diseñado para el contexto industrial latinoamericano
+- **Internacionalización progresiva:** Nace con pricing USD y roadmap de expansión, pero con enfoque pragmático: doméstico primero, regional después
 
 Las ventajas concretas son:
 
@@ -197,6 +326,7 @@ Las ventajas concretas son:
 3. **Foco regional:** Soporte en español, conocimiento del contexto LATAM (cortes de luz, conectividad limitada, normativas locales)
 4. **Sin vendor lock-in:** Stack abierto, datos exportables, sin contratos leoninos de 3 años
 5. **Implementación rápida:** 1-2 semanas vs 3-6 meses de soluciones enterprise
+6. **Buyer persona alineado:** Producto diseñado para "Roberto el Gerente de Planta", no para un comité corporativo de 15 personas
 
 ---
 
@@ -248,16 +378,42 @@ Las ventajas concretas son:
 
 **Cuándo se justifica:** Cuando el tiempo gastado en cobrar manualmente excede el costo de implementar la integración. Estimación: a partir de 8-10 clientes activos.
 
-### Milestone 4 — Expansión regional (2026+)
+### Milestone 4 — Expansión regional y modelo de distribución (2026+)
 
-**Objetivo:** Replicar el modelo en otros países LATAM.
+**Objetivo:** Replicar el modelo en otros países LATAM mediante canales de distribución.
 
 **Trabajo necesario:**
-- Localización de moneda y facturación por país
+- Localización de moneda y facturación por país (CLP, ARS, PEN, COP, MXN)
 - Cumplimiento tributario local (boleta electrónica Chile, factura electrónica México, etc.)
-- Partnerships con distribuidores locales en cada país
-- Marketing localizado por sector
-- Soporte horario por zona
+- **Partnerships con distribuidores locales:** seleccionar 1-2 distribuidores por país con base en la industria
+- Modelo de comisiones para distribuidores (ej: 15-20% del primer año, 5-10% recurrentes)
+- Marketing localizado por sector y país
+- Soporte horario por zona horaria
+- Portal de partners con materiales de venta y capacitación
+
+**Criterios para selección de distribuidores:**
+- Presencia en el sector industrial local
+- Capacidad técnica para hacer demos y soporte básico
+- Red de contactos con empresas medianas
+- Alineación con valores de ManttoAI (transparencia, sin vendor lock-in)
+
+### Milestone 5 — Entrada a mercados de gobierno (GuB) (2027+)
+
+**Objetivo:** Certificar y vender a entidades estatales y empresas públicas.
+
+**Trabajo necesario:**
+- Certificación en plataformas de licitación pública (ChileCompra, Mercado Público Chile; sistemas equivalentes en otros países)
+- Desarrollo de casos de uso específicos para sector público (ej: plantas de tratamiento municipal)
+- Alineación de pricing con marcos presupuestarios estatales (presupuestos anuales, trámites administrativos)
+- Cumplimiento de requisitos regulatorios adicionales (certificación ISO, seguridad de datos)
+- Equipo de ventas especializado en licitaciones públicas
+- Pilotos con municipios medianos antes de abordar empresas grandes (Codelco, ENAP)
+
+**Diferencias clave del modelo GuB:**
+- Ciclos de venta más largos (6-18 meses)
+- Requisitos de documentación y cumplimiento más estrictos
+- Menor margen pero contratos de mayor tamaño y estabilidad
+- Necesidad de certificaciones y referencias de clientes privados previos
 
 ---
 
@@ -307,14 +463,21 @@ Para la defensa del proyecto de título, los puntos clave a destacar son:
 - Cobertura de tests del 70% con CI/CD funcional
 - Soporte para 50 usuarios concurrentes validado
 
-**De negocio:**
-- Identificación de un mercado real y desatendido (USD 15B+ proyectado a 2027)
-- Modelo de negocio claro con tres tiers de pricing diferenciados
-- Unit economics defendibles (margen bruto 67%, ratio LTV/CAC 12.8x)
-- Análisis de breakeven realista (14 clientes-mes para recuperar inversión)
-- Roadmap escalonado que separa MVP de escalamiento
-- Decisiones técnicas fundamentadas en restricciones reales
-- Producto vendible: cualquier persona del jurado puede entender qué se vende y a quién
+**De negocio y marketing:**
+- **B2B puro:** Modelo de venta B2B bien definido, con ciclos de venta típicos y contratos entre empresas
+- **Segmentación estratégica:** Cuatro criterios claros (geográfico, tamaño, sectorial, necesidad)
+- **Target bien definido:** Mercado objetivo específico dentro del mercado potencial más amplio
+- **Buyer persona concreto:** "Roberto el Gerente de Planta" con pain points, objetivos y patrón de compra
+- **Mercado potencial cuantificado:** USD 15B+ global, 30K+ empresas LATAM
+- **Unit economics defendibles:** Margen bruto 67%, ratio LTV/CAC 12.8x
+- **Breakeven realista:** 14 clientes-mes para recuperar la inversión inicial
+- **Estrategia de internacionalización:** Focalizado (Chile → LATAM → regional) con pricing en USD
+- **Modelo de distribución planificado:** Venta directa (Fase 1) → Partners locales (Fase 2) → expansión
+- **Mercado de gobierno identificado:** Segmento potencial (GuB) con estrategia de entrada definida
+
+**Por qué B2C y B2C no aplican:**
+- B2C no aplica porque el producto es una solución organizacional, no de consumo individual
+- El modelo está alineado con el comportamiento del mercado industrial y el patrón de compra B2B
 
 **De gestión:**
 - Equipo de 4 personas con roles claros
@@ -328,13 +491,15 @@ Para la defensa del proyecto de título, los puntos clave a destacar son:
 ## 9. Pitch para la Defensa (estructura sugerida de slides)
 
 1. **El problema** — Empresas industriales medianas pierden plata por no poder pagar soluciones de mantenimiento predictivo enterprise (USD 3.000-15.000/mes)
-2. **El mercado** — USD 15B+ para 2027, segmento mediano desatendido en LATAM
+2. **El mercado** — USD 15B+ para 2027, segmento mediano desatendido en LATAM (30K+ empresas)
 3. **La solución** — ManttoAI: stack completo IoT + ML + Cloud Dashboard desde USD 500/mes
 4. **Demo en vivo** — Mostrar el flujo: ESP32 → MQTT → Backend → ML → Dashboard → Alerta
 5. **Modelo ML** — Random Forest, F1-Score ≥ 85%, cross-validation, métricas
 6. **Arquitectura** — Diagrama del sistema en AWS, decisiones técnicas, justificación del single-tenant para MVP
-7. **Modelo de negocio** — Pricing en 3 tiers, unit economics, ratio LTV/CAC
-8. **Punto de breakeven** — 14 clientes-mes para recuperar la inversión inicial de USD 10.640
-9. **Competencia** — Por qué no competimos con SAP sino contra el status quo y Fiix/UpKeep
-10. **Roadmap** — Pilotos → multi-tenancy → billing automático → expansión regional
-11. **Cierre** — Esto no es un trabajo académico, es un producto vendible con plan de negocio defendible
+7. **Modelo de negocio** — Pricing en 3 tiers, unit economics, ratio LTV/CAC, breakeven en 14 clientes-mes
+8. **Segmentación y target** — Por qué elegimos empresas medianas 30-200 empleados en 5 países LATAM
+9. **Buyer persona** — "Roberto el Gerente de Planta": pain points, objetivos, por qué nos compra
+10. **Estrategia de distribución e internacionalización** — Venta directa (Fase 1) → Partners locales (Fase 2) → LATAM (Fase 3)
+11. **Competencia** — Por qué no competimos con SAP sino contra el status quo y Fiix/UpKeep
+12. **Roadmap** — Pilotos → multi-tenancy → billing automático → expansión regional → mercado de gobierno
+13. **Cierre** — Esto no es un trabajo académico, es un producto vendible con plan de negocio defendible y conocimiento aplicado de marketing B2B

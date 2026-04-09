@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 
 import Header from "./Header";
-import OnboardingTour, { isOnboardingDone } from "../onboarding/OnboardingTour";
+import OnboardingTour from "../onboarding/OnboardingTour";
+import { isOnboardingDone } from "../../utils/onboardingStorage";
 import Sidebar from "./Sidebar";
 
 /**

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 
 test("sin token no se puede acceder al dashboard", async ({ page }) => {
   // Simular que no hay sesión activa - el backend devuelve 401

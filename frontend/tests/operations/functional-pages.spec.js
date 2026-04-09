@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 
 test("equipos, alertas e historial consumen backend real", async ({ page }) => {
   const pageErrors = [];

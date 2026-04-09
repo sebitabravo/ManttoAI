@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 
 test("dashboard consume API real y reemplaza placeholders", async ({ page }) => {
   const pageErrors = [];

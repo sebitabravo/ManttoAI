@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import useAuth from "../../hooks/useAuth";
+import { markOnboardingDone } from "../../utils/onboardingStorage";
 import Logo from "../ui/Logo";
 import Button from "../ui/Button";
 
@@ -30,8 +31,6 @@ import Button from "../ui/Button";
  * Selectores: usa `data-tour` attributes en las páginas para establecer
  * los elementos a destacar. Ver cada página para los atributos.
  */
-
-const STORAGE_KEY = "manttoai_onboarding_done";
 
 /**
  * Definición base de los pasos del tour.
@@ -130,25 +129,8 @@ function StepDots({ total, actual }) {
 
 /**
  * Verifica si el onboarding ya fue completado.
+ * Importado desde utils/onboardingStorage para cumplir con react-refresh.
  */
-export function isOnboardingDone() {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Marca el onboarding como completado.
- */
-function markOnboardingDone() {
-  try {
-    localStorage.setItem(STORAGE_KEY, "true");
-  } catch {
-    // localStorage puede no estar disponible (ej. modo privado)
-  }
-}
 
 /**
  * Componente principal del tour de onboarding.

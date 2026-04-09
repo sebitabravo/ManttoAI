@@ -80,6 +80,11 @@ SMTP_PASSWORD=
 SMTP_FROM_EMAIL=
 SMTP_TO_EMAIL=
 
+# Frontend (opcional)
+# Si desplegás frontend/backend como aplicaciones separadas,
+# definir URL absoluta del backend (ej: https://api.tu-dominio.com/api/v1)
+VITE_API_URL=
+
 # Seed (opcional, primera ejecución)
 SEED_ADMIN_EMAIL=admin@manttoai.local
 SEED_ADMIN_PASSWORD=__GENERA_UNA_SEGURA__

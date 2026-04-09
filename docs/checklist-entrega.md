@@ -6,7 +6,7 @@ Usar esta lista antes de grabar video o presentar defensa.
 
 - [ ] `make setup-env` ejecutado sin errores
 - [ ] `make config` en verde
-- [ ] `make up` con contenedores `backend`, `frontend`, `mysql`, `mosquitto`, `nginx` activos
+- [ ] `make up` con contenedores `backend`, `frontend`, `mysql`, `mosquitto` activos
 - [ ] `curl http://localhost:8000/health` responde `200`
 
 ## B. Flujo funcional MVP

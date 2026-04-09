@@ -59,6 +59,7 @@ mosquitto/passwd
 # === QA / Testing temporal ===
 qa-*.png
 audit-*.png
+pr_*.diff
 .playwright-mcp/
 pr_review_comment.md
 

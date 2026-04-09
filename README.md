@@ -124,7 +124,7 @@ make e2e-front
 El proyecto usa **un solo `docker-compose.yml`** que funciona tanto en desarrollo local como en Dokploy.
 
 - Guía paso a paso: [`docs/despliegue-dokploy.md`](docs/despliegue-dokploy.md)
-- En Dokploy, configurar dominio en UI → Domains → servicio `nginx` puerto 80
+- En Dokploy, configurar dominio en UI → Domains → servicio `frontend` puerto 80
 - Variables de entorno se configuran en UI → Environment
 
 ## Documentación clave

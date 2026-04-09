@@ -24,7 +24,6 @@ manttoai/
 │── .env.example                     # Variables de entorno documentadas (sin secretos)
 │── .gitignore                       # Archivos ignorados por Git
 │── Makefile                         # Atajos de comandos frecuentes
-│── skills-lock.json                 # Lock de skills instaladas a nivel proyecto
 │
 ├── .github/
 │   ├── ISSUE_TEMPLATE/
@@ -128,6 +127,7 @@ manttoai/
 │   ├── postcss.config.js
 │   ├── index.html
 │   ├── eslint.config.js
+│   ├── nginx.conf                   # Proxy /api/* → backend en runtime productivo
 │   │
 │   └── src/
 │       ├── main.jsx
@@ -215,9 +215,6 @@ manttoai/
 │   ├── mosquitto.conf
 │   └── passwd                       # Debe ir ignorado por Git
 │
-├── nginx/
-│   └── default.conf
-│
 ├── scripts/
 │   ├── backup_db.sh
 │   ├── seed_db.py
@@ -273,13 +270,6 @@ services:
     ports: ["1883:1883"]
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
-
-  nginx:
-    image: nginx:alpine
-    ports: ["80:80", "443:443"]
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-    depends_on: [backend, frontend]
 
 volumes:
   mysql_data:

@@ -12,17 +12,17 @@ Este proyecto usa **un solo `docker-compose.yml`** que funciona tanto en desarro
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                           DOKPLOY                                │
+│                           DOKPLOY                               │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Traefik (HTTPS, Let's Encrypt)                           │   │
-│  │   - Configurado desde UI → Domains                       │   │
-│  │   - Inyecta labels y red automáticamente                 │   │
+│  │ Traefik (HTTPS, Let's Encrypt)                          │   │
+│  │   - Configurado desde UI → Domains                      │   │
+│  │   - Inyecta labels y red automáticamente                │   │
 │  └──────────────────────┬───────────────────────────────────┘   │
 │                         │ HTTP :80                              │
 │  ┌──────────────────────▼───────────────────────────────────┐   │
-│  │ nginx (entry point del stack)                            │   │
-│  │   - /     → frontend:80                                  │   │
-│  │   - /api/ → backend:8000                                 │   │
+│  │ frontend:80 (nginx interno del contenedor)              │   │
+│  │   - sirve SPA React                                     │   │
+│  │   - proxy /api/* → backend:8000                         │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │                         │                                       │
 │  ┌─────────────┐   ┌────┴────────┐   ┌─────────┐   ┌─────────┐ │
@@ -89,13 +89,13 @@ SEED_ADMIN_PASSWORD=__GENERA_UNA_SEGURA__
 
 1. Ir a pestaña **Domains** de la aplicación
 2. **Add Domain**:
-   - **Service**: `nginx`
+   - **Service**: `frontend`
    - **Port**: `80`
    - **Domain**: tu dominio (ej: `manttoai.example.com`)
    - **HTTPS**: habilitado (Let's Encrypt automático)
 3. Dokploy inyecta automáticamente:
    - Labels de Traefik
-   - Red `dokploy-network` al servicio nginx
+   - Red `dokploy-network` al servicio frontend
 
 ## 4. Primera ejecución: seed (opcional)
 

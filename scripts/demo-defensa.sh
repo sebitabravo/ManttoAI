@@ -123,13 +123,13 @@ demo_step_2_backend_health() {
 demo_step_3_auth() {
     print_section "PASO 3: Autenticación JWT"
     
-    print_subsection "3.1 Login con credenciales demo"
-    print_info "Usuario: demo@manttoai.cl"
-    print_info "Endpoint: POST ${BACKEND_URL}/auth/login"
+    print_subsection "3.1 Login con credenciales admin"
+    print_info "Usuario: admin@manttoai.local"
+    print_info "Endpoint: POST ${BACKEND_URL}/api/v1/auth/login"
     
-    local login_response=$(curl -s -X POST "${BACKEND_URL}/auth/login" \
+    local login_response=$(curl -s -X POST "${BACKEND_URL}/api/v1/auth/login" \
         -H "Content-Type: application/json" \
-        -d '{"email":"demo@manttoai.cl","password":"demo123"}')
+        -d '{"email":"admin@manttoai.local","password":"admin123"}')
     
     echo "$login_response" | jq '.' 2>/dev/null || echo "$login_response"
     
@@ -153,10 +153,10 @@ demo_step_3_auth() {
 demo_step_4_dashboard() {
     print_section "PASO 4: Dashboard - Resumen en Tiempo Real"
     
-    print_subsection "4.1 Endpoint /dashboard/resumen"
-    print_info "URL: GET ${BACKEND_URL}/dashboard/resumen"
+    print_subsection "4.1 Endpoint /api/v1/dashboard/resumen"
+    print_info "URL: GET ${BACKEND_URL}/api/v1/dashboard/resumen"
     
-    local dashboard_response=$(curl -s "${BACKEND_URL}/dashboard/resumen" \
+    local dashboard_response=$(curl -s "${BACKEND_URL}/api/v1/dashboard/resumen" \
         -H "Authorization: Bearer ${JWT_TOKEN}")
     
     echo "$dashboard_response" | jq '.' 2>/dev/null || echo "$dashboard_response"
@@ -185,11 +185,11 @@ demo_step_4_dashboard() {
 demo_step_5_ml_prediction() {
     print_section "PASO 5: Predicción de Riesgo con Machine Learning"
     
-    print_subsection "5.1 Endpoint /predicciones/equipo/1"
+    print_subsection "5.1 Endpoint /api/v1/predicciones/1"
     print_info "Modelo: Random Forest Classifier (scikit-learn)"
-    print_info "Features: temperatura, humedad, vibración_x, vibración_y, vibración_z"
+    print_info "Features: temperatura, humedad, vib_x, vib_y, vib_z"
     
-    local prediction_response=$(curl -s "${BACKEND_URL}/predicciones/equipo/1" \
+    local prediction_response=$(curl -s "${BACKEND_URL}/api/v1/predicciones/1" \
         -H "Authorization: Bearer ${JWT_TOKEN}")
     
     echo "$prediction_response" | jq '.' 2>/dev/null || echo "$prediction_response"
@@ -229,9 +229,9 @@ demo_step_6_iot_mqtt() {
 {
   "temperatura": 55.5,
   "humedad": 65.0,
-  "vibracion_x": 0.8,
-  "vibracion_y": 0.5,
-  "vibracion_z": 10.2,
+  "vib_x": 0.8,
+  "vib_y": 0.5,
+  "vib_z": 10.2,
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF
@@ -250,7 +250,7 @@ EOF
     sleep 2
     
     print_subsection "6.2 Verificar última lectura en base de datos"
-    local lecturas_response=$(curl -s "${BACKEND_URL}/lecturas?limit=1" \
+    local lecturas_response=$(curl -s "${BACKEND_URL}/api/v1/lecturas?limit=1" \
         -H "Authorization: Bearer ${JWT_TOKEN}")
     
     echo "$lecturas_response" | jq '.[0]' 2>/dev/null || echo "$lecturas_response"

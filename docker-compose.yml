@@ -106,25 +106,5 @@ services:
       - "8025:8025"
     restart: unless-stopped
 
-  mysql-backup:
-    image: fradelg/mysql-cron-backup
-    environment:
-      MYSQL_HOST: mysql
-      MYSQL_PORT: 3306
-      MYSQL_USER: root
-      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-manttoai_root}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-manttoai_db}
-      SCHEDULE: "0 2 * * *"  # Backup diario a las 2 AM
-      BACKUP_KEEP_DAYS: "7"  # Mantener backups por 7 días
-      BACKUP_FILENAME: "manttoai-backup-%Y%m%d-%H%M%S.sql.gz"
-      TZ: "America/Santiago"
-    volumes:
-      - mysql_backups:/backup
-    depends_on:
-      mysql:
-        condition: service_healthy
-    restart: unless-stopped
-
 volumes:
   mysql_data:
-  mysql_backups:

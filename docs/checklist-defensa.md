@@ -40,7 +40,7 @@
 ### Stack y Servicios
 
 - [ ] `docker compose up -d` ejecutado sin errores
-- [ ] 4 servicios HEALTHY: backend, frontend, mysql, mosquitto
+- [ ] 5 servicios HEALTHY: backend, frontend, mysql, mosquitto, mailpit
 - [ ] Backend responde en `/health` con status "ok"
 - [ ] Frontend accesible en navegador
 - [ ] Base de datos poblada con datos demo (`seed_db.py`)
@@ -197,13 +197,13 @@ docker compose ps
 curl http://localhost:8000/health
 
 # Login y obtener JWT
-curl -X POST http://localhost:8000/auth/login \
+curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"demo@manttoai.cl","password":"demo123"}'
+  -d '{"email":"admin@manttoai.local","password":"admin123"}'
 
 # Dashboard resumen
 TOKEN="<tu-jwt-token>"
-curl http://localhost:8000/dashboard/resumen \
+curl http://localhost:8000/api/v1/dashboard/resumen \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -257,7 +257,7 @@ cd frontend && npm run lint
 
 ```bash
 mosquitto_pub -h localhost -t "manttoai/equipo/1/lecturas" \
-  -m '{"temperatura":60,"humedad":70,"vibracion_x":1.0,"vibracion_y":0.8,"vibracion_z":10.5}'
+  -m '{"temperatura":60,"humedad":70,"vib_x":1.0,"vib_y":0.8,"vib_z":10.5}'
 ```
 
 ### Ver logs en tiempo real
@@ -310,7 +310,7 @@ docker compose logs -f
 - **Broker**: Mosquitto (open source)
 
 ### Infraestructura
-- **Servicios**: 4 (backend, frontend, mysql, mosquitto)
+- **Servicios**: 5 (backend, frontend, mysql, mosquitto, mailpit)
 - **Estado**: Todos HEALTHY
 - **Tiempo de start**: ~15 segundos
 - **Uptime demo**: 18+ horas sin caídas

@@ -88,7 +88,7 @@ async def get_metrics_summary(
     # Métricas de base de datos
     total_equipos = db.scalar(select(func.count(Equipo.id)))
     total_alertas_activas = db.scalar(
-        select(func.count(Alerta.id)).where(Alerta.activa)
+        select(func.count(Alerta.id)).where(Alerta.leida.is_(False))
     )
     total_lecturas_24h = db.scalar(
         select(func.count(Lectura.id)).where(

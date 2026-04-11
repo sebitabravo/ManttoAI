@@ -88,6 +88,22 @@ def authenticate_user(db: Session, email: str, password: str) -> Usuario:
     return usuario
 
 
+def change_password(
+    db: Session, user: Usuario, current_password: str, new_password: str
+) -> dict:
+    """Cambia la contraseña de un usuario autenticado."""
+
+    if not verify_password(current_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Contraseña actual incorrecta",
+        )
+
+    user.password_hash = hash_password(new_password)
+    db.commit()
+    return {"message": "Contraseña actualizada exitosamente"}
+
+
 def login_user(db: Session, email: str, password: str) -> Token:
     """Retorna un token JWT para credenciales válidas."""
 

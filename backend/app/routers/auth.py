@@ -9,8 +9,14 @@ from app.config import get_settings
 from app.dependencies import get_current_user
 from app.dependencies import get_db
 from app.middleware.rate_limit import limiter
-from app.schemas.usuario import LoginRequest, Token, UsuarioCreate, UsuarioResponse
-from app.services.auth_service import login_user, register_user
+from app.schemas.usuario import (
+    ChangePasswordRequest,
+    LoginRequest,
+    Token,
+    UsuarioCreate,
+    UsuarioResponse,
+)
+from app.services.auth_service import change_password, login_user, register_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
@@ -86,3 +92,21 @@ def logout(response: Response) -> Response:
     )
     response.status_code = status.HTTP_204_NO_CONTENT
     return response
+
+
+@router.post("/change-password")
+@limiter.limit("5/minute")
+def change_password_endpoint(
+    payload: ChangePasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+) -> dict:
+    """Cambia la contraseña del usuario autenticado."""
+
+    return change_password(
+        db=db,
+        user=current_user,
+        current_password=payload.current_password,
+        new_password=payload.new_password,
+    )

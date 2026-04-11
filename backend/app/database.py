@@ -213,6 +213,11 @@ def apply_runtime_schema_fixes() -> None:
             "fecha_ejecucion",
             "fecha_ejecucion DATETIME NULL",
         )
+        usuario_active_changed = _add_column_if_missing(
+            "usuarios",
+            "is_active",
+            "is_active BOOLEAN NOT NULL DEFAULT 1",
+        )
         alerta_index_changed = _ensure_alerta_unique_index()
 
         if any(
@@ -220,16 +225,19 @@ def apply_runtime_schema_fixes() -> None:
                 equipo_changed,
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
+                usuario_active_changed,
                 alerta_index_changed,
             ]
         ):
             logger.info(
                 "Se aplicaron parches de compatibilidad de esquema "
                 "(equipos.descripcion=%s, mantenciones.fecha_programada=%s, "
-                "mantenciones.fecha_ejecucion=%s, alerta_unique_index=%s)",
+                "mantenciones.fecha_ejecucion=%s, usuarios.is_active=%s, "
+                "alerta_unique_index=%s)",
                 equipo_changed,
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
+                usuario_active_changed,
                 alerta_index_changed,
             )
     except Exception:

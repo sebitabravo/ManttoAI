@@ -3,6 +3,22 @@ import { useEffect, useState } from "react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 
+const TIPOS_MANTENCION = [
+  { value: "preventiva", label: "Preventiva" },
+  { value: "correctiva", label: "Correctiva" },
+  { value: "predictiva", label: "Predictiva" },
+  { value: "emergencia", label: "Emergencia" },
+];
+
+const ESTADOS_MANTENCION = [
+  { value: "programada", label: "Programada" },
+  { value: "en_progreso", label: "En progreso" },
+  { value: "ejecutada", label: "Ejecutada" },
+  { value: "cancelada", label: "Cancelada" },
+];
+
+const selectClassName = "w-full min-h-[44px] rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60";
+
 const DEFAULT_VALUES = {
   tipo: "preventiva",
   descripcion: "",
@@ -89,15 +105,25 @@ export default function MantencionForm({
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
-      <Input
-        label="Tipo"
-        name="tipo"
-        value={form.tipo}
-        onChange={handleChange}
-        error={errors.tipo}
-        disabled={isSubmitting}
-        required
-      />
+      <div>
+        <label htmlFor="mantencion-tipo" className="block mb-1 text-sm font-medium text-neutral-700">
+          Tipo
+        </label>
+        <select
+          id="mantencion-tipo"
+          name="tipo"
+          value={form.tipo}
+          onChange={handleChange}
+          disabled={isSubmitting}
+          required
+          className={selectClassName}
+        >
+          {TIPOS_MANTENCION.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        {errors.tipo ? <p className="mt-1 text-xs text-danger-600">{errors.tipo}</p> : null}
+      </div>
       <Input
         label="Descripción"
         name="descripcion"
@@ -107,15 +133,25 @@ export default function MantencionForm({
         disabled={isSubmitting}
         required
       />
-      <Input
-        label="Estado"
-        name="estado"
-        value={form.estado}
-        onChange={handleChange}
-        error={errors.estado}
-        disabled={isSubmitting}
-        required
-      />
+      <div>
+        <label htmlFor="mantencion-estado" className="block mb-1 text-sm font-medium text-neutral-700">
+          Estado
+        </label>
+        <select
+          id="mantencion-estado"
+          name="estado"
+          value={form.estado}
+          onChange={handleChange}
+          disabled={isSubmitting}
+          required
+          className={selectClassName}
+        >
+          {ESTADOS_MANTENCION.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        {errors.estado ? <p className="mt-1 text-xs text-danger-600">{errors.estado}</p> : null}
+      </div>
 
       {resolvedErrorMessage ? (
         <div className="text-sm text-danger-600" role="alert">

@@ -3,6 +3,24 @@ import { useEffect, useState } from "react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 
+const ESTADOS_EQUIPO = [
+  { value: "operativo", label: "Operativo" },
+  { value: "monitoreo", label: "En monitoreo" },
+  { value: "detenido", label: "Detenido" },
+  { value: "mantenimiento", label: "En mantenimiento" },
+  { value: "fuera_servicio", label: "Fuera de servicio" },
+];
+
+const TIPOS_EQUIPO = [
+  { value: "Motor", label: "Motor" },
+  { value: "Compresor", label: "Compresor" },
+  { value: "Bomba", label: "Bomba" },
+  { value: "Ventilador", label: "Ventilador" },
+  { value: "Otro", label: "Otro" },
+];
+
+const selectClassName = "w-full min-h-[44px] rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60";
+
 const DEFAULT_VALUES = {
   nombre: "",
   ubicacion: "Laboratorio",
@@ -114,24 +132,44 @@ export default function EquipoForm({
         disabled={isSubmitting}
         required
       />
-      <Input
-        label="Tipo"
-        name="tipo"
-        value={form.tipo}
-        onChange={handleChange}
-        error={errors.tipo}
-        disabled={isSubmitting}
-        required
-      />
-      <Input
-        label="Estado"
-        name="estado"
-        value={form.estado}
-        onChange={handleChange}
-        error={errors.estado}
-        disabled={isSubmitting}
-        required
-      />
+      <div>
+        <label htmlFor="equipo-tipo" className="block mb-1 text-sm font-medium text-neutral-700">
+          Tipo
+        </label>
+        <select
+          id="equipo-tipo"
+          name="tipo"
+          value={form.tipo}
+          onChange={handleChange}
+          disabled={isSubmitting}
+          required
+          className={selectClassName}
+        >
+          {TIPOS_EQUIPO.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        {errors.tipo ? <p className="mt-1 text-xs text-danger-600">{errors.tipo}</p> : null}
+      </div>
+      <div>
+        <label htmlFor="equipo-estado" className="block mb-1 text-sm font-medium text-neutral-700">
+          Estado
+        </label>
+        <select
+          id="equipo-estado"
+          name="estado"
+          value={form.estado}
+          onChange={handleChange}
+          disabled={isSubmitting}
+          required
+          className={selectClassName}
+        >
+          {ESTADOS_EQUIPO.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        {errors.estado ? <p className="mt-1 text-xs text-danger-600">{errors.estado}</p> : null}
+      </div>
 
       {resolvedErrorMessage ? (
         <div className="text-sm text-danger-600" role="alert">

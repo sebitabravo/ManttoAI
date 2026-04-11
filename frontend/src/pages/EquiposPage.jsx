@@ -172,7 +172,7 @@ export default function EquiposPage() {
 
       <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
         {equipos.map((equipo) => (
-          <EquipoCard key={equipo.id} equipo={equipo} />
+          <EquipoCard key={equipo.id} equipo={equipo} onDeleted={refresh} />
         ))}
       </div>
     </section>

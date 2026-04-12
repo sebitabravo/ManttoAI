@@ -11,6 +11,10 @@ def setup_logging(app_name: str = "ManttoAI", level: str = "INFO") -> None:
     """Configura logging estructurado JSON para la aplicación."""
 
     logger = logging.getLogger()
+    if logger.handlers:
+        logger.setLevel(getattr(logging, level.upper()))
+        return
+
     logger.setLevel(getattr(logging, level.upper()))
 
     # Handler para stdout con formato JSON

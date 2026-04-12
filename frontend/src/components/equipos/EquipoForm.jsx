@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import Button from "../ui/Button";
 import Input from "../ui/Input";
+import { selectClassName } from "../../utils/formStyles";
 
 const ESTADOS_EQUIPO = [
   { value: "operativo", label: "Operativo" },
@@ -18,8 +19,6 @@ const TIPOS_EQUIPO = [
   { value: "Ventilador", label: "Ventilador" },
   { value: "Otro", label: "Otro" },
 ];
-
-const selectClassName = "w-full min-h-[44px] rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60";
 
 const DEFAULT_VALUES = {
   nombre: "",

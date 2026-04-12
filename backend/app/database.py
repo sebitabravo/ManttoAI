@@ -218,6 +218,11 @@ def apply_runtime_schema_fixes() -> None:
             "is_active",
             "is_active BOOLEAN NOT NULL DEFAULT 1",
         )
+        usuario_password_changed_changed = _add_column_if_missing(
+            "usuarios",
+            "password_changed_at",
+            "password_changed_at DATETIME NULL",
+        )
         alerta_index_changed = _ensure_alerta_unique_index()
 
         if any(
@@ -226,6 +231,7 @@ def apply_runtime_schema_fixes() -> None:
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
                 usuario_active_changed,
+                usuario_password_changed_changed,
                 alerta_index_changed,
             ]
         ):
@@ -233,11 +239,13 @@ def apply_runtime_schema_fixes() -> None:
                 "Se aplicaron parches de compatibilidad de esquema "
                 "(equipos.descripcion=%s, mantenciones.fecha_programada=%s, "
                 "mantenciones.fecha_ejecucion=%s, usuarios.is_active=%s, "
+                "usuarios.password_changed_at=%s, "
                 "alerta_unique_index=%s)",
                 equipo_changed,
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
                 usuario_active_changed,
+                usuario_password_changed_changed,
                 alerta_index_changed,
             )
     except Exception:

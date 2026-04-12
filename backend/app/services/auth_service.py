@@ -45,7 +45,7 @@ def create_access_token(subject: str) -> str:
     issued_at = datetime.now(timezone.utc)
     payload = {
         "sub": subject,
-        "iat": int(issued_at.timestamp()),
+        "iat": issued_at.timestamp(),
         "exp": int(expire_at.timestamp()),
     }
     return jwt.encode(payload, settings.secret_key, algorithm=JWT_ALGORITHM)
@@ -100,6 +100,7 @@ def change_password(
         )
 
     user.password_hash = hash_password(new_password)
+    user.password_changed_at = datetime.now(timezone.utc)
     db.commit()
     return {"message": "Contraseña actualizada exitosamente"}
 

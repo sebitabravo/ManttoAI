@@ -1,5 +1,7 @@
 """Endpoints públicos para dispositivos IoT (autenticados con API Key)."""
 
+import hashlib
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
@@ -12,10 +14,21 @@ from app.services.lectura_service import create_lectura
 router = APIRouter(prefix="/iot", tags=["iot"])
 
 
+def _resolve_iot_rate_limit_key(request: Request) -> str:
+    """Genera clave de rate limit por API key (sin exponer secreto plano)."""
+
+    api_key = request.headers.get("X-API-Key", "").strip()
+    if not api_key:
+        return "anonymous"
+
+    api_key_hash = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
+    return f"api-key:{api_key_hash}"
+
+
 @router.post(
     "/lecturas", response_model=LecturaResponse, status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("100/minute")
+@limiter.limit("100/minute", key_func=_resolve_iot_rate_limit_key)
 def post_lectura_iot(
     request: Request,
     payload: LecturaCreate,

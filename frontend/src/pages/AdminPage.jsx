@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import useAuth from "../hooks/useAuth";
 import { getUsers, createUser, updateUser, deleteUser } from "../api/admin";
 import { getApiKeys, createApiKey, revokeApiKey } from "../api/admin";
@@ -7,8 +7,7 @@ import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
 import EmptyState from "../components/ui/EmptyState";
-
-const selectClassName = "w-full min-h-[44px] rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60";
+import { selectClassName } from "../utils/formStyles";
 
 function AdminPage() {
   const { user } = useAuth();
@@ -16,7 +15,11 @@ function AdminPage() {
   const [users, setUsers] = useState([]);
   const [apiKeys, setApiKeys] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingByTab, setLoadingByTab] = useState({
+    usuarios: true,
+    "api-keys": true,
+    "audit-logs": true,
+  });
   const [showUserModal, setShowUserModal] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [newApiKey, setNewApiKey] = useState(null);
@@ -25,6 +28,13 @@ function AdminPage() {
   const [feedback, setFeedback] = useState({ type: "", message: "" });
   const [confirmDeleteUser, setConfirmDeleteUser] = useState(null);
   const [confirmRevokeKey, setConfirmRevokeKey] = useState(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [isRevokingApiKey, setIsRevokingApiKey] = useState(false);
+  const pendingLoadsRef = useRef({
+    usuarios: 0,
+    "api-keys": 0,
+    "audit-logs": 0,
+  });
 
   // Auto-dismiss feedback después de 4 segundos
   useEffect(() => {
@@ -37,41 +47,55 @@ function AdminPage() {
     setFeedback({ type, message });
   }, []);
 
+  const beginTabLoad = useCallback((tab) => {
+    pendingLoadsRef.current[tab] = (pendingLoadsRef.current[tab] || 0) + 1;
+    setLoadingByTab((current) => ({ ...current, [tab]: true }));
+  }, []);
+
+  const endTabLoad = useCallback((tab) => {
+    const nextCount = Math.max((pendingLoadsRef.current[tab] || 1) - 1, 0);
+    pendingLoadsRef.current[tab] = nextCount;
+
+    if (nextCount === 0) {
+      setLoadingByTab((current) => ({ ...current, [tab]: false }));
+    }
+  }, []);
+
   const loadUsers = useCallback(async () => {
+    beginTabLoad("usuarios");
     try {
-      setLoading(true);
       const data = await getUsers();
       setUsers(data.usuarios || []);
     } catch (error) {
       showFeedback("error", "Error cargando usuarios: " + (error.message || "desconocido"));
     } finally {
-      setLoading(false);
+      endTabLoad("usuarios");
     }
-  }, [showFeedback]);
+  }, [beginTabLoad, endTabLoad, showFeedback]);
 
   const loadApiKeys = useCallback(async () => {
+    beginTabLoad("api-keys");
     try {
-      setLoading(true);
       const data = await getApiKeys();
       setApiKeys(data || []);
     } catch (error) {
       showFeedback("error", "Error cargando API keys: " + (error.message || "desconocido"));
     } finally {
-      setLoading(false);
+      endTabLoad("api-keys");
     }
-  }, [showFeedback]);
+  }, [beginTabLoad, endTabLoad, showFeedback]);
 
   const loadAuditLogs = useCallback(async () => {
+    beginTabLoad("audit-logs");
     try {
-      setLoading(true);
       const data = await getAuditLogs();
       setAuditLogs(data.logs || []);
     } catch (error) {
       showFeedback("error", "Error cargando audit logs: " + (error.message || "desconocido"));
     } finally {
-      setLoading(false);
+      endTabLoad("audit-logs");
     }
-  }, [showFeedback]);
+  }, [beginTabLoad, endTabLoad, showFeedback]);
 
   // Cargar datos según tab activa
   useEffect(() => {
@@ -108,6 +132,9 @@ function AdminPage() {
   };
 
   const handleRevokeApiKey = async (keyId) => {
+    if (!keyId || isRevokingApiKey) return;
+
+    setIsRevokingApiKey(true);
     try {
       await revokeApiKey(keyId);
       setConfirmRevokeKey(null);
@@ -115,10 +142,15 @@ function AdminPage() {
       loadApiKeys();
     } catch (error) {
       showFeedback("error", "Error revocando API key: " + (error.message || "desconocido"));
+    } finally {
+      setIsRevokingApiKey(false);
     }
   };
 
   const handleDeleteUser = async (userId) => {
+    if (!userId || isDeletingUser) return;
+
+    setIsDeletingUser(true);
     try {
       await deleteUser(userId);
       setConfirmDeleteUser(null);
@@ -126,6 +158,8 @@ function AdminPage() {
       loadUsers();
     } catch (error) {
       showFeedback("error", "Error eliminando usuario: " + (error.message || "desconocido"));
+    } finally {
+      setIsDeletingUser(false);
     }
   };
 
@@ -141,14 +175,6 @@ function AdminPage() {
         return "bg-gray-100 text-gray-800";
     }
   };
-
-  if (loading && users.length === 0 && apiKeys.length === 0) {
-    return (
-      <section className="grid grid-cols-1 gap-4">
-        <div className="p-8 text-center text-sm text-neutral-600">Cargando...</div>
-      </section>
-    );
-  }
 
   return (
     <section data-tour="admin-contenido" className="grid grid-cols-1 gap-4">
@@ -216,7 +242,11 @@ function AdminPage() {
             <Button onClick={() => setShowUserModal(true)}>Nuevo Usuario</Button>
           </div>
 
-          {users.length === 0 ? (
+          {loadingByTab.usuarios && users.length === 0 ? (
+            <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-600">
+              Cargando usuarios...
+            </div>
+          ) : users.length === 0 ? (
             <EmptyState title="No hay usuarios" description="Crea tu primer usuario" />
           ) : (
             <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
@@ -280,7 +310,11 @@ function AdminPage() {
             <Button onClick={() => setShowApiKeyModal(true)}>Nueva API Key</Button>
           </div>
 
-          {apiKeys.length === 0 ? (
+          {loadingByTab["api-keys"] && apiKeys.length === 0 ? (
+            <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-600">
+              Cargando API keys...
+            </div>
+          ) : apiKeys.length === 0 ? (
             <EmptyState title="No hay API keys" description="Crea tu primera API key para dispositivos IoT" />
           ) : (
             <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
@@ -329,7 +363,11 @@ function AdminPage() {
       {/* Tab Content: Audit Logs */}
       {activeTab === "audit-logs" && (
         <div className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
-          {auditLogs.length === 0 ? (
+          {loadingByTab["audit-logs"] && auditLogs.length === 0 ? (
+            <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-600">
+              Cargando audit logs...
+            </div>
+          ) : auditLogs.length === 0 ? (
             <EmptyState title="No hay audit logs" description="Los logs de auditoría aparecerán aquí" />
           ) : (
             <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
@@ -472,34 +510,70 @@ function AdminPage() {
       </Modal>
 
       {/* Modal: Confirmar eliminación de usuario */}
-      <Modal open={!!confirmDeleteUser} onClose={() => setConfirmDeleteUser(null)} title="Eliminar usuario">
+      <Modal
+        open={!!confirmDeleteUser}
+        onClose={() => {
+          if (!isDeletingUser) {
+            setConfirmDeleteUser(null);
+          }
+        }}
+        title="Eliminar usuario"
+      >
         <div className="space-y-4">
           <p className="text-sm text-neutral-600">
             ¿Estás seguro de que querés eliminar este usuario? Esta acción no se puede deshacer.
           </p>
           <div className="flex justify-end space-x-3">
-            <Button type="button" variant="outline" onClick={() => setConfirmDeleteUser(null)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDeleteUser(null)}
+              disabled={isDeletingUser}
+            >
               Cancelar
             </Button>
-            <Button type="button" variant="danger" onClick={() => handleDeleteUser(confirmDeleteUser)}>
-              Eliminar
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => handleDeleteUser(confirmDeleteUser)}
+              disabled={isDeletingUser}
+            >
+              {isDeletingUser ? "Eliminando..." : "Eliminar"}
             </Button>
           </div>
         </div>
       </Modal>
 
       {/* Modal: Confirmar revocar API key */}
-      <Modal open={!!confirmRevokeKey} onClose={() => setConfirmRevokeKey(null)} title="Revocar API Key">
+      <Modal
+        open={!!confirmRevokeKey}
+        onClose={() => {
+          if (!isRevokingApiKey) {
+            setConfirmRevokeKey(null);
+          }
+        }}
+        title="Revocar API Key"
+      >
         <div className="space-y-4">
           <p className="text-sm text-neutral-600">
             ¿Estás seguro de que querés revocar esta API key? El dispositivo asociado perderá acceso inmediatamente.
           </p>
           <div className="flex justify-end space-x-3">
-            <Button type="button" variant="outline" onClick={() => setConfirmRevokeKey(null)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmRevokeKey(null)}
+              disabled={isRevokingApiKey}
+            >
               Cancelar
             </Button>
-            <Button type="button" variant="danger" onClick={() => handleRevokeApiKey(confirmRevokeKey)}>
-              Revocar
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => handleRevokeApiKey(confirmRevokeKey)}
+              disabled={isRevokingApiKey}
+            >
+              {isRevokingApiKey ? "Revocando..." : "Revocar"}
             </Button>
           </div>
         </div>

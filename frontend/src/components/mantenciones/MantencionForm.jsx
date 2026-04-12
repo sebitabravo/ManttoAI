@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import Button from "../ui/Button";
 import Input from "../ui/Input";
+import { selectClassName } from "../../utils/formStyles";
 
 const TIPOS_MANTENCION = [
   { value: "preventiva", label: "Preventiva" },
@@ -16,8 +17,6 @@ const ESTADOS_MANTENCION = [
   { value: "ejecutada", label: "Ejecutada" },
   { value: "cancelada", label: "Cancelada" },
 ];
-
-const selectClassName = "w-full min-h-[44px] rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60";
 
 const DEFAULT_VALUES = {
   tipo: "preventiva",

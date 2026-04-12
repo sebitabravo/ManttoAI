@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import get_settings
+from app.utils.logging_config import setup_logging
 from app.database import check_database_connection, initialize_database_schema
 from app.dependencies import get_current_user, require_role
 from app.middleware.audit import audit_middleware
@@ -39,6 +40,7 @@ from app.services.prediccion_scheduler_service import (
 from app.services.simulator_service import start_simulator, stop_simulator
 
 settings = get_settings()
+setup_logging(app_name=settings.app_name, level="INFO")
 logger = logging.getLogger(__name__)
 ORIGINAL_CHECK_DATABASE_CONNECTION = check_database_connection
 

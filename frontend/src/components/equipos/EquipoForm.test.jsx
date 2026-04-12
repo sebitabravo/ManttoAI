@@ -11,8 +11,8 @@ describe("EquipoForm", () => {
 
     await user.clear(screen.getByLabelText("Nombre del equipo"));
     await user.clear(screen.getByLabelText("Ubicación"));
-    await user.clear(screen.getByLabelText("Tipo"));
-    await user.clear(screen.getByLabelText("Estado"));
+    fireEvent.change(screen.getByLabelText("Tipo"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Estado"), { target: { value: "" } });
     fireEvent.submit(screen.getByRole("button", { name: "Guardar" }).closest("form"));
 
     expect(screen.getByText("El nombre del equipo es obligatorio.")).toBeTruthy();
@@ -31,10 +31,8 @@ describe("EquipoForm", () => {
     await user.type(screen.getByLabelText("Nombre del equipo"), "  Compresor A  ");
     await user.clear(screen.getByLabelText("Ubicación"));
     await user.type(screen.getByLabelText("Ubicación"), "  Planta Norte  ");
-    await user.clear(screen.getByLabelText("Tipo"));
-    await user.type(screen.getByLabelText("Tipo"), "  Compresor  ");
-    await user.clear(screen.getByLabelText("Estado"));
-    await user.type(screen.getByLabelText("Estado"), "  operativo  ");
+    await user.selectOptions(screen.getByLabelText("Tipo"), "Compresor");
+    await user.selectOptions(screen.getByLabelText("Estado"), "operativo");
     await user.click(screen.getByRole("button", { name: "Guardar" }));
 
     expect(onSubmit).toHaveBeenCalledWith({

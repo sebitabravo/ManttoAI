@@ -94,6 +94,22 @@ class UsuarioUpdate(BaseModel):
         return _normalize_and_validate_email(value)
 
 
+class ChangePasswordRequest(BaseModel):
+    """Payload para cambio de contraseña."""
+
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    def validate_new_password(cls, value: str) -> str:
+        """Valida longitud mínima de la nueva contraseña."""
+
+        if len(value) < 8:
+            raise ValueError("password debe tener al menos 8 caracteres")
+
+        return value
+
+
 class UsuarioListResponse(BaseModel):
     """Respuesta para lista de usuarios."""
 

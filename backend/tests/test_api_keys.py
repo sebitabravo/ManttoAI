@@ -7,7 +7,6 @@ from app.models.api_key import APIKey
 from app.models.usuario import Usuario
 from app.services.api_key_service import (
     create_api_key,
-    get_api_key_by_id,
     list_api_keys,
     revoke_api_key,
     validate_api_key,

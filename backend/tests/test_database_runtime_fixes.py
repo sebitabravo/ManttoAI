@@ -251,6 +251,8 @@ def test_apply_runtime_schema_fixes_logs_info_when_any_patch_applies(
         ("equipos", "descripcion"),
         ("mantenciones", "fecha_programada"),
         ("mantenciones", "fecha_ejecucion"),
+        ("usuarios", "is_active"),
+        ("usuarios", "password_changed_at"),
     ]
     assert "Se aplicaron parches de compatibilidad de esquema" in caplog.text
 

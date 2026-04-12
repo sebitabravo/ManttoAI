@@ -37,8 +37,7 @@ def list_usuarios(
         query = query.where(Usuario.rol == rol)
 
     if is_active is not None:
-        # Como el modelo no tiene campo is_active, filtramos por existencia
-        pass  # TODO: Agregar campo is_active al modelo Usuario si se necesita
+        query = query.where(Usuario.is_active == is_active)
 
     # Contar total usando COUNT(*) - O(1) en la DB
     count_query = select(func.count()).select_from(query.subquery())
@@ -136,8 +135,8 @@ def update_usuario(
         usuario.email = payload.email
     if payload.rol is not None:
         usuario.rol = payload.rol
-
-    # TODO: Implementar is_active cuando se agregue al modelo
+    if payload.is_active is not None:
+        usuario.is_active = payload.is_active
 
     db.commit()
     db.refresh(usuario)

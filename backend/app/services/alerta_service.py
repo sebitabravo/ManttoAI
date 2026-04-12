@@ -39,6 +39,9 @@ def _resolve_threshold_target(
     if variable_key == "temperatura":
         return lectura.temperatura, "Temperatura fuera de rango"
 
+    if variable_key == "humedad":
+        return lectura.humedad, "Humedad fuera de rango"
+
     if variable_key == "vibracion":
         valor_vibracion = max(
             abs(lectura.vib_x), abs(lectura.vib_y), abs(lectura.vib_z)
@@ -74,11 +77,13 @@ def evaluate_thresholds(db: Session, lectura: Lectura) -> list[Alerta]:
         if not _is_out_of_range(valor_medido, umbral.valor_min, umbral.valor_max):
             continue
 
-        tipo_alerta = (
-            "temperatura"
-            if umbral.variable.lower().strip() == "temperatura"
-            else "vibracion"
-        )
+        variable_normalizada = umbral.variable.lower().strip()
+        if variable_normalizada == "temperatura":
+            tipo_alerta = "temperatura"
+        elif variable_normalizada == "humedad":
+            tipo_alerta = "humedad"
+        else:
+            tipo_alerta = "vibracion"
         # Evitar duplicados por clave lógica (equipo_id, tipo, mensaje).
         # Ya no se filtra por leida porque el UniqueConstraint del modelo
         # abarca solo esas tres columnas — crear una alerta con la misma

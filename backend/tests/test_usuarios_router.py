@@ -1,6 +1,5 @@
 """Tests para el router de usuarios."""
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 

@@ -1,6 +1,6 @@
 /** Tests básicos para AdminPage (Vitest + RTL). */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as adminApi from "../api/admin";
@@ -137,7 +137,6 @@ describe("AdminPage", () => {
   });
 
   it("permite revocar API key activa", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     adminApi.revokeApiKey.mockResolvedValue({ ok: true });
 
     render(<AdminPage />);
@@ -157,9 +156,14 @@ describe("AdminPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Revocar" }));
 
     await waitFor(() => {
-      expect(adminApi.revokeApiKey).toHaveBeenCalledWith(1);
+      expect(screen.getByRole("heading", { name: "Revocar API Key" })).toBeTruthy();
     });
 
-    confirmSpy.mockRestore();
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Revocar" }));
+
+    await waitFor(() => {
+      expect(adminApi.revokeApiKey).toHaveBeenCalledWith(1);
+    });
   });
 });

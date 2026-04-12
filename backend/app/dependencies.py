@@ -1,7 +1,7 @@
 """Dependencias reutilizables de FastAPI."""
 
 from collections.abc import Callable, Generator
-from datetime import datetime
+from datetime import datetime, timezone
 
 import bcrypt
 from fastapi import Depends, HTTPException, Request, status
@@ -29,6 +29,15 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def _to_utc_epoch_seconds(value: datetime) -> float:
+    """Convierte datetime a epoch UTC con precisión de segundos."""
+
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc).timestamp()
+
+    return value.astimezone(timezone.utc).timestamp()
 
 
 def get_current_user(
@@ -82,6 +91,17 @@ def get_current_user(
     usuario = db.scalars(select(Usuario).where(Usuario.email == subject)).first()
     if usuario is None:
         raise credentials_exception
+
+    token_iat_raw = payload.get("iat")
+    try:
+        token_iat = float(token_iat_raw)
+    except (TypeError, ValueError):
+        token_iat = None
+
+    if usuario.password_changed_at is not None:
+        password_changed_at = _to_utc_epoch_seconds(usuario.password_changed_at)
+        if token_iat is None or token_iat < password_changed_at:
+            raise credentials_exception
 
     return usuario
 

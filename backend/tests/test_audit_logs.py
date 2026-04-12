@@ -1,9 +1,7 @@
 """Tests para el servicio de Audit Logs."""
 
-import pytest
 from sqlalchemy.orm import Session
 
-from app.models.audit_log import AuditLog
 from app.models.usuario import Usuario
 from app.services.audit_service import (
     get_audit_log_by_id,

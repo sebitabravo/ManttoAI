@@ -168,6 +168,36 @@ def test_login_endpoint_rejects_invalid_credentials(unauthenticated_client):
     assert response.json()["detail"] == "Credenciales inválidas"
 
 
+def test_change_password_invalidates_previous_access_token(unauthenticated_client):
+    """Al cambiar contraseña, el JWT previo debe quedar inválido."""
+
+    login_response = unauthenticated_client.post(
+        "/auth/login",
+        json={"email": "admin@manttoai.local", "password": "Admin123!"},
+    )
+    assert login_response.status_code == 200
+    old_token = login_response.json()["access_token"]
+
+    change_response = unauthenticated_client.post(
+        "/auth/change-password",
+        json={"current_password": "Admin123!", "new_password": "Admin123!Nueva"},
+        headers={"Authorization": f"Bearer {old_token}"},
+    )
+    assert change_response.status_code == 200
+
+    old_token_me_response = unauthenticated_client.get(
+        "/auth/me",
+        headers={"Authorization": f"Bearer {old_token}"},
+    )
+    assert old_token_me_response.status_code == 401
+
+    login_with_new_password_response = unauthenticated_client.post(
+        "/auth/login",
+        json={"email": "admin@manttoai.local", "password": "Admin123!Nueva"},
+    )
+    assert login_with_new_password_response.status_code == 200
+
+
 def test_protected_endpoint_rejects_request_without_token(unauthenticated_client):
     """Valida rechazo de endpoints operativos sin autenticación."""
 

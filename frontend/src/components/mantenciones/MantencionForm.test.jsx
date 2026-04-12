@@ -9,9 +9,9 @@ describe("MantencionForm", () => {
 
     render(<MantencionForm onSubmit={vi.fn()} submitLabel="Guardar mantención" />);
 
-    await user.clear(screen.getByLabelText("Tipo"));
     await user.clear(screen.getByLabelText("Descripción"));
-    await user.clear(screen.getByLabelText("Estado"));
+    fireEvent.change(screen.getByLabelText("Tipo"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Estado"), { target: { value: "" } });
     fireEvent.submit(
       screen.getByRole("button", { name: "Guardar mantención" }).closest("form")
     );
@@ -27,12 +27,10 @@ describe("MantencionForm", () => {
 
     render(<MantencionForm onSubmit={onSubmit} submitLabel="Guardar mantención" />);
 
-    await user.clear(screen.getByLabelText("Tipo"));
-    await user.type(screen.getByLabelText("Tipo"), "  correctiva  ");
+    await user.selectOptions(screen.getByLabelText("Tipo"), "correctiva");
     await user.clear(screen.getByLabelText("Descripción"));
     await user.type(screen.getByLabelText("Descripción"), "  Cambio de rodamiento  ");
-    await user.clear(screen.getByLabelText("Estado"));
-    await user.type(screen.getByLabelText("Estado"), "  ejecutada  ");
+    await user.selectOptions(screen.getByLabelText("Estado"), "ejecutada");
     await user.click(screen.getByRole("button", { name: "Guardar mantención" }));
 
     expect(onSubmit).toHaveBeenCalledWith({

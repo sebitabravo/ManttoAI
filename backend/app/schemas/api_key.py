@@ -22,8 +22,7 @@ class APIKeyResponse(BaseModel):
     last_used_at: datetime | None = None
     revoked_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class APIKeyDetailResponse(APIKeyResponse):

@@ -2,8 +2,12 @@
 
 from contextlib import contextmanager
 
+from sqlalchemy import select
+
+from app.models.usuario import Usuario
 from app.services import alerta_service, prediccion_service
 from app.services import email_service
+from app.services.auth_service import create_access_token, hash_password
 
 
 def _build_equipo_payload(nombre: str) -> dict[str, str]:
@@ -87,6 +91,27 @@ def _make_fake_smtp_client(calls: list):
         yield FakeSMTPClient()
 
     return fake_get_smtp_client
+
+
+def _create_visualizador_headers(
+    client, email: str = "visualizador@manttoai.local"
+) -> dict[str, str]:
+    """Crea usuario visualizador y retorna headers autenticados para tests RBAC."""
+
+    session_local = client.app.state.testing_session_local
+    with session_local() as db:
+        usuario = db.scalars(select(Usuario).where(Usuario.email == email)).first()
+        if usuario is None:
+            usuario = Usuario(
+                nombre="Visualizador ManttoAI",
+                email=email,
+                password_hash=hash_password("Visual123!"),
+                rol="visualizador",
+            )
+            db.add(usuario)
+            db.commit()
+
+    return {"Authorization": f"Bearer {create_access_token(email)}"}
 
 
 def test_post_prediccion_ejecuta_inferencia_real_y_persiste(client, monkeypatch):
@@ -269,6 +294,27 @@ def test_post_prediccion_sin_lectura_retorna_404(client, monkeypatch):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Lectura no encontrada para el equipo"
+
+
+def test_post_prediccion_rejects_visualizador_role(client, monkeypatch):
+    """Valida que un visualizador no pueda ejecutar predicciones persistentes."""
+
+    monkeypatch.setattr(
+        prediccion_service,
+        "load_model_artifact",
+        _mock_model_loader([0.7]),
+    )
+
+    equipo_id = _create_equipo(client, nombre="Equipo Solo Lectura")
+    _create_lectura(client, equipo_id=equipo_id)
+
+    response = client.post(
+        f"/predicciones/ejecutar/{equipo_id}",
+        headers=_create_visualizador_headers(client),
+    )
+
+    assert response.status_code == 403
+    assert "roles" in response.json()["detail"]
 
 
 def test_get_prediccion_sin_registros_retorna_404(client):

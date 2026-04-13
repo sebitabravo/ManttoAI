@@ -281,6 +281,44 @@ def test_patch_alerta_marks_record_as_read(client):
     assert after_patch.json() == []
 
 
+def test_repeated_breach_after_mark_as_read_creates_new_alert(client):
+    """Valida que una anomalía recurrente vuelva a generar alerta tras marcarla leída."""
+
+    equipo_id = _create_equipo(client, nombre="Equipo Recurrente")
+    _create_umbral(
+        client,
+        equipo_id=equipo_id,
+        variable="temperatura",
+        valor_min=10.0,
+        valor_max=45.0,
+    )
+    _create_lectura(client, equipo_id=equipo_id, temperatura=58.0)
+
+    primera_alerta = client.get(
+        "/alertas",
+        params={"equipo_id": equipo_id, "solo_no_leidas": True},
+    )
+    assert primera_alerta.status_code == 200
+    primera_alerta_id = primera_alerta.json()[0]["id"]
+
+    marcar_leida = client.patch(f"/alertas/{primera_alerta_id}/leer")
+    assert marcar_leida.status_code == 200
+
+    _create_lectura(client, equipo_id=equipo_id, temperatura=60.0)
+
+    todas = client.get("/alertas", params={"equipo_id": equipo_id})
+    no_leidas = client.get(
+        "/alertas",
+        params={"equipo_id": equipo_id, "solo_no_leidas": True},
+    )
+
+    assert todas.status_code == 200
+    assert no_leidas.status_code == 200
+    assert len(todas.json()) == 2
+    assert len(no_leidas.json()) == 1
+    assert no_leidas.json()[0]["id"] != primera_alerta_id
+
+
 def test_get_alertas_count_returns_totals(client):
     """Valida endpoint de conteo global y por equipo."""
 

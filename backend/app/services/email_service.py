@@ -76,7 +76,7 @@ def get_smtp_client() -> Generator[smtplib.SMTP | smtplib.SMTP_SSL, None, None]:
         finally:
             try:
                 client.quit()
-            except Exception:
+            except (SMTPException, OSError):
                 pass
     else:
         # SMTP con STARTTLS opcional (p.ej. 587) o sin TLS para brokers locales de demo
@@ -92,7 +92,7 @@ def get_smtp_client() -> Generator[smtplib.SMTP | smtplib.SMTP_SSL, None, None]:
         finally:
             try:
                 client.quit()
-            except Exception:
+            except (SMTPException, OSError):
                 pass
 
 
@@ -131,7 +131,7 @@ def send_alert_email_with_client(
             else:
                 logger.info("[EMAIL] Enviado: subject=%s", subject)
             return EmailResponse(sent=True, subject=subject, message=message)
-        except Exception as exc:
+        except (SMTPException, OSError) as exc:
             last_exc = exc
             logger.warning(
                 "[EMAIL] Intento %d/%d falló: subject=%s error=%s",
@@ -181,7 +181,7 @@ def send_alert_email(subject: str, message: str) -> EmailResponse:
     try:
         with get_smtp_client() as smtp_client:
             return send_alert_email_with_client(smtp_client, subject, message)
-    except Exception as exc:
+    except (RuntimeError, SMTPException, OSError) as exc:
         sanitized_error = _sanitize_smtp_error(exc)
         logger.exception("Error al conectar con servidor SMTP: %s", sanitized_error)
         return EmailResponse(

@@ -31,7 +31,7 @@ def get_prediccion(
     "/ejecutar/{equipo_id}",
     response_model=PrediccionResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
+    dependencies=[Depends(require_role("admin", "tecnico"))],
 )
 @limiter.limit("100/hour")  # ML es costoso, limitar más
 def post_prediccion(

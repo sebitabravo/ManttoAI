@@ -2,12 +2,14 @@
 
 from collections.abc import Callable, Generator
 from datetime import datetime, timezone
+import logging
 
 import bcrypt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -19,6 +21,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 settings = get_settings()
 JWT_ALGORITHM = "HS256"
+logger = logging.getLogger(__name__)
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -89,7 +92,7 @@ def get_current_user(
         raise credentials_exception from exc
 
     usuario = db.scalars(select(Usuario).where(Usuario.email == subject)).first()
-    if usuario is None:
+    if usuario is None or not usuario.is_active:
         raise credentials_exception
 
     token_iat_raw = payload.get("iat")
@@ -164,15 +167,30 @@ def get_api_key_user(
 
     for api_key_obj in candidates:
         try:
-            if not bcrypt.checkpw(
+            is_valid = bcrypt.checkpw(
                 api_key.encode("utf-8"), api_key_obj.key_hash.encode("utf-8")
-            ):
-                continue
-
-            api_key_obj.last_used_at = datetime.utcnow()
-            db.commit()
-            return api_key_obj
-        except Exception:
+            )
+        except (AttributeError, TypeError, ValueError) as exc:
+            logger.warning(
+                "No se pudo verificar candidate API key id=%s: %s: %s",
+                getattr(api_key_obj, "id", "n/a"),
+                type(exc).__name__,
+                str(exc),
+            )
             continue
+
+        if not is_valid:
+            continue
+
+        api_key_obj.last_used_at = datetime.now(timezone.utc)
+        try:
+            db.commit()
+        except SQLAlchemyError:
+            db.rollback()
+            logger.exception(
+                "No se pudo persistir last_used_at para API key id=%s",
+                api_key_obj.id,
+            )
+        return api_key_obj
 
     return None

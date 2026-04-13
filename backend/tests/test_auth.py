@@ -3,7 +3,7 @@
 from sqlalchemy import select
 
 from app.models.usuario import Usuario
-from app.services.auth_service import verify_password
+from app.services.auth_service import create_access_token, verify_password
 
 
 def test_register_endpoint_persists_user_with_hashed_password(unauthenticated_client):
@@ -166,6 +166,49 @@ def test_login_endpoint_rejects_invalid_credentials(unauthenticated_client):
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Credenciales inválidas"
+
+
+def test_login_endpoint_rejects_inactive_user(unauthenticated_client):
+    """Valida que un usuario desactivado no pueda autenticarse."""
+
+    session_local = unauthenticated_client.app.state.testing_session_local
+    with session_local() as db:
+        usuario = db.scalars(
+            select(Usuario).where(Usuario.email == "admin@manttoai.local")
+        ).first()
+        assert usuario is not None
+        usuario.is_active = False
+        db.commit()
+
+    response = unauthenticated_client.post(
+        "/auth/login",
+        json={"email": "admin@manttoai.local", "password": "Admin123!"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Credenciales inválidas"
+
+
+def test_protected_endpoint_rejects_inactive_user_token(unauthenticated_client):
+    """Valida que un token de usuario inactivo no permita usar la API."""
+
+    session_local = unauthenticated_client.app.state.testing_session_local
+    with session_local() as db:
+        usuario = db.scalars(
+            select(Usuario).where(Usuario.email == "admin@manttoai.local")
+        ).first()
+        assert usuario is not None
+        usuario.is_active = False
+        db.commit()
+
+    token = create_access_token("admin@manttoai.local")
+    response = unauthenticated_client.get(
+        "/equipos",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "No autenticado"
 
 
 def test_change_password_invalidates_previous_access_token(unauthenticated_client):

@@ -5,38 +5,10 @@ import { getEquipo, updateEquipo } from "../api/equipos";
 import { getLecturas } from "../api/lecturas";
 import { createMantencion, getMantenciones, updateMantencion } from "../api/mantenciones";
 import { getPredicciones } from "../api/predicciones";
-import { getUmbrales, updateUmbral } from "../api/umbrales";
+import useEquipoUmbrales from "./useEquipoUmbrales";
 import { EQUIPO_DETALLE_POLLING_INTERVAL_MS } from "../utils/constants";
 import { getApiErrorMessage } from "../utils/errorHandling";
 import { sortByTimestampDesc } from "../utils/time";
-
-/**
- * Normaliza entrada decimal: remueve espacios y reemplaza coma por punto.
- * @param {string|number|null} value - Valor a normalizar
- * @returns {string} Valor normalizado como string
- */
-function normalizeDecimalInput(value) {
-  return String(value ?? "").trim().replace(",", ".");
-}
-
-/**
- * Construye objeto de drafts para edición de umbrales.
- * @param {Array} umbrales - Lista de umbrales del equipo
- * @returns {Object} Objeto con umbralId como key y {valor_min, valor_max} como value
- */
-function buildUmbralDrafts(umbrales) {
-  return (Array.isArray(umbrales) ? umbrales : []).reduce((accumulator, umbral) => {
-    const umbralId = Number(umbral.id);
-
-    return {
-      ...accumulator,
-      [umbralId]: {
-        valor_min: String(umbral.valor_min),
-        valor_max: String(umbral.valor_max),
-      },
-    };
-  }, {});
-}
 
 /**
  * Formatea nombre de variable para mostrar en UI.
@@ -81,14 +53,19 @@ export default function useEquipoDetalle() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateErrorMessage, setUpdateErrorMessage] = useState("");
 
-  // === Estados de umbrales ===
-  const [umbrales, setUmbrales] = useState([]);
-  const [umbralDrafts, setUmbralDrafts] = useState({});
-  const [umbralesLoading, setUmbralesLoading] = useState(true);
-  const [umbralesErrorMessage, setUmbralesErrorMessage] = useState("");
-  const [savingUmbralById, setSavingUmbralById] = useState({});
-  const [umbralErrorById, setUmbralErrorById] = useState({});
-  const [umbralSuccessById, setUmbralSuccessById] = useState({});
+  const {
+    umbrales,
+    umbralDrafts,
+    umbralesLoading,
+    umbralesErrorMessage,
+    savingUmbralById,
+    umbralErrorById,
+    umbralSuccessById,
+    isSavingAnyUmbral,
+    loadUmbrales,
+    handleUmbralDraftChange,
+    handleSaveUmbral,
+  } = useEquipoUmbrales(resolvedEquipoId);
 
   // === Estados de mantenciones ===
   const [showCreateMantencionForm, setShowCreateMantencionForm] = useState(false);
@@ -159,49 +136,7 @@ export default function useEquipoDetalle() {
     return () => window.clearInterval(timer);
   }, [loadEquipoDetalle]);
 
-  // === Carga de umbrales ===
-  const loadUmbrales = useCallback(async () => {
-    if (!Number.isFinite(resolvedEquipoId)) {
-      setUmbralesErrorMessage("No se pueden cargar umbrales: identificador de equipo inválido.");
-      setUmbralesLoading(false);
-      return;
-    }
-
-    setUmbralesLoading(true);
-    setUmbralesErrorMessage("");
-
-    try {
-      const umbralesData = await getUmbrales();
-      const umbralesEquipo = (Array.isArray(umbralesData) ? umbralesData : []).filter(
-        (umbral) => Number(umbral.equipo_id) === resolvedEquipoId
-      );
-
-      setUmbrales(umbralesEquipo);
-      setUmbralDrafts(buildUmbralDrafts(umbralesEquipo));
-      setSavingUmbralById({});
-      setUmbralErrorById({});
-      setUmbralSuccessById({});
-    } catch (fetchError) {
-      setUmbralesErrorMessage(
-        getApiErrorMessage(
-          fetchError,
-          "No pudimos cargar umbrales del equipo. Revisá conexión y permisos de acceso."
-        )
-      );
-    } finally {
-      setUmbralesLoading(false);
-    }
-  }, [resolvedEquipoId]);
-
-  useEffect(() => {
-    loadUmbrales();
-  }, [loadUmbrales]);
-
   // === Valores computados ===
-  const isSavingAnyUmbral = useMemo(() => {
-    return Object.values(savingUmbralById).some(Boolean);
-  }, [savingUmbralById]);
-
   const lecturasOrdenadas = useMemo(() => {
     return sortByTimestampDesc(lecturas).slice(0, 10);
   }, [lecturas]);
@@ -328,85 +263,6 @@ export default function useEquipoDetalle() {
     } finally {
       setIsSavingMantencion(false);
       isUserOperationInProgress.current = false;
-    }
-  }
-
-  // === Handlers de umbrales ===
-  function handleUmbralDraftChange(umbralId, field, value) {
-    const resolvedUmbralId = Number(umbralId);
-
-    setUmbralDrafts((current) => ({
-      ...current,
-      [resolvedUmbralId]: {
-        ...current[resolvedUmbralId],
-        [field]: value,
-      },
-    }));
-
-    setUmbralErrorById((current) => ({ ...current, [resolvedUmbralId]: "" }));
-    setUmbralSuccessById((current) => ({ ...current, [resolvedUmbralId]: "" }));
-  }
-
-  async function handleSaveUmbral(umbralId) {
-    const resolvedUmbralId = Number(umbralId);
-    const draft = umbralDrafts[resolvedUmbralId];
-
-    if (!draft) {
-      return;
-    }
-
-    const valorMin = Number.parseFloat(normalizeDecimalInput(draft.valor_min));
-    const valorMax = Number.parseFloat(normalizeDecimalInput(draft.valor_max));
-
-    if (!Number.isFinite(valorMin) || !Number.isFinite(valorMax)) {
-      setUmbralErrorById((current) => ({
-        ...current,
-        [resolvedUmbralId]: "Ingresá números válidos para mínimo y máximo.",
-      }));
-      setUmbralSuccessById((current) => ({ ...current, [resolvedUmbralId]: "" }));
-      return;
-    }
-
-    if (valorMin > valorMax) {
-      setUmbralErrorById((current) => ({
-        ...current,
-        [resolvedUmbralId]: "El valor mínimo no puede ser mayor que el máximo.",
-      }));
-      setUmbralSuccessById((current) => ({ ...current, [resolvedUmbralId]: "" }));
-      return;
-    }
-
-    setSavingUmbralById((current) => ({ ...current, [resolvedUmbralId]: true }));
-    setUmbralErrorById((current) => ({ ...current, [resolvedUmbralId]: "" }));
-    setUmbralSuccessById((current) => ({ ...current, [resolvedUmbralId]: "" }));
-
-    try {
-      const updatedUmbral = await updateUmbral(resolvedUmbralId, {
-        valor_min: valorMin,
-        valor_max: valorMax,
-      });
-
-      setUmbrales((current) =>
-        current.map((umbral) => (Number(umbral.id) === resolvedUmbralId ? updatedUmbral : umbral))
-      );
-      setUmbralDrafts((current) => ({
-        ...current,
-        [resolvedUmbralId]: {
-          valor_min: String(updatedUmbral.valor_min),
-          valor_max: String(updatedUmbral.valor_max),
-        },
-      }));
-      setUmbralSuccessById((current) => ({
-        ...current,
-        [resolvedUmbralId]: "Umbral actualizado correctamente.",
-      }));
-    } catch (saveError) {
-      setUmbralErrorById((current) => ({
-        ...current,
-        [resolvedUmbralId]: getApiErrorMessage(saveError, "No pudimos guardar este umbral."),
-      }));
-    } finally {
-      setSavingUmbralById((current) => ({ ...current, [resolvedUmbralId]: false }));
     }
   }
 

@@ -1,6 +1,6 @@
 """Servicio de negocio para gestión de Audit Logs."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -46,7 +46,7 @@ def log_audit(
         new_values=new_values,
         ip_address=ip_address,
         user_agent=user_agent,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
     db.add(audit_log)

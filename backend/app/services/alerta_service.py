@@ -386,6 +386,7 @@ def create_prediction_failure_alert(
         return alerta
 
     try:
+        db.flush()  # Intentar persistir en la transacción actual para detectar duplicados
         db.commit()
     except IntegrityError:
         db.rollback()

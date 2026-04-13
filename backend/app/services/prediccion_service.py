@@ -247,12 +247,6 @@ def _persist_prediction_result(
 
     prediction_failure_alert = None
     if classification == "falla":
-        # Bloqueamos el equipo para evitar que otros hilos creen la misma alerta
-        # de predicción simultáneamente.
-        from app.services.alerta_service import _lock_equipo_alert_scope
-
-        _lock_equipo_alert_scope(db, equipo_id)
-
         prediction_failure_alert = create_prediction_failure_alert(
             db,
             equipo_id=equipo_id,
@@ -261,6 +255,7 @@ def _persist_prediction_result(
         )
 
     try:
+        db.flush()  # Asegurar que la predicción se envíe a la BD antes del commit
         db.commit()
     except IntegrityError as exc:
         db.rollback()

@@ -94,12 +94,15 @@ def evaluate_thresholds(db: Session, lectura: Lectura) -> list[Alerta]:
         # Evitar duplicados solo mientras exista una alerta activa equivalente.
         # Si la alerta anterior ya fue leída, una nueva anomalía debe generar
         # un nuevo registro para mantener trazabilidad del incidente.
+        # NOTA: Usamos with_for_update() para romper el snapshot isolation en MySQL
+        # y ver alertas creadas por transacciones concurrentes recién confirmadas.
         alerta_existente = db.scalars(
             select(Alerta)
             .where(Alerta.equipo_id == lectura.equipo_id)
             .where(Alerta.tipo == tipo_alerta)
             .where(Alerta.mensaje == mensaje_alerta)
             .where(Alerta.leida.is_(False))
+            .with_for_update()
             .limit(1)
         ).first()
         if alerta_existente is not None:
@@ -169,12 +172,15 @@ def count_alertas(
 def get_active_prediction_failure_alert(db: Session, equipo_id: int) -> Alerta | None:
     """Obtiene alerta activa de predicción para un equipo, si existe."""
 
+    # NOTA: Usamos with_for_update() para romper el snapshot isolation en MySQL
+    # y ver alertas creadas por transacciones concurrentes recién confirmadas.
     return db.scalars(
         select(Alerta)
         .where(Alerta.equipo_id == equipo_id)
         .where(Alerta.tipo == PREDICTION_ALERT_TYPE)
         .where(Alerta.nivel == "alto")
         .where(Alerta.leida.is_(False))
+        .with_for_update()
         .limit(1)
     ).first()
 

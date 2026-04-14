@@ -4,18 +4,23 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from collections.abc import Callable
 from socket import gaierror
 
 from fastapi import HTTPException
 from pydantic import ValidationError
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import SessionLocal
 from app.schemas.lectura import LecturaMqttPayload
 from app.services.lectura_service import create_lectura_from_mqtt_payload
+
+# Configuración de reintentos para tolerancia a fallos de DB (RNF-17)
+_MQTT_DB_RETRY_ATTEMPTS = 3
+_MQTT_DB_RETRY_BACKOFF_SECONDS = 1.0
 
 try:
     import paho.mqtt.client as mqtt
@@ -94,6 +99,79 @@ def parse_message(payload: str | bytes) -> LecturaMqttPayload:
         raise ValueError("Payload MQTT inválido") from exc
 
 
+def _persist_lectura_with_retry(
+    topic: str,
+    equipo_id: int,
+    lectura_payload: LecturaMqttPayload,
+    session_factory: SessionFactory,
+    max_attempts: int = _MQTT_DB_RETRY_ATTEMPTS,
+    backoff_seconds: float = _MQTT_DB_RETRY_BACKOFF_SECONDS,
+) -> bool:
+    """
+    Persiste una lectura MQTT con reintentos automáticos ante fallos de DB.
+
+    Implementa tolerancia a fallos operacionales (RNF-17): si la DB cae
+    momentáneamente durante la operación, reintenta hasta max_attempts veces
+    con backoff exponencial antes de descartar el mensaje.
+
+    Solo reintenta ante OperationalError (DB no disponible). Errores de
+    validación o negocio (HTTPException) se descartan inmediatamente.
+    """
+    for intento in range(1, max_attempts + 1):
+        db = session_factory()
+        try:
+            lectura = create_lectura_from_mqtt_payload(
+                db, equipo_id, lectura_payload, background_tasks=None
+            )
+            logger.info(
+                "[MQTT] Lectura persistida: equipo_id=%d lectura_id=%s "
+                "timestamp=%s temp=%.1f humedad=%.1f",
+                equipo_id,
+                getattr(lectura, "id", "n/a"),
+                getattr(lectura, "timestamp", "n/a"),
+                lectura_payload.temperatura or 0,
+                lectura_payload.humedad or 0,
+            )
+            return True
+        except HTTPException as exc:
+            # Error de negocio (equipo no existe, etc.) — no reintentar
+            logger.warning(
+                "No se persistió lectura MQTT topic=%s detalle=%s",
+                topic,
+                exc.detail,
+            )
+            return False
+        except OperationalError as exc:
+            # DB no disponible momentáneamente — reintentar con backoff
+            if intento < max_attempts:
+                espera = backoff_seconds * intento
+                logger.warning(
+                    "[MQTT] DB no disponible (intento %d/%d) topic=%s error=%s — "
+                    "reintentando en %.1fs",
+                    intento,
+                    max_attempts,
+                    topic,
+                    str(exc),
+                    espera,
+                )
+                time.sleep(espera)
+            else:
+                logger.error(
+                    "[MQTT] DB no disponible tras %d intentos topic=%s — "
+                    "lectura descartada",
+                    max_attempts,
+                    topic,
+                )
+                return False
+        except (SQLAlchemyError, RuntimeError, OSError):
+            logger.exception("Error inesperado procesando mensaje MQTT topic=%s", topic)
+            return False
+        finally:
+            db.close()
+
+    return False  # pragma: no cover — alcanzado solo si max_attempts == 0
+
+
 def process_mqtt_message(
     topic: str,
     payload: str | bytes,
@@ -108,32 +186,12 @@ def process_mqtt_message(
         logger.warning("Mensaje MQTT descartado topic=%s error=%s", topic, str(exc))
         return False
 
-    db = session_factory()
-    try:
-        lectura = create_lectura_from_mqtt_payload(
-            db, equipo_id, lectura_payload, background_tasks=None
-        )
-        logger.info(
-            "[MQTT] Lectura persistida: equipo_id=%d lectura_id=%s timestamp=%s temp=%.1f humedad=%.1f",
-            equipo_id,
-            getattr(lectura, "id", "n/a"),
-            getattr(lectura, "timestamp", "n/a"),
-            lectura_payload.temperatura or 0,
-            lectura_payload.humedad or 0,
-        )
-        return True
-    except HTTPException as exc:
-        logger.warning(
-            "No se persistió lectura MQTT topic=%s detalle=%s",
-            topic,
-            exc.detail,
-        )
-        return False
-    except (SQLAlchemyError, RuntimeError, OSError):
-        logger.exception("Error inesperado procesando mensaje MQTT topic=%s", topic)
-        return False
-    finally:
-        db.close()
+    return _persist_lectura_with_retry(
+        topic=topic,
+        equipo_id=equipo_id,
+        lectura_payload=lectura_payload,
+        session_factory=session_factory,
+    )
 
 
 def _on_connect(client, _userdata, _flags, reason_code, _properties) -> None:

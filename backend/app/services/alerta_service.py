@@ -1,6 +1,7 @@
 """Servicios de alertas y evaluación básica de umbrales."""
 
 import logging
+from smtplib import SMTPException
 import threading
 
 from collections.abc import Callable
@@ -57,9 +58,21 @@ def _resolve_threshold_target(
     return None
 
 
+def _resolve_alert_type(variable: str) -> str:
+    """Normaliza el tipo de alerta persistido para una variable monitoreada."""
+
+    variable_normalizada = variable.lower().strip()
+    if variable_normalizada == "temperatura":
+        return "temperatura"
+    if variable_normalizada == "humedad":
+        return "humedad"
+    return "vibracion"
+
+
 def evaluate_thresholds(db: Session, lectura: Lectura) -> list[Alerta]:
     """Evalúa umbrales y agrega alertas en sesión; el caller realiza commit."""
 
+    _lock_equipo_alert_scope(db, lectura.equipo_id)
     umbrales = list(
         db.scalars(select(Umbral).where(Umbral.equipo_id == lectura.equipo_id))
     )
@@ -77,22 +90,19 @@ def evaluate_thresholds(db: Session, lectura: Lectura) -> list[Alerta]:
         if not _is_out_of_range(valor_medido, umbral.valor_min, umbral.valor_max):
             continue
 
-        variable_normalizada = umbral.variable.lower().strip()
-        if variable_normalizada == "temperatura":
-            tipo_alerta = "temperatura"
-        elif variable_normalizada == "humedad":
-            tipo_alerta = "humedad"
-        else:
-            tipo_alerta = "vibracion"
-        # Evitar duplicados por clave lógica (equipo_id, tipo, mensaje).
-        # Ya no se filtra por leida porque el UniqueConstraint del modelo
-        # abarca solo esas tres columnas — crear una alerta con la misma
-        # clave aunque la anterior esté leída violaría la constraint.
+        tipo_alerta = _resolve_alert_type(umbral.variable)
+        # Evitar duplicados solo mientras exista una alerta activa equivalente.
+        # Si la alerta anterior ya fue leída, una nueva anomalía debe generar
+        # un nuevo registro para mantener trazabilidad del incidente.
+        # NOTA: Usamos with_for_update() para romper el snapshot isolation en MySQL
+        # y ver alertas creadas por transacciones concurrentes recién confirmadas.
         alerta_existente = db.scalars(
             select(Alerta)
             .where(Alerta.equipo_id == lectura.equipo_id)
             .where(Alerta.tipo == tipo_alerta)
             .where(Alerta.mensaje == mensaje_alerta)
+            .where(Alerta.leida.is_(False))
+            .with_for_update()
             .limit(1)
         ).first()
         if alerta_existente is not None:
@@ -162,12 +172,15 @@ def count_alertas(
 def get_active_prediction_failure_alert(db: Session, equipo_id: int) -> Alerta | None:
     """Obtiene alerta activa de predicción para un equipo, si existe."""
 
+    # NOTA: Usamos with_for_update() para romper el snapshot isolation en MySQL
+    # y ver alertas creadas por transacciones concurrentes recién confirmadas.
     return db.scalars(
         select(Alerta)
         .where(Alerta.equipo_id == equipo_id)
         .where(Alerta.tipo == PREDICTION_ALERT_TYPE)
         .where(Alerta.nivel == "alto")
         .where(Alerta.leida.is_(False))
+        .with_for_update()
         .limit(1)
     ).first()
 
@@ -248,7 +261,7 @@ def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) ->
                             alerta.id,
                             alerta.equipo_id,
                         )
-                except Exception as exc:
+                except (RuntimeError, OSError, SMTPException) as exc:
                     # Registrar tipo y mensaje para diagnóstico sin volcar posibles
                     # credenciales SMTP. En staging/DEBUG habilitar exc_info=True.
                     logger.warning(
@@ -258,7 +271,7 @@ def dispatch_critical_email_notifications(db: Session, alertas: list[Alerta]) ->
                         str(exc),
                     )
                     alerta.email_enviado = False
-    except Exception as exc:
+    except (RuntimeError, OSError, SMTPException) as exc:
         logger.warning(
             "No se pudo establecer conexión SMTP para notificaciones: %s: %s",
             type(exc).__name__,
@@ -288,7 +301,7 @@ def _dispatch_emails_in_thread(
     try:
         alertas = list(db.scalars(select(Alerta).where(Alerta.id.in_(alerta_ids))))
         dispatch_critical_email_notifications(db, alertas)
-    except Exception as exc:
+    except (SQLAlchemyError, RuntimeError, OSError, SMTPException) as exc:
         logger.warning(
             "Error en envío de emails en hilo de fondo: %s: %s",
             type(exc).__name__,
@@ -379,6 +392,7 @@ def create_prediction_failure_alert(
         return alerta
 
     try:
+        db.flush()  # Intentar persistir en la transacción actual para detectar duplicados
         db.commit()
     except IntegrityError:
         db.rollback()

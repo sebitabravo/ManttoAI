@@ -2,7 +2,7 @@
 
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 from pythonjsonlogger import jsonlogger
 
@@ -52,7 +52,7 @@ def log_request(
         "duration_ms": duration_ms,
         "user_id": user_id,
         "ip_address": ip_address,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
     logger.info(log_data)
@@ -73,7 +73,7 @@ def log_error(
         "error_message": str(error),
         "context": context or {},
         "user_id": user_id,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
     logger.error(log_data, exc_info=True)
@@ -96,7 +96,7 @@ def log_business_event(
         "entity_id": entity_id,
         "user_id": user_id,
         "metadata": metadata or {},
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
     logger.info(log_data)

@@ -85,6 +85,13 @@ def authenticate_user(db: Session, email: str, password: str) -> Usuario:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if not usuario.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales inválidas",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     return usuario
 
 

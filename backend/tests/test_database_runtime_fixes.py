@@ -176,9 +176,21 @@ def test_dedupe_alertas_returns_zero_for_unsupported_dialect(monkeypatch):
     assert executed_sql == []
 
 
-def test_ensure_alerta_unique_index_is_noop_when_already_aligned(monkeypatch):
-    """No recrea índice si ya coincide con columnas esperadas."""
+def test_ensure_alerta_unique_index_is_noop_when_index_is_absent(monkeypatch):
+    """No ejecuta cambios si el índice legacy ya no existe."""
 
+    fake_inspector = FakeInspector(indexes=[])
+    monkeypatch.setattr(database, "inspect", lambda _engine: fake_inspector)
+
+    assert database._ensure_alerta_unique_index() is False
+
+
+def test_ensure_alerta_unique_index_drops_legacy_index(monkeypatch):
+    """Elimina el índice único legacy cuando todavía existe."""
+
+    executed_sql: list[str] = []
+    fake_connection = FakeConnection(executed_sql)
+    fake_engine = FakeEngine("sqlite", fake_connection)
     fake_inspector = FakeInspector(
         indexes=[
             {
@@ -187,45 +199,15 @@ def test_ensure_alerta_unique_index_is_noop_when_already_aligned(monkeypatch):
             }
         ]
     )
-    monkeypatch.setattr(database, "inspect", lambda _engine: fake_inspector)
-
-    assert database._ensure_alerta_unique_index() is False
-
-
-def test_ensure_alerta_unique_index_recreates_index_even_if_drop_fails(monkeypatch):
-    """Recrea índice único tras deduplicar, tolerando DROP fallido."""
-
-    executed_sql: list[str] = []
-    fake_connection = FakeConnection(
-        executed_sql,
-        fail_once_on="DROP INDEX",
-        fail_exception=RuntimeError("índice no existe"),
-    )
-    fake_engine = FakeEngine("sqlite", fake_connection)
-    fake_inspector = FakeInspector(
-        indexes=[
-            {
-                "name": "uq_alerta_activa_por_equipo_tipo_mensaje",
-                "column_names": ["equipo_id", "tipo", "mensaje", "leida"],
-            }
-        ]
-    )
-    dedupe_calls: list[bool] = []
 
     monkeypatch.setattr(database, "engine", fake_engine)
     monkeypatch.setattr(database, "inspect", lambda _engine: fake_inspector)
-    monkeypatch.setattr(
-        database,
-        "_dedupe_alertas_by_logical_key",
-        lambda: dedupe_calls.append(True) or 2,
-    )
 
     changed = database._ensure_alerta_unique_index()
 
     assert changed is True
-    assert dedupe_calls == [True]
     assert any(
-        "CREATE UNIQUE INDEX uq_alerta_activa_por_equipo_tipo_mensaje" in sql
+        "DROP INDEX IF EXISTS uq_alerta_activa_por_equipo_tipo_mensaje" in sql
         for sql in executed_sql
     )
 

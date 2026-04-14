@@ -5,9 +5,11 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Callable
+from socket import gaierror
 
 from fastapi import HTTPException
 from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -127,7 +129,7 @@ def process_mqtt_message(
             exc.detail,
         )
         return False
-    except Exception:
+    except (SQLAlchemyError, RuntimeError, OSError):
         logger.exception("Error inesperado procesando mensaje MQTT topic=%s", topic)
         return False
     finally:
@@ -194,7 +196,7 @@ def start_mqtt_subscriber(session_factory: SessionFactory = SessionLocal) -> boo
     try:
         client.connect(settings.mqtt_broker_host, settings.mqtt_broker_port)
         client.loop_start()
-    except Exception as exc:
+    except (OSError, ValueError, gaierror) as exc:
         logger.warning(
             "No se pudo iniciar subscriber MQTT en %s:%s (%s: %s)",
             settings.mqtt_broker_host,

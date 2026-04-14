@@ -8,7 +8,6 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
-    UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -20,17 +19,6 @@ class Alerta(Base):
     """Representa una alerta generada por umbrales o predicción."""
 
     __tablename__ = "alertas"
-    __table_args__ = (
-        # 'leida' fue removido de la constraint: incluirlo permitía duplicar
-        # la misma alerta (una leída + una no leída), lo cual es incorrecto.
-        # La deduplicación se hace por equipo/tipo/mensaje sin importar el estado.
-        UniqueConstraint(
-            "equipo_id",
-            "tipo",
-            "mensaje",
-            name="uq_alerta_activa_por_equipo_tipo_mensaje",
-        ),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     equipo_id: Mapped[int] = mapped_column(ForeignKey("equipos.id"), index=True)

@@ -1,13 +1,17 @@
 """Servicio de negocio para gestión de API Keys."""
 
+import logging
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 
 import bcrypt
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.api_key import APIKey
+
+logger = logging.getLogger(__name__)
 
 
 def generate_api_key() -> str:
@@ -103,7 +107,7 @@ def revoke_api_key(db: Session, api_key_id: int) -> APIKey:
         raise ValueError(f"API Key con ID {api_key_id} no encontrada")
 
     api_key.is_active = False
-    api_key.revoked_at = datetime.utcnow()
+    api_key.revoked_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(api_key)
 
@@ -127,13 +131,28 @@ def validate_api_key(db: Session, plain_key: str) -> APIKey | None:
 
     for api_key in candidates:
         try:
-            if not verify_api_key(plain_key, api_key.key_hash):
-                continue
-
-            api_key.last_used_at = datetime.utcnow()
-            db.commit()
-            return api_key
-        except Exception:
+            is_valid = verify_api_key(plain_key, api_key.key_hash)
+        except (AttributeError, TypeError, ValueError) as exc:
+            logger.warning(
+                "No se pudo validar candidate API key id=%s: %s: %s",
+                getattr(api_key, "id", "n/a"),
+                type(exc).__name__,
+                str(exc),
+            )
             continue
+
+        if not is_valid:
+            continue
+
+        api_key.last_used_at = datetime.now(timezone.utc)
+        try:
+            db.commit()
+        except SQLAlchemyError:
+            db.rollback()
+            logger.exception(
+                "No se pudo persistir last_used_at para API key id=%s",
+                api_key.id,
+            )
+        return api_key
 
     return None

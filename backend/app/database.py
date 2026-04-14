@@ -4,7 +4,7 @@ import logging
 from os import getenv
 
 from sqlalchemy import create_engine, inspect, text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import get_settings
@@ -146,31 +146,28 @@ def _dedupe_alertas_by_logical_key() -> int:
 
 
 def _ensure_alerta_unique_index() -> bool:
-    """Alinea índice único de alertas con el modelo vigente."""
+    """Elimina índice único legacy de alertas si todavía existe."""
 
     index_name = "uq_alerta_activa_por_equipo_tipo_mensaje"
-    expected_columns = ["equipo_id", "tipo", "mensaje"]
 
     inspector = inspect(engine)
     indexes = inspector.get_indexes("alertas")
     constraints = inspector.get_unique_constraints("alertas")
 
-    existing_columns: list[str] | None = None
+    index_exists = False
     for index in indexes:
         if index.get("name") == index_name:
-            existing_columns = list(index.get("column_names") or [])
+            index_exists = True
             break
 
-    if existing_columns is None:
+    if not index_exists:
         for constraint in constraints:
             if constraint.get("name") == index_name:
-                existing_columns = list(constraint.get("column_names") or [])
+                index_exists = True
                 break
 
-    if existing_columns == expected_columns:
+    if not index_exists:
         return False
-
-    _dedupe_alertas_by_logical_key()
 
     dialect = engine.dialect.name
     with engine.begin() as connection:
@@ -179,17 +176,9 @@ def _ensure_alerta_unique_index() -> bool:
                 connection.execute(text(f"ALTER TABLE alertas DROP INDEX {index_name}"))
             else:
                 connection.execute(text(f"DROP INDEX IF EXISTS {index_name}"))
-        except Exception:
-            logger.debug(
-                "No se pudo eliminar índice único previo de alertas; se intentará recrear"
-            )
-
-        connection.execute(
-            text(
-                "CREATE UNIQUE INDEX "
-                f"{index_name} ON alertas (equipo_id, tipo, mensaje)"
-            )
-        )
+        except SQLAlchemyError:
+            logger.debug("No se pudo eliminar índice único legacy de alertas")
+            return False
 
     return True
 
@@ -240,7 +229,7 @@ def apply_runtime_schema_fixes() -> None:
                 "(equipos.descripcion=%s, mantenciones.fecha_programada=%s, "
                 "mantenciones.fecha_ejecucion=%s, usuarios.is_active=%s, "
                 "usuarios.password_changed_at=%s, "
-                "alerta_unique_index=%s)",
+                "alerta_unique_index_removed=%s)",
                 equipo_changed,
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
@@ -248,7 +237,7 @@ def apply_runtime_schema_fixes() -> None:
                 usuario_password_changed_changed,
                 alerta_index_changed,
             )
-    except Exception:
+    except (RuntimeError, SQLAlchemyError, DBAPIError):
         logger.exception("Falló la aplicación de parches de compatibilidad de esquema")
 
 

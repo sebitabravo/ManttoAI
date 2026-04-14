@@ -2,13 +2,14 @@
 
 from collections import deque
 from collections.abc import Callable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from threading import RLock
 from time import perf_counter
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db
@@ -92,7 +93,7 @@ async def get_metrics_summary(
     )
     total_lecturas_24h = db.scalar(
         select(func.count(Lectura.id)).where(
-            Lectura.timestamp >= datetime.utcnow() - timedelta(hours=24)
+            Lectura.timestamp >= datetime.now(timezone.utc) - timedelta(hours=24)
         )
     )
     total_usuarios = db.scalar(select(func.count(Usuario.id)))
@@ -113,7 +114,7 @@ async def get_metrics_summary(
         }
 
     return {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "system": {
             "total_equipos": total_equipos or 0,
             "total_alertas_activas": total_alertas_activas or 0,
@@ -144,17 +145,13 @@ async def get_detailed_health(
             "status": "healthy",
             "message": "Database connection OK",
         }
-    except Exception as e:
-        components["database"] = {"status": "unhealthy", "message": str(e)}
+    except SQLAlchemyError as exc:
+        components["database"] = {"status": "unhealthy", "message": str(exc)}
 
-    # Verificar contador de métricas
-    try:
-        components["metrics"] = {
-            "status": "healthy",
-            "message": f"Tracking {_request_count.keys()} endpoints",
-        }
-    except Exception as e:
-        components["metrics"] = {"status": "unhealthy", "message": str(e)}
+    components["metrics"] = {
+        "status": "healthy",
+        "message": f"Tracking {_request_count.keys()} endpoints",
+    }
 
     # Determinar estado general
     all_healthy = all(c["status"] == "healthy" for c in components.values())
@@ -162,7 +159,7 @@ async def get_detailed_health(
 
     return {
         "status": overall_status,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "components": components,
     }
 

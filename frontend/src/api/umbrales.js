@@ -1,7 +1,12 @@
 import client from "./client";
 
-export async function getUmbrales() {
-  const { data } = await client.get("/umbrales");
+export async function getUmbrales(equipoId) {
+  const config = Number.isFinite(Number(equipoId))
+    ? { params: { equipo_id: Number(equipoId) } }
+    : undefined;
+  const { data } = config
+    ? await client.get("/umbrales", config)
+    : await client.get("/umbrales");
   return data;
 }
 

@@ -5,8 +5,9 @@ from collections.abc import Callable
 
 from fastapi import HTTPException
 from fastapi import Request, Response
-from starlette.concurrency import run_in_threadpool
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from app.database import SessionLocal
 from app.dependencies import get_current_user
@@ -76,7 +77,7 @@ def _resolve_user_id_and_log(
                     "HTTPException inesperada al resolver usuario para auditoría"
                 )
                 user_id = None
-        except Exception:
+        except (RuntimeError, TypeError, ValueError, SQLAlchemyError):
             logger.exception("Error inesperado al resolver usuario para auditoría")
             user_id = None
 
@@ -95,7 +96,7 @@ def _resolve_user_id_and_log(
                 ip_address=request.client.host if request.client else None,
                 user_agent=request.headers.get("user-agent"),
             )
-    except Exception:
+    except SQLAlchemyError:
         # No fallar el request si el audit log falla
         logger.exception("Fallo al escribir audit log")
     finally:

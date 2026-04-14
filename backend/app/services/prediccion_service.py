@@ -255,6 +255,7 @@ def _persist_prediction_result(
         )
 
     try:
+        db.flush()  # Asegurar que la predicción se envíe a la BD antes del commit
         db.commit()
     except IntegrityError as exc:
         db.rollback()

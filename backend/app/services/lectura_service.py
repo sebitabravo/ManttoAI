@@ -2,10 +2,11 @@
 
 import logging
 from collections.abc import Callable
+from smtplib import SMTPException
 
 from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.lectura import Lectura
@@ -84,6 +85,7 @@ def create_lectura(
         from app.models.umbral import Umbral
         from app.services.alerta_service import (
             _is_out_of_range,
+            _resolve_alert_type,
             _resolve_threshold_target,
         )
 
@@ -98,29 +100,20 @@ def create_lectura(
             valor, mensaje_alerta = target
             if not _is_out_of_range(valor, umbral.valor_min, umbral.valor_max):
                 continue
+            tipo_alerta = _resolve_alert_type(umbral.variable)
             # Verificar si ya existe cualquier alerta con esta clave
             existente = db.scalars(
                 select(Alerta)
                 .where(Alerta.equipo_id == lectura.equipo_id)
-                .where(
-                    Alerta.tipo
-                    == (
-                        "temperatura"
-                        if umbral.variable.lower().strip() == "temperatura"
-                        else "vibracion"
-                    )
-                )
+                .where(Alerta.tipo == tipo_alerta)
                 .where(Alerta.mensaje == mensaje_alerta)
+                .where(Alerta.leida.is_(False))
                 .limit(1)
             ).first()
             if existente is None:
                 alerta = Alerta(
                     equipo_id=lectura.equipo_id,
-                    tipo=(
-                        "temperatura"
-                        if umbral.variable.lower().strip() == "temperatura"
-                        else "vibracion"
-                    ),
+                    tipo=tipo_alerta,
                     mensaje=mensaje_alerta,
                     nivel="alto",
                     email_enviado=False,
@@ -151,7 +144,7 @@ def create_lectura(
     else:
         try:
             dispatch_critical_email_notifications(db, alertas_creadas)
-        except Exception:
+        except (SQLAlchemyError, RuntimeError, OSError, SMTPException):
             logger.exception(
                 "No se pudo despachar notificación crítica para lectura id=%s",
                 lectura.id,

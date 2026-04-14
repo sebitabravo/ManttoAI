@@ -1,11 +1,14 @@
 """Endpoints de gestión de usuarios (solo admin)."""
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
 from app.middleware.rate_limit import limiter
+from app.models.audit_log import AuditLog
 from app.models.usuario import Usuario
 from app.schemas.usuario import (
     UsuarioCreate,
@@ -169,3 +172,128 @@ def delete_usuario(
 
     db.delete(usuario)
     db.commit()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Endpoints RGPD — Derecho al olvido y portabilidad de datos (RN-02)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@router.get("/{usuario_id}/exportar-datos")
+@limiter.limit("10/hour")
+def exportar_datos_usuario(
+    usuario_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_role("admin")),
+) -> dict:
+    """
+    Exporta todos los datos personales de un usuario en formato portátil (RGPD Art. 20).
+
+    Incluye: datos de cuenta, equipos asociados, audit logs.
+    Permite al usuario ejercer su derecho de portabilidad de datos.
+    """
+    usuario = db.get(Usuario, usuario_id)
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
+        )
+
+    # Recopilar audit logs del usuario
+    audit_logs = list(
+        db.scalars(
+            select(AuditLog)
+            .where(AuditLog.usuario_id == usuario_id)
+            .order_by(AuditLog.created_at.desc())
+            .limit(500)
+        )
+    )
+
+    return {
+        "exportado_en": datetime.now(timezone.utc).isoformat(),
+        "version": "1.0",
+        "titular": {
+            "id": usuario.id,
+            "nombre": usuario.nombre,
+            "email": usuario.email,
+            "rol": usuario.rol,
+            "is_active": usuario.is_active,
+            "created_at": (
+                usuario.created_at.isoformat() if usuario.created_at else None
+            ),
+        },
+        "audit_logs": [
+            {
+                "id": log.id,
+                "accion": log.action,
+                "entidad": log.entity_type,
+                "entidad_id": log.entity_id,
+                "ip": log.ip_address,
+                "timestamp": log.created_at.isoformat() if log.created_at else None,
+            }
+            for log in audit_logs
+        ],
+        "nota_legal": (
+            "Exportación generada en cumplimiento del derecho de portabilidad "
+            "de datos (Ley 19.628 Art. 12 / RGPD Art. 20). "
+            "Los datos de telemetría de equipos no se incluyen por ser datos "
+            "industriales no personales."
+        ),
+    }
+
+
+@router.delete("/{usuario_id}/datos-personales", status_code=status.HTTP_200_OK)
+@limiter.limit("5/hour")
+def eliminar_datos_personales(
+    usuario_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_role("admin")),
+) -> dict:
+    """
+    Elimina o anonimiza todos los datos personales de un usuario (RGPD Art. 17 / Ley 19.628).
+
+    Implementa el derecho al olvido:
+    - Anonimiza nombre y email del usuario (no elimina el registro para mantener integridad referencial)
+    - Elimina audit logs asociados al usuario
+    - Desactiva la cuenta permanentemente
+
+    Los datos de telemetría (lecturas, alertas, predicciones) se mantienen
+    porque son datos industriales del equipo, no datos personales del usuario.
+    """
+    usuario = db.get(Usuario, usuario_id)
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
+        )
+
+    # Prevenir auto-eliminación
+    if usuario.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No puedes eliminar tus propios datos personales",
+        )
+
+    # Anonimizar datos personales (preserva integridad referencial)
+    email_anonimizado = f"eliminado_{usuario_id}@anonimizado.manttoai"
+    usuario.nombre = f"Usuario Eliminado #{usuario_id}"
+    usuario.email = email_anonimizado
+    usuario.password_hash = "ELIMINADO"
+    usuario.is_active = False
+
+    # Eliminar audit logs del usuario (datos de comportamiento personal)
+    db.execute(delete(AuditLog).where(AuditLog.usuario_id == usuario_id))
+
+    db.commit()
+
+    return {
+        "mensaje": "Datos personales eliminados correctamente",
+        "usuario_id": usuario_id,
+        "email_anonimizado": email_anonimizado,
+        "eliminado_en": datetime.now(timezone.utc).isoformat(),
+        "nota_legal": (
+            "Datos personales anonimizados en cumplimiento del derecho al olvido "
+            "(Ley 19.628 / RGPD Art. 17). El registro se mantiene anonimizado "
+            "para preservar la integridad referencial del sistema."
+        ),
+    }

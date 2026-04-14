@@ -6,7 +6,7 @@ y descarta correctamente ante errores de negocio o agotamiento de reintentos.
 """
 
 from collections.abc import Generator
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy import create_engine

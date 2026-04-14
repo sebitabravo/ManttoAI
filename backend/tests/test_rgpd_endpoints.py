@@ -6,12 +6,7 @@ Valida:
 - DELETE /usuarios/{id}/datos-personales — derecho al olvido (anonimización)
 """
 
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
-
-from app.models.usuario import Usuario
-from app.services.auth_service import hash_password
 
 
 def _crear_usuario_tecnico(client: TestClient) -> dict:
@@ -148,6 +143,7 @@ def test_eliminar_datos_personales_requiere_autenticacion(
     # Nota: si el usuario no existe, FastAPI puede retornar 404 antes del 401
     # dependiendo del orden de validación. Verificamos que no sea 200.
     response = unauthenticated_client.delete("/api/v1/usuarios/99999/datos-personales")
-    assert response.status_code in (401, 404), (
-        f"Se esperaba 401 o 404, se obtuvo {response.status_code}"
-    )
+    assert response.status_code in (
+        401,
+        404,
+    ), f"Se esperaba 401 o 404, se obtuvo {response.status_code}"

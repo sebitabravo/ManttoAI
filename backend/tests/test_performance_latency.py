@@ -9,7 +9,6 @@ RNF-04: Tiempo de respuesta API < 500ms GET, < 1s POST/PUT
 import time
 from collections.abc import Generator
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy import create_engine
@@ -155,9 +154,9 @@ class TestRNF01LatenciaMQTT:
         duracion = time.perf_counter() - inicio
 
         assert resultado is False, "Payload inválido debe retornar False"
-        assert duracion < 1.0, (
-            f"Rechazo de payload inválido tardó {duracion:.3f}s — debe ser < 1s"
-        )
+        assert (
+            duracion < 1.0
+        ), f"Rechazo de payload inválido tardó {duracion:.3f}s — debe ser < 1s"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -272,9 +271,9 @@ class TestRNF02LatenciaEmail:
         duracion = time.perf_counter() - inicio
 
         assert puede_enviar is False
-        assert duracion < 1.0, (
-            f"Verificación de config SMTP tardó {duracion:.3f}s — debe ser < 1s"
-        )
+        assert (
+            duracion < 1.0
+        ), f"Verificación de config SMTP tardó {duracion:.3f}s — debe ser < 1s"
 
 
 # ─────────────────────────────────────────────────────────────────────────────

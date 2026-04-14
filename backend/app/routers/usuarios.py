@@ -218,9 +218,9 @@ def exportar_datos_usuario(
             "email": usuario.email,
             "rol": usuario.rol,
             "is_active": usuario.is_active,
-            "created_at": usuario.created_at.isoformat()
-            if usuario.created_at
-            else None,
+            "created_at": (
+                usuario.created_at.isoformat() if usuario.created_at else None
+            ),
         },
         "audit_logs": [
             {

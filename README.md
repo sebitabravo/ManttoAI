@@ -1,139 +1,94 @@
-# ManttoAI Predictivo
+# 🚀 ManttoAI - IoT Predictive Maintenance Platform
 
-Prototipo académico de mantenimiento predictivo con ESP32, MQTT, FastAPI, React y un pipeline ML liviano.
+![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB.svg?logo=react&logoColor=black)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg?logo=docker&logoColor=white)
+![Machine Learning](https://img.shields.io/badge/ML-Scikit_Learn-F7931E.svg)
 
-## Estado actual
+**ManttoAI** is an open-source, lightweight predictive maintenance platform. It captures real-time telemetry from IoT devices (ESP32) via MQTT, evaluates operational thresholds, and runs a Machine Learning model (Random Forest) to predict equipment failures before they happen.
 
-Este repositorio tiene un MVP funcional para demo académica, respetando la arquitectura definida en `docs/arquitectura-manttoai.md`.
+---
 
-## Módulos principales
+## ✨ Key Features
 
-- `backend/`: API FastAPI y lógica de negocio
-- `frontend/`: dashboard React con Vite
-- `iot/`: firmware y simulador MQTT
-- `docs/`: arquitectura, ADRs y documentación funcional
-- `scripts/`: utilidades operativas
+- **📡 Real-time IoT Telemetry:** Native MQTT integration (Mosquitto) for capturing temperature, humidity, and vibration.
+- **🧠 Machine Learning Predictions:** Built-in Random Forest model (94.1% F1-Score) to evaluate failure risks.
+- **🚨 Smart Alerts:** Automated evaluation of operational thresholds with email notifications.
+- **📊 Interactive Dashboard:** React SPA with auto-refresh, historical trends, and equipment management.
+- **🛠️ Built-in IoT Simulator:** No hardware? No problem. Includes a 24/7 software simulator to generate realistic sensor data out of the box.
 
-## Flujo local reproducible (stack + seed + simulador)
+## 🏗️ Tech Stack
 
-### Requisitos previos
+- **Backend:** FastAPI, SQLAlchemy, Pydantic, MySQL 8
+- **Frontend:** React 18, Vite, Tailwind CSS
+- **IoT & Messaging:** ESP32 (Firmware), Eclipse Mosquitto (MQTT)
+- **Machine Learning:** Scikit-learn, Pandas, Numpy
+- **Infrastructure:** Docker, Docker Compose, Nginx (Dokploy ready)
 
-- Docker + Docker Compose
-- Docker Compose V2 (`docker compose`)
+---
+
+## 🚀 Quick Start (Local Development)
+
+You can run the entire platform locally using Docker Compose. No external dependencies are required.
+
+### Prerequisites
+- Docker & Docker Compose V2
 - GNU Make
-- `curl` (opcional, para verificación rápida)
 
-> Docker Compose carga automáticamente `docker-compose.override.yml` junto a `docker-compose.yml` para desarrollo local (hot-reload del backend y scripts montados). No necesitás exportar variables ni usar `-f` explícito.
-
-> En local, `docker-compose.override.yml` fuerza `APP_ENV=development` para permitir defaults de demo.
-> En despliegues sin override, el backend asume `APP_ENV=production` y valida que no uses secretos/credenciales por defecto.
-> Aun así, para credenciales controladas se recomienda ejecutar `make setup-env` antes.
-
-> ⚠️ Este flujo es **solo para desarrollo local/demo**. No uses `make seed` contra bases productivas.
-> Recomendado: Docker Compose V2 reciente, porque el `docker-compose.yml` usa `depends_on.condition` + `healthcheck` para endurecer el arranque local.
-
-### Paso a paso
-
+### 1. Start the platform
 ```bash
-# 1) Preparar archivos .env locales (idempotente)
+# Generate local .env files and MQTT credentials
 make setup-env
 
-# 2) Validar compose
-make config
-
-# 3) Levantar stack completo
+# Spin up the entire stack (Backend, Frontend, MySQL, Mosquitto)
 make up
-
-# 4) Poblar datos demo (usuario admin + equipos + umbrales)
-make seed
-
-# 5) Enviar lecturas demo por MQTT
-make simulate
-
-# 5b) (Opcional) validar escenario de 3 nodos en paralelo
-make verify-3-nodes
-
-# (Opcional) modo no interactivo para CI/scripts
-# export VERIFY_ADMIN_PASSWORD="<password_admin>"
-# make verify-3-nodes
-
-# 6) Verificar resumen del dashboard
-curl http://localhost:8000/dashboard/resumen
-
-# 7) (Opcional recomendado) validar flujo completo de smoke
-bash scripts/smoke_test.sh
 ```
 
-> El smoke test modifica datos. Ejecutalo en local; para forzar API remota usá `SMOKE_ALLOW_REMOTE=true` de forma explícita.
-
-> `make setup-env` genera `.env` y `backend/.env` locales para demo y también crea `mosquitto/passwd` como archivo no versionado.
-> Si cambiás credenciales MQTT después, regenerá con `make setup-mqtt-creds` y reiniciá `mosquitto`.
-
-### Credenciales demo del seed
-
-- Email: `admin@manttoai.local`
-- Password: definida en `backend/.env` local a través de `SEED_ADMIN_PASSWORD`.
-
-> Si querés cambiar estas credenciales, modificá `SEED_ADMIN_*` en `backend/.env` antes de ejecutar `make seed`.
-> `make verify-3-nodes` usa prompt oculto para password de login. Para modo no interactivo, exportá `VERIFY_ADMIN_PASSWORD` o `VERIFY_ADMIN_TOKEN` en el entorno.
-> Si el API está sobre HTTPS con CA interna, podés usar `VERIFY_CA_BUNDLE` (o `--ca-bundle`) para validación TLS explícita.
-> El seed valida `APP_ENV=development` por seguridad. Solo se puede forzar fuera de dev con `SEED_ALLOW_NON_DEV=true`.
-> No subas `.env` reales al repositorio; mantené credenciales sensibles fuera de git.
-> Si ya tenías una base local previa a la deduplicación de alertas, recreá el esquema local o limpiá duplicados antes de reutilizar la tabla `alertas`.
-> Para instalaciones ya existentes, ejecutá `python scripts/migrate_alerta_uniqueness.py` una vez antes de levantar el stack definitivo.
-
-### Nota de red para desarrollo local
-
-- MySQL y Mosquitto están ligados a `127.0.0.1` por defecto para reducir exposición accidental.
-- Si necesitás recibir MQTT desde dispositivos externos (ej. ESP32 fuera del host), ajustá el puerto de `mosquitto` en `docker-compose.yml` y restringí acceso con firewall/autenticación.
-
-## Comandos útiles
-
+### 2. Seed data & simulate
 ```bash
-# Infra
-make config
-make up
-make down
-make logs
-
-# Seed / simulación
+# Create the admin user, sample equipment, and thresholds
 make seed
+
+# Start sending realistic simulated MQTT telemetry
 make simulate
-make verify-3-nodes
-make smoke-test
-
-# Backend
-make test
-make lint
-
-# Frontend
-make lint-front
-make build-front
-make e2e-front
 ```
 
-## Convenciones
+### 3. Access the Dashboard
+- **Frontend:** `http://localhost:5173` (or port 80 if fully deployed)
+- **API Docs (Swagger):** `http://localhost:8000/docs`
+- **Default Login:** `admin@manttoai.local` (Password generated in `backend/.env` after `make setup-env`)
 
-- `AGENTS.md` es la fuente de verdad para contexto de IA
-- `CLAUDE.md` apunta a `AGENTS.md`
-- comentarios de código en español
-- cambios chicos y reversibles
+---
 
-## Despliegue remoto (Dokploy)
+## 📂 Repository Structure
 
-El proyecto usa **un solo `docker-compose.yml`** que funciona tanto en desarrollo local como en Dokploy.
+```text
+├── backend/       # FastAPI application, ML models, and business logic
+├── frontend/      # React 18 SPA dashboard
+├── iot/           # ESP32 C++ firmware and MQTT simulation scripts
+├── mosquitto/     # MQTT broker configuration and auth
+├── scripts/       # Operational and deployment utilities
+└── docs/          # Architecture and academic documentation
+```
 
-- Guía paso a paso: [`docs/despliegue-dokploy.md`](docs/despliegue-dokploy.md)
-- En Dokploy, configurar dominio en UI → Domains → servicio `frontend` puerto 80
-- Variables de entorno se configuran en UI → Environment
+## 🤝 Contributing
 
-## Documentación clave
+We welcome contributions from the community! If you'd like to help:
+1. Check the [Issues](https://github.com/sebitabravo/ManttoAI/issues) tab for open tasks.
+2. Fork the repository and create a feature branch (`feature/amazing-idea`).
+3. Ensure your code passes all checks (`make lint` and `make test`).
+4. Open a Pull Request.
 
-- Arquitectura objetivo: `docs/arquitectura-manttoai.md`
-- Flujo del equipo con IA: `docs/flujo-trabajo-ia.md`
-- Endpoints: `docs/api-endpoints.md`
-- Modelo ML: `docs/modelo-ml.md`
-- Guía de demo: `docs/demo.md`
-- Manual de usuario: `docs/manual-usuario.md`
-- Secrets de deploy: `docs/deploy-secrets.md`
-- Checklist final de entrega: `docs/checklist-entrega.md`
+---
+
+## 🎓 Academic Context (PMBOK)
+
+*This project originated as a Capstone Project (Gestión de Proyectos Informáticos) at INACAP.* 
+
+If you are an academic evaluator or looking for the formal PMBOK project management artifacts (Project Charter, WBS, RACI, Risk Matrix, etc.), please refer to the dedicated management index:
+
+👉 **[Ver Documentación PMBOK / Evaluación Académica](docs/gestion-proyecto/INDEX.md)**
+
+---
+*Maintained by the ManttoAI Team. Open source for the community.*

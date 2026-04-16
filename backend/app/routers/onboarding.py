@@ -1,7 +1,6 @@
 """Endpoints del wizard de onboarding."""
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role

@@ -1,9 +1,5 @@
-import { useNavigate } from "react-router-dom";
-
-import Button from "../ui/Button";
 import Logo from "../ui/Logo";
 import TopbarNotifications from "./TopbarNotifications";
-import useAuth from "../../hooks/useAuth";
 import UserMenu from "./UserMenu";
 
 /**
@@ -12,9 +8,8 @@ import UserMenu from "./UserMenu";
  * Funcionalidad:
  * - Logo + branding
  * - Botón hamburguesa para sidebar responsive (visible solo en tablet/mobile)
- * - Configuración rápida (solo admin): repetir wizard, ver tour
  * - Notificaciones
- * - Usuario actual + botón salir
+ * - Menú de usuario con opciones de configuración, perfil y logout
  * 
  * Props:
  *  - onMenuToggle: callback para alternar el sidebar en resolución tablet
@@ -23,14 +18,6 @@ import UserMenu from "./UserMenu";
  *  - onReplayTour: callback para lanzar el tour de producto desde Layout
  */
 export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef, onReplayTour }) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  function handleLogout() {
-    logout();
-    navigate("/login", { replace: true });
-  }
-
   return (
     <header className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100 px-3 py-3 sm:px-5 sm:py-4">
       <div className="flex items-center gap-3">

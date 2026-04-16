@@ -21,7 +21,6 @@ from app.services.auth_service import change_password, login_user, register_user
 from fastapi import HTTPException
 from app.models.usuario import Usuario
 
-from app.schemas.usuario import ProfileResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()

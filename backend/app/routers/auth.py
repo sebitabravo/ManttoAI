@@ -129,10 +129,9 @@ def update_profile(
     Email no es editable por el usuario (para evitar problemas de verificación).
     """
 
-    # Recargar usuario desde la DB para evitar staleness
-    usuario: Usuario | None = db.get(Usuario, current_user.id)
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    # Usar el usuario proporcionado por la dependencia (ya está autenticado y verificado)
+    # No necesitamos recargar - current_user es el usuario correcto
+    usuario = current_user
 
     # Solo nombre y avatar son editables por el usuario
     if payload.nombre is not None:

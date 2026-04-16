@@ -39,14 +39,14 @@ def resolve_api_limit() -> str:
     """Configurable limit for API endpoints.
 
     Set via RATE_LIMIT_API env var.
-    Dev: 6000/hour (100/min, enough for polling)
-    Prod: 600/hour (10/min, stricter)
+    Dev: 60000/hour (1000/min, enough for polling)
+    Prod: 1500/hour (25/min, stricter)
     """
     settings = get_settings()
     app_env = settings.app_env.strip().lower()
 
     default_limit = (
-        "6000/hour" if app_env in {"development", "dev", "local"} else "600/hour"
+        "60000/hour" if app_env in {"development", "dev", "local"} else "1500/hour"
     )
     return os.getenv("RATE_LIMIT_API", default_limit)
 
@@ -54,16 +54,10 @@ def resolve_api_limit() -> str:
 def _resolve_default_limits() -> list[str]:
     """Resolves global limits by environment.
 
-    RATE_LIMIT_API controls all endpoints.
+    Uses RATE_LIMIT_API consistently.
     """
 
-    settings = get_settings()
-    app_env = settings.app_env.strip().lower()
-
-    default = (
-        "60000/hour" if app_env in {"development", "dev", "local"} else "1500/hour"
-    )
-    return [os.getenv("RATE_LIMIT_API", default)]
+    return [resolve_api_limit()]
 
 
 def _resolve_storage_uri() -> str:

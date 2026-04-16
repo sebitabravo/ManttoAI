@@ -5,10 +5,8 @@ import re
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
-from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
-from app.middleware.rate_limit import limit_by_role
 from app.services.report_service import (
     export_alertas_csv,
     export_informe_ejecutivo_pdf,

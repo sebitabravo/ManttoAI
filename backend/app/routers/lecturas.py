@@ -20,7 +20,7 @@ router = APIRouter(prefix="/lecturas", tags=["lecturas"])
     response_model=list[LecturaResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("500/minute")
+@limiter.limit("6000/minute")  # Alto volume para dashboard polling
 def get_lecturas(
     request: Request,
     equipo_id: int | None = Query(default=None),
@@ -37,7 +37,7 @@ def get_lecturas(
     response_model=LecturaResponse,
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("500/minute")
+@limiter.limit("6000/minute")  # Alto volume para polling frecuente
 def get_latest(
     equipo_id: int,
     request: Request,

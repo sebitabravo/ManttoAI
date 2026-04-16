@@ -78,7 +78,7 @@ def get_average_duration(endpoint: str, last_n: int = 100) -> float | None:
 
 
 @router.get("/summary")
-@limiter.limit("200/hour")
+@limiter.limit("600/hour")
 async def get_metrics_summary(
     request: Request,
     db: Session = Depends(get_db),
@@ -129,7 +129,7 @@ async def get_metrics_summary(
 
 
 @router.get("/health-detailed")
-@limiter.limit("500/hour")  # Health checks se llaman mucho
+@limiter.limit("600/hour")
 async def get_detailed_health(
     request: Request,
     db: Session = Depends(get_db),
@@ -165,7 +165,7 @@ async def get_detailed_health(
 
 
 @router.post("/reset")
-@limiter.limit("20/hour")  # Resetear métricas es sensible
+@limiter.limit("600/hour")
 async def reset_metrics(
     request: Request,
     current_user=Depends(get_current_user),

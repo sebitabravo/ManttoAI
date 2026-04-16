@@ -13,7 +13,7 @@ router = APIRouter(prefix="/audit-logs", tags=["audit-logs"])
 
 
 @router.get("", response_model=AuditLogListResponse)
-@limiter.limit("100/hour")  # Audit logs pueden ser muchos, limitar
+@limiter.limit("600/hour")
 def list_audit_logs(
     request: Request,
     usuario_id: int | None = Query(None, description="Filtrar por ID de usuario"),
@@ -47,7 +47,7 @@ def list_audit_logs(
 
 
 @router.get("/{log_id}", response_model=AuditLogResponse)
-@limiter.limit("200/hour")
+@limiter.limit("600/hour")
 def get_audit_log(
     log_id: int,
     request: Request,

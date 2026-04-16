@@ -33,7 +33,7 @@ def get_prediccion(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("100/hour")  # ML es costoso, limitar más
+@limiter.limit("600/hour")
 def post_prediccion(
     equipo_id: int,
     background_tasks: BackgroundTasks,

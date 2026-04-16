@@ -110,10 +110,9 @@ def complete_onboarding(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Equipo no encontrado"
             )
-        # Validar propiedad: equipo debe ser del usuario o de su organización
-        if equipo.usuario_id != current_user.id and equipo.organizacion_id != getattr(
-            current_user, "organizacion_id", None
-        ):
+        # Validar propiedad: equipo debe ser de la organización del usuario o sin organización (propio/global)
+        user_org_id = getattr(current_user, "organizacion_id", None)
+        if equipo.organizacion_id is not None and equipo.organizacion_id != user_org_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No tienes permiso para usar este equipo",

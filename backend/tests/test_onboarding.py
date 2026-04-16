@@ -78,6 +78,11 @@ def test_get_status_rejects_visualizador(client):
 def test_update_step_persists_new_step(client):
     """Valida que actualizar el paso lo persista correctamente."""
 
+    # Avanzar al paso 2 primero (no se puede saltar más de 1 paso)
+    response1 = client.patch("/onboarding/step", json={"step": 2})
+    assert response1.status_code == 200
+
+    # Luego avanzar al paso 3
     response = client.patch("/onboarding/step", json={"step": 3})
 
     assert response.status_code == 200

@@ -1,11 +1,18 @@
 """Endpoints de equipos."""
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
 from app.middleware.rate_limit import limiter
-from app.schemas.equipo import EquipoCreate, EquipoResponse, EquipoUpdate
+from app.models.usuario import Usuario
+from app.schemas.equipo import (
+    EquipoCreate,
+    EquipoFullSetupRequest,
+    EquipoFullSetupResponse,
+    EquipoResponse,
+    EquipoUpdate,
+)
 from app.services.equipo_service import (
     create_equipo,
     delete_equipo,
@@ -102,3 +109,72 @@ def delete_equipo_by_id(
 
     delete_equipo(db, equipo_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/full-setup",
+    response_model=EquipoFullSetupResponse,
+    dependencies=[Depends(require_role("admin", "tecnico"))],
+)
+@limiter.limit("20/minute")
+def create_equipo_with_umbrales(
+    payload: EquipoFullSetupRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_role("admin", "tecnico")),
+) -> EquipoFullSetupResponse:
+    """Crea equipo con umbrales en una sola transacción atómica.
+
+    Si falla cualquier paso, se hace rollback de todo.
+    """
+    from app.models.equipo import Equipo
+    from app.models.umbral import Umbral
+
+    try:
+        with db.begin():  # Transacción atómica
+            # 1. Crear equipo
+            equipo = Equipo(
+                nombre=payload.nombre,
+                ubicacion=payload.ubicacion or "Laboratorio",
+                tipo=payload.tipo or "Motor",
+                descripcion=payload.descripcion or "Equipo monitoreado por ManttoAI",
+                estado="operativo",
+            )
+            db.add(equipo)
+            db.flush()  # Obtener ID
+
+            # 2. Crear umbral de temperatura
+            umbral_temp = Umbral(
+                equipo_id=equipo.id,
+                variable="temperatura",
+                valor_min=0,
+                valor_max=payload.temperatura_max,
+            )
+            db.add(umbral_temp)
+            db.flush()
+
+            # 3. Crear umbral de vibración
+            umbral_vib = Umbral(
+                equipo_id=equipo.id,
+                variable="vibracion",
+                valor_min=0,
+                valor_max=payload.vibracion_max,
+            )
+            db.add(umbral_vib)
+            db.flush()
+
+        # Commit explícito fuera del bloque
+        db.commit()
+
+        return EquipoFullSetupResponse(
+            equipo=equipo,
+            umbral_temperatura_id=umbral_temp.id,
+            umbral_vibracion_id=umbral_vib.id,
+        )
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al crear equipo con umbrales: {str(e)}",
+        ) from e

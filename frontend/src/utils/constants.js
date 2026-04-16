@@ -63,3 +63,32 @@ export const EQUIPO_DETALLE_POLLING_INTERVAL_MS = resolvePollingInterval(
   ENV_EQUIPO_DETALLE_POLLING_INTERVAL_MS,
   20000
 );
+
+// === Constantes de negocio ===
+
+// Prefijos telefónicos de Latinoamérica
+export const PAISES_TELEFONO = [
+  { codigo: "+54", pais: "Argentina", bandera: "🇦🇷" },
+  { codigo: "+56", pais: "Chile", bandera: "🇨🇱" },
+  { codigo: "+51", pais: "Perú", bandera: "🇵🇪" },
+  { codigo: "+57", pais: "Colombia", bandera: "🇨🇴" },
+  { codigo: "+55", pais: "Brasil", bandera: "🇧🇷" },
+];
+
+// Avatares disponibles para selección de perfil de usuario
+export const AVATARES = [
+  { id: "user", emoji: "👤", label: "Usuario" },
+  { id: "person", emoji: "🧑", label: "Persona" },
+  { id: "man", emoji: "👨", label: "Hombre" },
+  { id: "woman", emoji: "👩", label: "Mujer" },
+  { id: "robot", emoji: "🤖", label: "Robot" },
+  { id: "alien", emoji: "👽", label: "Alien" },
+  { id: "cat", emoji: "🐱", label: "Gato" },
+  { id: "dog", emoji: "🐶", label: "Perro" },
+];
+
+// Mapa rápido para buscar emoji por ID
+export const AVATAR_MAP = AVATARES.reduce((acc, av) => {
+  acc[av.id] = av.emoji;
+  return acc;
+}, {});

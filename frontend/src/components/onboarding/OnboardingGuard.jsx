@@ -30,10 +30,13 @@ export default function OnboardingGuard({ children }) {
         }
       } catch (err) {
         console.error("Error al verificar estado del onboarding:", err);
-        // Si hay un error de red, mostrar estado de carga y redirigir al onboarding
-        // para evitar saltar el wizard involuntariamente
+        // Si hay un error de red, redirigir al onboarding
+        // y pasar state para mostrar feedback
         if (pathname !== "/onboarding") {
-          navigate("/onboarding", { replace: true });
+          navigate("/onboarding", { 
+            replace: true,
+            state: { redirectReason: "error" }
+          });
           return;
         }
       } finally {

@@ -1,6 +1,8 @@
 // Avatares disponibles para selección de perfil de usuario.
-// Usado por ProfilePage.jsx (selector) y UserMenu.jsx (mapa de emojis).
+// Definidos aquí para mantener compatibilidad con imports existentes.
+// Fuente de datos centralizada para el sistema.
 
+// Definición de avatares (exportado desde constants.js para acceso centralizado)
 export const AVATARES = [
   { id: "user", emoji: "👤", label: "Usuario" },
   { id: "person", emoji: "🧑", label: "Persona" },

@@ -8,15 +8,7 @@ import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
 import EmptyState from "../components/ui/EmptyState";
 import { selectClassName } from "../utils/formStyles";
-
-// Lista de prefijos telefónicos de Latinoamérica
-const PAISES_TELEFONO = [
-  { codigo: "+54", pais: "Argentina", bandera: "🇦🇷" },
-  { codigo: "+56", pais: "Chile", bandera: "🇨🇱" },
-  { codigo: "+51", pais: "Perú", bandera: "🇵🇪" },
-  { codigo: "+57", pais: "Colombia", bandera: "🇨🇴" },
-  { codigo: "+55", pais: "Brasil", bandera: "🇧🇷" },
-];
+import { PAISES_TELEFONO } from "../utils/constants";
 
 // Regex genérico para teléfonos latinoamericanos
 // Formato: +CÓDIGO NÚMERO (8-9 dígitos después del código)

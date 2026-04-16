@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import {
   getOnboardingStatus,
@@ -29,9 +29,11 @@ import Button from "../ui/Button";
  */
 export default function OnboardingWizard() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
+  const [showRedirectMessage, setShowRedirectMessage] = useState(false);
 
   // Estado del formulario
   const [equipoData, setEquipoData] = useState({
@@ -86,10 +88,14 @@ export default function OnboardingWizard() {
         setError("No se pudo cargar el estado del onboarding");
       } finally {
         setLoading(false);
+        // Mostrar mensaje si vino por error de red
+        if (location.state?.redirectReason === "error") {
+          setShowRedirectMessage(true);
+        }
       }
     }
     loadStatus();
-  }, [navigate]);
+  }, [navigate, location.state]);
 
   // Guardar progreso del paso actual
   const saveStepProgress = async (step) => {
@@ -551,6 +557,11 @@ export default function OnboardingWizard() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
               {error}
+            </div>
+          )}
+          {showRedirectMessage && (
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md mb-6">
+              No pudimos verificar tu estado anterior. Por seguridad, te pedimos completar la configuración inicial.
             </div>
           )}
           {renderStep()}

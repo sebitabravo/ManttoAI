@@ -40,26 +40,26 @@ function resolvePollingInterval(envValue, defaultMs) {
   return Number.isFinite(envValue) ? Math.max(1000, envValue) : defaultMs;
 }
 
-// Dashboard: 15s default - resumen general
+// Dashboard: 30s default - resumen general (evitar rate limits)
 export const DASHBOARD_POLLING_INTERVAL_MS = resolvePollingInterval(
   ENV_DASHBOARD_POLLING_INTERVAL_MS,
-  15000
+  30000
 );
 
-// Alertas: 10s default - crítico para seguridad operacional
+// Alertas: 15s default - crítico para seguridad operacional
 export const ALERTAS_POLLING_INTERVAL_MS = resolvePollingInterval(
   ENV_ALERTAS_POLLING_INTERVAL_MS,
-  10000
+  15000
 );
 
-// Lista de equipos: 20s default - menos crítico
+// Lista de equipos: 30s default - menos crítico
 export const EQUIPOS_POLLING_INTERVAL_MS = resolvePollingInterval(
   ENV_EQUIPOS_POLLING_INTERVAL_MS,
-  20000
+  30000
 );
 
-// Detalle de equipo: 15s default - lecturas y predicciones en tiempo real
+// Detalle de equipo: 20s default - lecturas y predicciones en tiempo real
 export const EQUIPO_DETALLE_POLLING_INTERVAL_MS = resolvePollingInterval(
   ENV_EQUIPO_DETALLE_POLLING_INTERVAL_MS,
-  15000
+  20000
 );

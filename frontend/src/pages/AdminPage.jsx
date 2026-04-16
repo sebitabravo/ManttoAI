@@ -9,6 +9,15 @@ import Input from "../components/ui/Input";
 import EmptyState from "../components/ui/EmptyState";
 import { selectClassName } from "../utils/formStyles";
 
+// Lista de prefijos telefónicos de Latinoamérica
+const PAISES_TELEFONO = [
+  { codigo: "+54", pais: "Argentina", bandera: "🇦🇷" },
+  { codigo: "+56", pais: "Chile", bandera: "🇨🇱" },
+  { codigo: "+51", pais: "Perú", bandera: "🇵🇪" },
+  { codigo: "+57", pais: "Colombia", bandera: "🇨🇴" },
+  { codigo: "+55", pais: "Brasil", bandera: "🇧🇷" },
+];
+
 function AdminPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("usuarios");
@@ -21,9 +30,12 @@ function AdminPage() {
     "audit-logs": true,
   });
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [newApiKey, setNewApiKey] = useState(null);
-  const [userForm, setUserForm] = useState({ nombre: "", email: "", password: "", rol: "visualizador" });
+  const [userForm, setUserForm] = useState({ nombre: "", email: "", password: "", telefono: "", prefijo: "+56", rol: "visualizador" });
+  const [editUserForm, setEditUserForm] = useState({ nombre: "", email: "", telefono: "", prefijo: "+56", rol: "visualizador" });
   const [apiKeyForm, setApiKeyForm] = useState({ device_id: "" });
   const [feedback, setFeedback] = useState({ type: "", message: "" });
   const [confirmDeleteUser, setConfirmDeleteUser] = useState(null);
@@ -107,13 +119,87 @@ function AdminPage() {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      await createUser(userForm);
+      // Validar teléfono si se proporciona
+      const telefono = userForm.telefono?.trim();
+      if (telefono) {
+        const telefonoRegex = /^(\+56\s?)?9\d{8}$|^\+56\s?9\s?\d{4}\s?\d{4}$/;
+        if (!telefonoRegex.test(telefono)) {
+          showFeedback("error", "Teléfono inválido. Formato: +56 9XXXXXXXX (ej: +56912345678)");
+          return;
+        }
+      }
+      // Combinar prefijo + teléfono para crear usuario
+      const telefonoCompleto = userForm.telefono ? `${userForm.prefijo}${userForm.telefono}` : "";
+      await createUser({ ...userForm, telefono: telefonoCompleto });
       setShowUserModal(false);
-      setUserForm({ nombre: "", email: "", password: "", rol: "visualizador" });
+      setUserForm({ nombre: "", email: "", password: "", telefono: "", prefijo: "+56", rol: "visualizador" });
       showFeedback("success", "Usuario creado exitosamente");
       loadUsers();
     } catch (error) {
       showFeedback("error", "Error creando usuario: " + (error.message || "desconocido"));
+    }
+  };
+
+  // Abrir modal de edición de usuario
+  const handleEditUserClick = (usuario) => {
+    // Extraer prefijo del teléfono existente o usar Chile por defecto
+    let prefijo = "+56";
+    let telefonoLimpio = usuario.telefono || "";
+    
+    for (const pais of PAISES_TELEFONO) {
+      if (usuario.telefono?.startsWith(pais.codigo)) {
+        prefijo = pais.codigo;
+        telefonoLimpio = usuario.telefono.slice(pais.codigo.length).trim();
+        break;
+      }
+    }
+    
+    setEditingUser(usuario);
+    setEditUserForm({
+      nombre: usuario.nombre || "",
+      email: usuario.email || "",
+      telefono: telefonoLimpio,
+      prefijo: prefijo,
+      rol: usuario.rol || "visualizador",
+    });
+    setShowEditUserModal(true);
+  };
+
+  // Guardar cambios del usuario
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Validar teléfono si se proporciona
+    const telefono = editUserForm.telefono?.trim();
+    if (telefono) {
+      // Validar según el prefijo seleccionado (8-9 dígitos según el país)
+      const digitosEsperados = editUserForm.prefijo === "+55" ? 9 : 8; // Brasil 9 dígitos, resto 8
+      const digitosRegex = new RegExp(`^\\d{${digitosEsperados}}$`);
+      
+      if (!digitosRegex.test(telefono)) {
+        const pais = PAISES_TELEFONO.find(p => p.codigo === editUserForm.prefijo);
+        showFeedback("error", `Teléfono inválido para ${pais?.pais || editUserForm.prefijo}. Necesitas ${digitosEsperados} dígitos.`);
+        return;
+      }
+    }
+
+    try {
+      // Combinar prefijo + teléfono
+      const telefonoCompleto = telefono ? `${editUserForm.prefijo}${telefono}` : null;
+      const dataToUpdate = {
+        nombre: editUserForm.nombre,
+        email: editUserForm.email,
+        telefono: telefonoCompleto,
+        rol: editUserForm.rol,
+      };
+      await updateUser(editingUser.id, dataToUpdate);
+      setShowEditUserModal(false);
+      setEditingUser(null);
+      showFeedback("success", "Usuario actualizado exitosamente");
+      loadUsers();
+    } catch (error) {
+      showFeedback("error", "Error actualizando usuario: " + (error.message || "desconocido"));
     }
   };
 
@@ -255,6 +341,7 @@ function AdminPage() {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Nombre</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Teléfono</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Rol</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Creado</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">Acciones</th>
@@ -275,15 +362,15 @@ function AdminPage() {
                           ? new Date(usuario.created_at).toLocaleDateString()
                           : "-"}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                        {usuario.telefono || "-"}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
-                          onClick={() => {
-                            const nuevoRol = usuario.rol === "admin" ? "visualizador" : "admin";
-                            updateUser(usuario.id, { rol: nuevoRol }).then(loadUsers);
-                          }}
+                          onClick={() => handleEditUserClick(usuario)}
                           className="text-indigo-600 hover:text-indigo-900 mr-4"
                         >
-                          Cambiar Rol
+                          Editar
                         </button>
                         {usuario.id !== user.id && (
                           <button
@@ -454,11 +541,100 @@ function AdminPage() {
               <option value="visualizador">Visualizador</option>
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-700">Teléfono (opcional)</label>
+            <div className="flex gap-2">
+              <select
+                value={userForm.prefijo}
+                onChange={(e) => setUserForm({ ...userForm, prefijo: e.target.value })}
+                className={`${selectClassName} w-24`}
+              >
+                {PAISES_TELEFONO.map((pais) => (
+                  <option key={pais.codigo} value={pais.codigo}>
+                    {pais.bandera} {pais.codigo}
+                  </option>
+                ))}
+              </select>
+              <Input
+                type="tel"
+                value={userForm.telefono}
+                onChange={(e) => setUserForm({ ...userForm, telefono: e.target.value })}
+                placeholder="9XXXXXXX"
+                className="flex-1"
+              />
+            </div>
+          </div>
           <div className="flex justify-end space-x-3">
             <Button type="button" variant="secondary" onClick={() => setShowUserModal(false)}>
               Cancelar
             </Button>
             <Button type="submit">Crear Usuario</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal: Editar Usuario */}
+      <Modal open={showEditUserModal} onClose={() => setShowEditUserModal(false)} title="Editar Usuario">
+        <form onSubmit={handleUpdateUser} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-neutral-700">Nombre</label>
+            <Input
+              type="text"
+              value={editUserForm.nombre}
+              onChange={(e) => setEditUserForm({ ...editUserForm, nombre: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-700">Email</label>
+            <Input
+              type="email"
+              value={editUserForm.email}
+              onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-700">Teléfono</label>
+            <div className="flex gap-2">
+              <select
+                value={editUserForm.prefijo}
+                onChange={(e) => setEditUserForm({ ...editUserForm, prefijo: e.target.value })}
+                className={`${selectClassName} w-24`}
+              >
+                {PAISES_TELEFONO.map((pais) => (
+                  <option key={pais.codigo} value={pais.codigo}>
+                    {pais.bandera} {pais.codigo}
+                  </option>
+                ))}
+              </select>
+              <Input
+                type="tel"
+                value={editUserForm.telefono}
+                onChange={(e) => setEditUserForm({ ...editUserForm, telefono: e.target.value })}
+                placeholder="9XXXXXXX"
+                className="flex-1"
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="edit-user-rol" className="block text-sm font-medium text-neutral-700">Rol</label>
+            <select
+              id="edit-user-rol"
+              value={editUserForm.rol}
+              onChange={(e) => setEditUserForm({ ...editUserForm, rol: e.target.value })}
+              className={`${selectClassName} mt-1`}
+            >
+              <option value="admin">Admin</option>
+              <option value="tecnico">Técnico</option>
+              <option value="visualizador">Visualizador</option>
+            </select>
+          </div>
+          <div className="flex justify-end space-x-3">
+            <Button type="button" variant="secondary" onClick={() => setShowEditUserModal(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit">Guardar Cambios</Button>
           </div>
         </form>
       </Modal>

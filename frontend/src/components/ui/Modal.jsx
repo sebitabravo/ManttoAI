@@ -114,17 +114,18 @@ export default function Modal({ open = false, title = "Modal", onClose, children
 
   if (!open) return null;
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/40 p-4"
-      onClick={(e) => {
-        // Cerrar al hacer click en el backdrop (fuera del contenido)
-        if (e.target === e.currentTarget && onClose) {
-          onClose();
-        }
-      }}
-      role="presentation"
-    >
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/40 p-4"
+        onClick={(e) => {
+          // Cerrar al hacer click en el backdrop (fuera del contenido)
+          if (e.target === e.currentTarget && onClose) {
+            e.stopPropagation();
+            onClose();
+          }
+        }}
+        role="presentation"
+      >
       <div
         ref={dialogRef}
         role="dialog"

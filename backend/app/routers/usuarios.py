@@ -136,6 +136,8 @@ def update_usuario(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Email ya en uso"
             )
         usuario.email = payload.email
+    if payload.telefono is not None:
+        usuario.telefono = payload.telefono
     if payload.rol is not None:
         usuario.rol = payload.rol
     if payload.is_active is not None:

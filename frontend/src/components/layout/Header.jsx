@@ -4,6 +4,7 @@ import Button from "../ui/Button";
 import Logo from "../ui/Logo";
 import TopbarNotifications from "./TopbarNotifications";
 import useAuth from "../../hooks/useAuth";
+import UserMenu from "./UserMenu";
 
 /**
  * Header principal de la aplicación.
@@ -11,14 +12,17 @@ import useAuth from "../../hooks/useAuth";
  * Funcionalidad:
  * - Logo + branding
  * - Botón hamburguesa para sidebar responsive (visible solo en tablet/mobile)
+ * - Configuración rápida (solo admin): repetir wizard, ver tour
+ * - Notificaciones
  * - Usuario actual + botón salir
  * 
  * Props:
  *  - onMenuToggle: callback para alternar el sidebar en resolución tablet
  *  - sidebarAbierto: estado del drawer (para aria-expanded y aria-label dinámico)
  *  - menuBtnRef: ref al botón hamburguesa (para devolver foco al cerrar el drawer)
+ *  - onReplayTour: callback para lanzar el tour de producto desde Layout
  */
-export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
+export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef, onReplayTour }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -57,10 +61,7 @@ export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
       {/* Usuario + botón salir */}
       <div className="flex items-center gap-2 sm:gap-3">
         <TopbarNotifications />
-        <span className="hidden text-sm text-neutral-600 md:inline">{user?.nombre || "Invitado"}</span>
-        <Button type="button" variant="outline" onClick={handleLogout} className="px-3 sm:px-4">
-          Salir
-        </Button>
+        <UserMenu onReplayTour={onReplayTour} />
       </div>
     </header>
   );

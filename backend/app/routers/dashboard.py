@@ -17,9 +17,9 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
 @limit_by_role(
-    admin_limit="10/minute",
-    tecnico_limit="6/minute",
-    visualizador_limit="3/minute",
+    admin_limit="120/minute",
+    tecnico_limit="60/minute",
+    visualizador_limit="30/minute",
 )
 def get_resumen(
     request: Request,

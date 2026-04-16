@@ -5,6 +5,7 @@ import re
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
 from app.services.report_service import (

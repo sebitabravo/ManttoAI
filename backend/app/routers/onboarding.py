@@ -45,7 +45,7 @@ def update_onboarding_step(
     # current_user ya es el usuario de la DB
 
     # Validar que no esté completado
-    if usuario.onboarding_completed:
+    if current_user.onboarding_completed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El onboarding ya está completado",

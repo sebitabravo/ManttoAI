@@ -151,19 +151,7 @@ test.describe("Onboarding Wizard", () => {
       // Avanzar (equipo + umbrales se crean juntos en paso 2)
       await page.getByRole("button", { name: "Siguiente" }).click();
 
-      // El paso 3 muestra review de umbrales o se salta
-      // Si el equipo ya tiene umbrales, puede avanzar directamente
-      const tienePaso3 = await page.getByText("Paso 3 de 5").isVisible().catch(() => false);
-      if (tienePaso3) {
-        // Verificar campos pre-llenados
-        await expect(page.getByLabel("Temperatura máxima (°C)")).toHaveValue("80");
-        await expect(page.getByLabel("Vibración máxima (g)")).toHaveValue("0.5");
-      }
-
-      // Avanzar al paso 4
-      await page.getByRole("button", { name: "Siguiente" }).click();
-
-      // PASO 4: Generar API Key
+      // PASO 4: Generar API Key (Paso 3 se salta automáticamente)
       await expect(page.getByRole("heading", { name: "Conecta tu dispositivo IoT" })).toBeVisible();
       await expect(page.getByText("Paso 4 de 5")).toBeVisible();
 

@@ -14,8 +14,6 @@ export default function usePolling(fetcher, intervalMs = 15000, initialData = nu
 
   const run = useCallback(async () => {
     // Keep showing previous data while fetching (stale-while-revalidate)
-    const previousData = data;
-
     try {
       const nextData = await fetcher();
       setData(nextData);
@@ -29,7 +27,7 @@ export default function usePolling(fetcher, intervalMs = 15000, initialData = nu
     } finally {
       setLoading(false);
     }
-  }, [fetcher, data]);
+  }, [fetcher]);
 
   useEffect(() => {
     run();

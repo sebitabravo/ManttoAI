@@ -88,7 +88,7 @@ export default function useEquipoDetalle() {
       return;
     }
 
-    // Solo mostrar loading en carga inicial, no en polling
+    // Solo mostrar loading en carga inicial, no en polling (stale-while-revalidate)
     if (!isPolling) {
       setLoading(true);
     }
@@ -113,8 +113,11 @@ export default function useEquipoDetalle() {
       setMantenciones(Array.isArray(mantencionesData) ? mantencionesData : []);
       setError(null);
     } catch (fetchError) {
-      // En polling, no mostrar error si ya tenemos datos
-      if (!isPolling || !equipo) {
+      // En polling, no mostrar error si ya tenemos datos (stale-while-revalidate)
+      // Keep showing old data instead of error
+      if (isPolling && equipo) {
+        console.warn("Polling failed, keeping previous data:", fetchError.message);
+      } else {
         setError(fetchError);
       }
     } finally {

@@ -1,5 +1,6 @@
 """Middleware de rate limiting para proteger la API contra abuso."""
 
+import logging
 from collections.abc import Callable
 
 from fastapi import Request
@@ -9,6 +10,8 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 # Limiter real para middleware global
@@ -27,10 +30,27 @@ def _resolve_default_limits() -> list[str]:
     return ["1500/hour"]
 
 
+def _resolve_storage_uri() -> str:
+    """Resuelve el storage URI intentando Redis, con fallback a memoria."""
+    try:
+        # Intentar Redis si está disponible
+        import redis
+
+        r = redis.Redis(host="redis", port=6379, socket_connect_timeout=1)
+        r.ping()
+        logger.info("Using Redis for rate limiting storage")
+        return "redis://redis:6379"
+    except Exception as e:
+        logger.warning(
+            f"Redis not available ({e}), using in-memory storage for rate limiting"
+        )
+        return "memory://"
+
+
 _global_limiter = Limiter(
     key_func=get_remote_address,
     default_limits=_resolve_default_limits(),
-    storage_uri="redis://redis:6379",  # Usa Redis para rate limits
+    storage_uri=_resolve_storage_uri(),
     headers_enabled=False,
 )
 

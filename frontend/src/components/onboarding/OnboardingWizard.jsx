@@ -6,8 +6,7 @@ import {
   updateOnboardingStep,
   completeOnboarding,
 } from "../../api/onboarding";
-import { createEquipo, getEquipos } from "../../api/equipos";
-import { createUmbral } from "../../api/umbrales";
+import { createEquipoFull, getEquipos } from "../../api/equipos";
 import { createApiKey } from "../../api/admin";
 import Button from "../ui/Button";
 
@@ -134,77 +133,48 @@ export default function OnboardingWizard() {
     }
   };
 
-  // Manejar creación de equipo (paso 2)
+  // Manejar creación de equipo + umbrales (pasos 2 y 3 combinados)
+  // Usa endpoint atómico /equipos/full-setup para crear todo en una transacción
   const handleCreateEquipo = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
 
     try {
-      // Si ya existe un equipo vinculado, no crear otro
+      // Si ya existe un equipo vinculado, ir directamente a paso de API key
       if (apiKeyData?.equipoId) {
         await handleNextStep();
         return;
       }
 
-      const equipo = await createEquipo(equipoData);
-      setApiKeyData((prev) => ({ ...prev, equipoId: equipo.id }));
-      await handleNextStep();
+      // Crear equipo + umbrales en una sola transacción (backend atómico)
+      const result = await createEquipoFull({
+        nombre: equipoData.nombre,
+        ubicacion: equipoData.ubicacion,
+        tipo: equipoData.tipo,
+        temperatura_max: umbralesData.temperatura_max,
+        vibracion_max: umbralesData.vibracion_max,
+      });
+
+      setApiKeyData((prev) => ({ ...prev, equipoId: result.equipo.id }));
+      // El paso 3 se salta (ya se crearon los umbrales con el equipo)
+      await handleNextStep(); // Ir a paso 3 (configurar API key)
     } catch (err) {
-      console.error("Error al crear equipo:", err);
-      setError("No se pudo crear el equipo. Verifica los datos e intenta nuevamente.");
+      console.error("Error al crear equipo con umbrales:", err);
+      setError(
+        "No se pudo crear el equipo con umbrales. Verifica los datos e intenta nuevamente."
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Manejar configuración de umbrales (paso 3)
+  // Manejar configuración de umbrales (paso 3) — ya no se usa: se crean con el equipo
+  // Se mantiene por compatibilidad pero simplemente avanza al siguiente paso
   const handleConfigureUmbrales = async (e) => {
     e.preventDefault();
-    if (!apiKeyData?.equipoId) {
-      setError("No hay equipo seleccionado");
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      // Crear ambos umbrales de forma atómica
-      // Si uno falla, reverted el otro via Promise.allSettled
-      const promises = [
-        createUmbral(apiKeyData.equipoId, {
-          equipo_id: apiKeyData.equipoId,
-          variable: "temperatura",
-          valor_min: 0,
-          valor_max: umbralesData.temperatura_max,
-        }),
-        createUmbral(apiKeyData.equipoId, {
-          equipo_id: apiKeyData.equipoId,
-          variable: "vibracion",
-          valor_min: 0,
-          valor_max: umbralesData.vibracion_max,
-        }),
-      ];
-
-      // Ejecutar ambos y verificar resultados
-      const results = await Promise.allSettled(promises);
-      const failed = results.filter((r) => r.status === "rejected");
-
-      if (failed.length > 0) {
-        // Si falló alguno, cleanup de los que pudieron created
-        console.error("Error parcial al crear umbrales:", failed);
-        setError("Error al configurar umbrales. Por favor intenta nuevamente.");
-        return;
-      }
-
-      await handleNextStep();
-    } catch (err) {
-      console.error("Error al configurar umbrales:", err);
-      setError("No se pudieron configurar los umbrales. Intenta nuevamente.");
-    } finally {
-      setSubmitting(false);
-    }
+    // Los umbrales ya se crearon junto con el equipo en handleCreateEquipo
+    await handleNextStep();
   };
 
   // Manejar generación de API key (paso 4)

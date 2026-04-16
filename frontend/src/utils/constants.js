@@ -58,30 +58,6 @@ export const EQUIPOS_POLLING_INTERVAL_MS = resolvePollingInterval(
   60000
 );
 
-// Detalle de equipo: 60s default - menos critico que 20s anterior
-export const EQUIPO_DETALLE_POLLING_INTERVAL_MS = resolvePollingInterval(
-  ENV_EQUIPO_DETALLE_POLLING_INTERVAL_MS,
-  60000
-);
-
-// Alertas: 15s default - crítico para seguridad operacional
-export const ALERTAS_POLLING_INTERVAL_MS = resolvePollingInterval(
-  ENV_ALERTAS_POLLING_INTERVAL_MS,
-  15000
-);
-
-// Lista de equipos: 30s default - menos crítico
-export const EQUIPOS_POLLING_INTERVAL_MS = resolvePollingInterval(
-  ENV_EQUIPOS_POLLING_INTERVAL_MS,
-  30000
-);
-
-// Detalle de equipo: 20s default - lecturas y predicciones en tiempo real
-export const EQUIPO_DETALLE_POLLING_INTERVAL_MS = resolvePollingInterval(
-  ENV_EQUIPO_DETALLE_POLLING_INTERVAL_MS,
-  20000
-);
-
 // === Constantes de negocio ===
 
 // Prefijos telefónicos de Latinoamérica

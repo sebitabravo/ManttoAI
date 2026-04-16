@@ -19,7 +19,6 @@ router = APIRouter(prefix="/onboarding", tags=["onboarding"])
     "/status",
     response_model=OnboardingStatusResponse,
 )
-@limiter.limit("60/minute")
 def get_onboarding_status(
     request: Request,
     db: Session = Depends(get_db),
@@ -27,21 +26,14 @@ def get_onboarding_status(
 ) -> OnboardingStatusResponse:
     """Retorna el estado actual del onboarding del usuario autenticado."""
 
-    # Recargar usuario desde la DB para obtener datos frescos
-    usuario = db.get(Usuario, current_user.id)
-    if not usuario:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
-        )
-
+    # current_user ya es el usuario de la DB (from require_role dependency)
     return OnboardingStatusResponse(
-        onboarding_step=usuario.onboarding_step,
-        onboarding_completed=usuario.onboarding_completed,
+        onboarding_step=current_user.onboarding_step,
+        onboarding_completed=current_user.onboarding_completed,
     )
 
 
 @router.patch("/step")
-@limiter.limit("30/minute")
 def update_onboarding_step(
     payload: OnboardingStepUpdate,
     request: Request,
@@ -50,12 +42,7 @@ def update_onboarding_step(
 ) -> OnboardingStatusResponse:
     """Actualiza el paso actual del onboarding del usuario."""
 
-    # Recargar usuario desde la DB
-    usuario = db.get(Usuario, current_user.id)
-    if not usuario:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
-        )
+    # current_user ya es el usuario de la DB
 
     # Validar que no esté completado
     if usuario.onboarding_completed:
@@ -65,7 +52,7 @@ def update_onboarding_step(
         )
 
     # Validar secuencia de pasos: no puede saltar más de 1 paso
-    current_step = usuario.onboarding_step or 1
+    current_step = current_user.onboarding_step or 1
     new_step = payload.step
     if abs(new_step - current_step) > 1:
         raise HTTPException(
@@ -74,18 +61,17 @@ def update_onboarding_step(
         )
 
     # Actualizar paso
-    usuario.onboarding_step = payload.step
+    current_user.onboarding_step = payload.step
     db.commit()
-    db.refresh(usuario)
+    db.refresh(current_user)
 
     return OnboardingStatusResponse(
-        onboarding_step=usuario.onboarding_step,
-        onboarding_completed=usuario.onboarding_completed,
+        onboarding_step=current_user.onboarding_step,
+        onboarding_completed=current_user.onboarding_completed,
     )
 
 
 @router.post("/complete", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("10/minute")
 def complete_onboarding(
     payload: OnboardingCompleteRequest,
     request: Request,
@@ -93,13 +79,6 @@ def complete_onboarding(
     current_user: Usuario = Depends(require_role("admin", "tecnico")),
 ) -> None:
     """Marca el onboarding como completado y registra los recursos creados."""
-
-    # Recargar usuario desde la DB
-    usuario = db.get(Usuario, current_user.id)
-    if not usuario:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
-        )
 
     # Validar que el equipo existe y pertenece al usuario u organización
     if payload.equipo_id is not None:
@@ -119,17 +98,12 @@ def complete_onboarding(
             )
 
     # Marcar como completado
-    usuario.onboarding_step = None
-    usuario.onboarding_completed = True
+    current_user.onboarding_step = None
+    current_user.onboarding_completed = True
     db.commit()
-
-    # Nota: En una implementación futura, aquí se podría crear un registro
-    # de auditoría para registrar que el usuario completó el onboarding con
-    # éxito y qué recursos creó (equipo, API key, etc.)
 
 
 @router.post("/reset", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("5/minute")
 def reset_onboarding(
     request: Request,
     db: Session = Depends(get_db),
@@ -137,13 +111,7 @@ def reset_onboarding(
 ) -> None:
     """Resetea el onboarding para permitir repetir el wizard (solo admin)."""
 
-    usuario = db.get(Usuario, current_user.id)
-    if not usuario:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
-        )
-
     # Reiniciar estado del wizard
-    usuario.onboarding_step = 1
-    usuario.onboarding_completed = False
+    current_user.onboarding_step = 1
+    current_user.onboarding_completed = False
     db.commit()

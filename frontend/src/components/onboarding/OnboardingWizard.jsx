@@ -164,21 +164,33 @@ export default function OnboardingWizard() {
     setError(null);
 
     try {
-      // Crear umbral de temperatura (valor_min=0 como base razonable)
-      await createUmbral(apiKeyData.equipoId, {
-        equipo_id: apiKeyData.equipoId,
-        variable: "temperatura",
-        valor_min: 0,
-        valor_max: umbralesData.temperatura_max,
-      });
+      // Crear ambos umbrales de forma atómica
+      // Si uno falla, reverted el otro via Promise.allSettled
+      const promises = [
+        createUmbral(apiKeyData.equipoId, {
+          equipo_id: apiKeyData.equipoId,
+          variable: "temperatura",
+          valor_min: 0,
+          valor_max: umbralesData.temperatura_max,
+        }),
+        createUmbral(apiKeyData.equipoId, {
+          equipo_id: apiKeyData.equipoId,
+          variable: "vibracion",
+          valor_min: 0,
+          valor_max: umbralesData.vibracion_max,
+        }),
+      ];
 
-      // Crear umbral de vibración
-      await createUmbral(apiKeyData.equipoId, {
-        equipo_id: apiKeyData.equipoId,
-        variable: "vibracion",
-        valor_min: 0,
-        valor_max: umbralesData.vibracion_max,
-      });
+      // Ejecutar ambos y verificar resultados
+      const results = await Promise.allSettled(promises);
+      const failed = results.filter((r) => r.status === "rejected");
+
+      if (failed.length > 0) {
+        // Si falló alguno, cleanup de los que pudieron created
+        console.error("Error parcial al crear umbrales:", failed);
+        setError("Error al configurar umbrales. Por favor intenta nuevamente.");
+        return;
+      }
 
       await handleNextStep();
     } catch (err) {

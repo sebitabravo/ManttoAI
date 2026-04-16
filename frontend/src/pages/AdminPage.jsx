@@ -18,6 +18,22 @@ const PAISES_TELEFONO = [
   { codigo: "+55", pais: "Brasil", bandera: "🇧🇷" },
 ];
 
+// Regex genérico para teléfonos latinoamericanos
+// Formato: +CÓDIGO NÚMERO (8-9 dígitos después del código)
+const telefonoRegex = (prefijo) => {
+  const codigo = prefijo.replace("+", "\\+");
+  // Permite formatos: +56912345678, +56 9 1234 5678, 912345678
+  return new RegExp(`^(\\${codigo}\\s?)?\\d{8,9}$`);
+};
+
+// Validar teléfono con el prefijo seleccionado
+const validarTelefono = (telefono, prefijo) => {
+  if (!telefono?.trim()) return true; // Teléfono opcional
+  const regex = telefonoRegex(prefijo);
+  const numeroLimpio = telefono.replace(/\s+/g, ""); // Remover espacios
+  return regex.test(numeroLimpio);
+};
+
 function AdminPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("usuarios");
@@ -119,14 +135,11 @@ function AdminPage() {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      // Validar teléfono si se proporciona
+      // Validar teléfono con el prefijo seleccionado
       const telefono = userForm.telefono?.trim();
-      if (telefono) {
-        const telefonoRegex = /^(\+56\s?)?9\d{8}$|^\+56\s?9\s?\d{4}\s?\d{4}$/;
-        if (!telefonoRegex.test(telefono)) {
-          showFeedback("error", "Teléfono inválido. Formato: +56 9XXXXXXXX (ej: +56912345678)");
-          return;
-        }
+      if (telefono && !validarTelefono(telefono, userForm.prefijo)) {
+        showFeedback("error", `Teléfono inválido para ${userForm.prefijo}. Formato: 9XXXXXXXX`);
+        return;
       }
       // Combinar prefijo + teléfono para crear usuario
       const telefonoCompleto = userForm.telefono ? `${userForm.prefijo}${userForm.telefono}` : "";

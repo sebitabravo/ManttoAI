@@ -22,7 +22,7 @@ router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
 
 @router.get("", response_model=UsuarioListResponse)
-@limiter.limit("600/hour")
+@limiter.limit("6000/hour")
 def list_usuarios(
     request: Request,
     rol: str | None = Query(None, description="Filtrar por rol"),
@@ -61,7 +61,7 @@ def list_usuarios(
 
 
 @router.get("/{usuario_id}", response_model=UsuarioResponse)
-@limiter.limit("600/hour")
+@limiter.limit("6000/hour")
 def get_usuario(
     usuario_id: int,
     request: Request,
@@ -80,7 +80,7 @@ def get_usuario(
 
 
 @router.post("", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit("600/hour")
+@limiter.limit("6000/hour")
 def create_usuario(
     payload: UsuarioCreate,
     request: Request,
@@ -105,7 +105,7 @@ def create_usuario(
 
 
 @router.put("/{usuario_id}", response_model=UsuarioResponse)
-@limiter.limit("600/hour")
+@limiter.limit("6000/hour")
 def update_usuario(
     usuario_id: int,
     payload: UsuarioUpdate,
@@ -150,7 +150,7 @@ def update_usuario(
 
 
 @router.delete("/{usuario_id}", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("600/hour")
+@limiter.limit("6000/hour")
 def delete_usuario(
     usuario_id: int,
     request: Request,
@@ -182,7 +182,7 @@ def delete_usuario(
 
 
 @router.get("/{usuario_id}/exportar-datos")
-@limiter.limit("600/hour")
+@limiter.limit("6000/hour")
 def exportar_datos_usuario(
     usuario_id: int,
     request: Request,
@@ -245,7 +245,7 @@ def exportar_datos_usuario(
 
 
 @router.delete("/{usuario_id}/datos-personales", status_code=status.HTTP_200_OK)
-@limiter.limit("600/hour")
+@limiter.limit("6000/hour")
 def eliminar_datos_personales(
     usuario_id: int,
     request: Request,

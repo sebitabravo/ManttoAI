@@ -29,7 +29,6 @@ router = APIRouter(prefix="/equipos", tags=["equipos"])
     response_model=list[EquipoResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("600/hour")  # Mayor límite para navegación frecuente
 def get_equipos(
     request: Request,
     db: Session = Depends(get_db),
@@ -44,7 +43,6 @@ def get_equipos(
     response_model=EquipoResponse,
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("600/hour")  # Mayor límite para navegación frecuente
 def get_equipo_by_id(
     equipo_id: int,
     request: Request,
@@ -61,7 +59,6 @@ def get_equipo_by_id(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("600/hour")
 def post_equipo(
     payload: EquipoCreate,
     request: Request,
@@ -82,7 +79,6 @@ def post_equipo(
     response_model=EquipoResponse,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("600/hour")
 def put_equipo(
     equipo_id: int,
     payload: EquipoUpdate,
@@ -99,7 +95,6 @@ def put_equipo(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role("admin"))],
 )
-@limiter.limit("600/hour")
 def delete_equipo_by_id(
     equipo_id: int,
     request: Request,
@@ -116,7 +111,6 @@ def delete_equipo_by_id(
     response_model=EquipoFullSetupResponse,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("600/hour")
 def create_equipo_with_umbrales(
     payload: EquipoFullSetupRequest,
     request: Request,

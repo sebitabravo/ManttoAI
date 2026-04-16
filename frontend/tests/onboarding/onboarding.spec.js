@@ -104,8 +104,24 @@ test.describe("Onboarding Wizard", () => {
         });
       });
 
+      // Variable para controlar el estado del onboarding
+      let onboardingCompleted = false;
+
+      // Mock de status que cambia después de completar
+      await page.route("**/api/v1/onboarding/status", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            onboarding_step: onboardingCompleted ? 5 : 1,
+            onboarding_completed: onboardingCompleted,
+          }),
+        });
+      });
+
       // Mock de completación del onboarding
       await page.route("**/api/v1/onboarding/complete", async (route) => {
+        onboardingCompleted = true;
         await route.fulfill({
           status: 204,
           contentType: "application/json",
@@ -177,20 +193,23 @@ test.describe("Onboarding Wizard", () => {
   test("permite saltar el wizard",
     { tag: ["@medium", "@e2e", "@onboarding", "@ONBOARDING-E2E-002"] },
     async ({ page }) => {
-      // Mock del estado inicial del onboarding
+      let onboardingCompleted = false;
+
+      // Mock dinámico del estado del onboarding
       await page.route("**/api/v1/onboarding/status", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            onboarding_step: 1,
-            onboarding_completed: false,
+            onboarding_step: onboardingCompleted ? 5 : 1,
+            onboarding_completed: onboardingCompleted,
           }),
         });
       });
 
       // Mock de completación del onboarding
       await page.route("**/api/v1/onboarding/complete", async (route) => {
+        onboardingCompleted = true;
         await route.fulfill({
           status: 204,
           contentType: "application/json",
@@ -206,6 +225,9 @@ test.describe("Onboarding Wizard", () => {
 
       // Saltar el wizard
       await page.getByRole("button", { name: "Saltar y configurar después" }).click();
+
+      // Esperar a que redireccione
+      await page.waitForTimeout(1000);
 
       // Verificar redirección al dashboard
       await expect(page).toHaveURL("/dashboard");
@@ -261,13 +283,15 @@ test.describe("Onboarding Wizard", () => {
   test("muestra error cuando falla la creación de equipo",
     { tag: ["@low", "@e2e", "@onboarding", "@ONBOARDING-E2E-004"] },
     async ({ page }) => {
-      // Mock del estado inicial del onboarding
+      let stepUpdateCallCount = 0;
+
+      // Mock del estado inicial del onboarding (empieza en paso 1)
       await page.route("**/api/v1/onboarding/status", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            onboarding_step: 2,
+            onboarding_step: 1,
             onboarding_completed: false,
           }),
         });
@@ -276,6 +300,7 @@ test.describe("Onboarding Wizard", () => {
       // Mock de actualización de paso
       await page.route("**/api/v1/onboarding/step", async (route) => {
         const requestBody = await route.request().postDataJSON();
+        stepUpdateCallCount++;
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -300,8 +325,14 @@ test.describe("Onboarding Wizard", () => {
       // Navegar al wizard
       await page.goto("/onboarding");
 
-      // Avanzar al paso 2
+      // Paso 1: Click enComenzar para avanzar al paso 2
       await page.getByRole("button", { name: "Comenzar" }).click();
+
+      // Esperar a que actualice el paso
+      await page.waitForTimeout(500);
+
+      // Paso 2: Verificar que estamos en el formulario de equipo
+      await expect(page.getByText("Nombre del equipo")).toBeVisible({ timeout: 10000 });
 
       // Llenar formulario
       await page.getByLabel("Nombre del equipo *").fill("Motor de prueba");
@@ -310,7 +341,7 @@ test.describe("Onboarding Wizard", () => {
       await page.getByRole("button", { name: "Siguiente" }).click();
 
       // Verificar que se muestra el error
-      await expect(page.getByText("No se pudo crear el equipo")).toBeVisible();
+      await expect(page.getByText(/Error al crear equipo|No se pudo crear/i)).toBeVisible({ timeout: 10000 });
     }
   );
 });

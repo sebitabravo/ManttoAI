@@ -30,7 +30,7 @@ def _resolve_default_limits() -> list[str]:
 _global_limiter = Limiter(
     key_func=get_remote_address,
     default_limits=_resolve_default_limits(),
-    storage_uri="memory://",
+    storage_uri="redis://redis:6379",  # Usa Redis para rate limits
     headers_enabled=False,
 )
 

@@ -38,6 +38,7 @@ services:
       SEED_TECNICO_NAME: ${SEED_TECNICO_NAME:-Tecnico ManttoAI}
       SEED_TECNICO_EMAIL: ${SEED_TECNICO_EMAIL:-tecnico@manttoai.local}
       SEED_ALLOW_NON_DEV: ${SEED_ALLOW_NON_DEV:-false}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
       mysql:
         condition: service_healthy

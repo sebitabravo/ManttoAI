@@ -125,6 +125,18 @@ test("equipos, alertas e historial consumen backend real", async ({ page }) => {
     });
   });
 
+  // Mock de onboarding completado (requerido por OnboardingGuard)
+  await page.route("**/api/v1/onboarding/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        onboarding_step: 3,
+        onboarding_completed: true,
+      }),
+    });
+  });
+
   await page.route("**/api/v1/dashboard/resumen", async (route) => {
     await route.fulfill({
       status: 200,

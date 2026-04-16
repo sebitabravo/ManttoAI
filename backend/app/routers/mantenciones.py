@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
-from app.middleware.rate_limit import limiter
 from app.schemas.mantencion import (
     MantencionCreate,
     MantencionResponse,
@@ -28,7 +27,6 @@ router = APIRouter(prefix="/mantenciones", tags=["mantenciones"])
     response_model=list[MantencionResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("200/hour")
 def get_mantenciones(
     request: Request,
     equipo_id: int | None = Query(default=None),
@@ -46,7 +44,6 @@ def get_mantenciones(
     response_model=MantencionResponse,
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("200/hour")
 def get_mantencion_by_id(
     mantencion_id: int,
     request: Request,
@@ -63,7 +60,6 @@ def get_mantencion_by_id(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("100/hour")
 def post_mantencion(
     payload: MantencionCreate,
     request: Request,
@@ -84,7 +80,6 @@ def post_mantencion(
     response_model=MantencionResponse,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("100/hour")
 def put_mantencion(
     mantencion_id: int,
     payload: MantencionUpdate,
@@ -101,7 +96,6 @@ def put_mantencion(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role("admin"))],
 )
-@limiter.limit("50/hour")
 def delete_mantencion_by_id(
     mantencion_id: int,
     request: Request,

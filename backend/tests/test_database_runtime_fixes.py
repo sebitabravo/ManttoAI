@@ -231,10 +231,15 @@ def test_apply_runtime_schema_fixes_logs_info_when_any_patch_applies(
 
     assert add_column_calls == [
         ("equipos", "descripcion"),
+        ("equipos", "organizacion_id"),
         ("mantenciones", "fecha_programada"),
         ("mantenciones", "fecha_ejecucion"),
         ("usuarios", "is_active"),
         ("usuarios", "password_changed_at"),
+        ("usuarios", "onboarding_step"),
+        ("usuarios", "onboarding_completed"),
+        ("usuarios", "telefono"),
+        ("usuarios", "avatar"),
     ]
     assert "Se aplicaron parches de compatibilidad de esquema" in caplog.text
 

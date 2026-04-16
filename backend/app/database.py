@@ -192,6 +192,11 @@ def apply_runtime_schema_fixes() -> None:
             "descripcion",
             "descripcion VARCHAR(255) NOT NULL DEFAULT 'Equipo monitoreado por ManttoAI'",
         )
+        equipo_org_changed = _add_column_if_missing(
+            "equipos",
+            "organizacion_id",
+            "organizacion_id INTEGER NULL DEFAULT NULL",
+        )
         mantencion_programada_changed = _add_column_if_missing(
             "mantenciones",
             "fecha_programada",
@@ -212,29 +217,61 @@ def apply_runtime_schema_fixes() -> None:
             "password_changed_at",
             "password_changed_at DATETIME NULL",
         )
+        usuario_onboarding_step_changed = _add_column_if_missing(
+            "usuarios",
+            "onboarding_step",
+            "onboarding_step INTEGER NULL DEFAULT 1",
+        )
+        usuario_onboarding_completed_changed = _add_column_if_missing(
+            "usuarios",
+            "onboarding_completed",
+            "onboarding_completed BOOLEAN NOT NULL DEFAULT 0",
+        )
+        usuario_telefono_changed = _add_column_if_missing(
+            "usuarios",
+            "telefono",
+            "telefono VARCHAR(30) NULL DEFAULT NULL",
+        )
+        usuario_avatar_changed = _add_column_if_missing(
+            "usuarios",
+            "avatar",
+            "avatar VARCHAR(50) NULL DEFAULT NULL",
+        )
         alerta_index_changed = _ensure_alerta_unique_index()
 
         if any(
             [
                 equipo_changed,
+                equipo_org_changed,
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
                 usuario_active_changed,
                 usuario_password_changed_changed,
+                usuario_onboarding_step_changed,
+                usuario_onboarding_completed_changed,
+                usuario_telefono_changed,
+                usuario_avatar_changed,
                 alerta_index_changed,
             ]
         ):
             logger.info(
                 "Se aplicaron parches de compatibilidad de esquema "
-                "(equipos.descripcion=%s, mantenciones.fecha_programada=%s, "
+                "(equipos.descripcion=%s, equipos.organizacion_id=%s, "
+                "mantenciones.fecha_programada=%s, "
                 "mantenciones.fecha_ejecucion=%s, usuarios.is_active=%s, "
-                "usuarios.password_changed_at=%s, "
+                "usuarios.password_changed_at=%s, usuarios.onboarding_step=%s, "
+                "usuarios.onboarding_completed=%s, usuarios.telefono=%s, usuarios.avatar=%s, "
                 "alerta_unique_index_removed=%s)",
                 equipo_changed,
+                equipo_org_changed,
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
                 usuario_active_changed,
                 usuario_password_changed_changed,
+                usuario_onboarding_step_changed,
+                usuario_onboarding_completed_changed,
+                usuario_telefono_changed,
+                usuario_avatar_changed,
                 alerta_index_changed,
             )
     except (RuntimeError, SQLAlchemyError, DBAPIError):

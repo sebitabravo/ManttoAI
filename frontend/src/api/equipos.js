@@ -24,3 +24,10 @@ export async function updateEquipo(id, payload) {
 export async function deleteEquipo(id) {
   await client.delete(`/equipos/${id}`);
 }
+
+// Crea equipo con umbrales en una sola transacción atómica (backend)
+// Devuelve: { equipo, umbral_temperatura_id, umbral_vibracion_id }
+export async function createEquipoFull(payload) {
+  const { data } = await client.post("/equipos/full-setup", payload);
+  return data;
+}

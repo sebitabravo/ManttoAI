@@ -13,7 +13,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db
-from app.middleware.rate_limit import limiter
 from app.models.alerta import Alerta
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
@@ -78,7 +77,6 @@ def get_average_duration(endpoint: str, last_n: int = 100) -> float | None:
 
 
 @router.get("/summary")
-@limiter.limit("200/hour")
 async def get_metrics_summary(
     request: Request,
     db: Session = Depends(get_db),
@@ -129,7 +127,6 @@ async def get_metrics_summary(
 
 
 @router.get("/health-detailed")
-@limiter.limit("500/hour")  # Health checks se llaman mucho
 async def get_detailed_health(
     request: Request,
     db: Session = Depends(get_db),
@@ -165,7 +162,6 @@ async def get_detailed_health(
 
 
 @router.post("/reset")
-@limiter.limit("20/hour")  # Resetear métricas es sensible
 async def reset_metrics(
     request: Request,
     current_user=Depends(get_current_user),

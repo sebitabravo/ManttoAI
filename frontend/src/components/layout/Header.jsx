@@ -1,9 +1,6 @@
-import { useNavigate } from "react-router-dom";
-
-import Button from "../ui/Button";
 import Logo from "../ui/Logo";
 import TopbarNotifications from "./TopbarNotifications";
-import useAuth from "../../hooks/useAuth";
+import UserMenu from "./UserMenu";
 
 /**
  * Header principal de la aplicación.
@@ -11,22 +8,16 @@ import useAuth from "../../hooks/useAuth";
  * Funcionalidad:
  * - Logo + branding
  * - Botón hamburguesa para sidebar responsive (visible solo en tablet/mobile)
- * - Usuario actual + botón salir
+ * - Notificaciones
+ * - Menú de usuario con opciones de configuración, perfil y logout
  * 
  * Props:
  *  - onMenuToggle: callback para alternar el sidebar en resolución tablet
  *  - sidebarAbierto: estado del drawer (para aria-expanded y aria-label dinámico)
  *  - menuBtnRef: ref al botón hamburguesa (para devolver foco al cerrar el drawer)
+ *  - onReplayTour: callback para lanzar el tour de producto desde Layout
  */
-export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  function handleLogout() {
-    logout();
-    navigate("/login", { replace: true });
-  }
-
+export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef, onReplayTour }) {
   return (
     <header className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100 px-3 py-3 sm:px-5 sm:py-4">
       <div className="flex items-center gap-3">
@@ -57,10 +48,7 @@ export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef }) {
       {/* Usuario + botón salir */}
       <div className="flex items-center gap-2 sm:gap-3">
         <TopbarNotifications />
-        <span className="hidden text-sm text-neutral-600 md:inline">{user?.nombre || "Invitado"}</span>
-        <Button type="button" variant="outline" onClick={handleLogout} className="px-3 sm:px-4">
-          Salir
-        </Button>
+        <UserMenu onReplayTour={onReplayTour} />
       </div>
     </header>
   );

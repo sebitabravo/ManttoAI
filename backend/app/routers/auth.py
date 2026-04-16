@@ -12,11 +12,13 @@ from app.middleware.rate_limit import limiter
 from app.schemas.usuario import (
     ChangePasswordRequest,
     LoginRequest,
+    ProfileUpdate,
     Token,
     UsuarioCreate,
     UsuarioResponse,
 )
 from app.services.auth_service import change_password, login_user, register_user
+from fastapi import HTTPException
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
@@ -110,3 +112,41 @@ def change_password_endpoint(
         current_password=payload.current_password,
         new_password=payload.new_password,
     )
+
+
+@router.put("/profile", response_model=UsuarioResponse)
+def update_profile(
+    payload: ProfileUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+) -> UsuarioResponse:
+    """Actualiza el perfil del usuario autenticado (solo nombre y avatar).
+
+    Nota: teléfono no es editable por el usuario - se configura desde admin.
+    Email no es editable por el usuario (para evitar problemas de verificación).
+    """
+
+    # Usar el usuario proporcionado por la dependencia (ya está autenticado y verificado)
+    # No necesitamos recargar - current_user es el usuario correcto
+    usuario = current_user
+
+    # Solo nombre y avatar son editables por el usuario
+    if payload.nombre is not None:
+        usuario.nombre = payload.nombre
+
+    if payload.avatar is not None:
+        usuario.avatar = payload.avatar
+
+    # Teléfono NO se actualiza desde aquí - solo desde admin
+
+    try:
+        db.commit()
+        db.refresh(usuario)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, detail="No se pudo actualizar el perfil"
+        ) from e
+
+    return UsuarioResponse.model_validate(usuario)

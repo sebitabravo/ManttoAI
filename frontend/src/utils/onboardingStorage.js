@@ -28,3 +28,14 @@ export function markOnboardingDone() {
     // localStorage puede no estar disponible (ej. modo privado)
   }
 }
+
+/**
+ * Limpia el flag de onboarding para permitir repetir el tour.
+ */
+export function clearOnboardingDone() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // localStorage puede no estar disponible
+  }
+}

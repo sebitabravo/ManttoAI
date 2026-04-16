@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
-from app.middleware.rate_limit import limiter
 from app.models.usuario import Usuario
 from app.schemas.api_key import APIKeyCreate, APIKeyDetailResponse, APIKeyResponse
 from app.services.api_key_service import (
@@ -20,7 +19,6 @@ router = APIRouter(prefix="/api-keys", tags=["api-keys"])
 @router.post(
     "", response_model=APIKeyDetailResponse, status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("20/hour")  # Crear API keys es sensible
 def create_new_api_key(
     payload: APIKeyCreate,
     request: Request,
@@ -52,7 +50,6 @@ def create_new_api_key(
 
 
 @router.get("", response_model=list[APIKeyResponse])
-@limiter.limit("100/hour")
 def get_api_keys(
     request: Request,
     include_inactive: bool = False,
@@ -67,7 +64,6 @@ def get_api_keys(
 
 
 @router.get("/{api_key_id}", response_model=APIKeyResponse)
-@limiter.limit("200/hour")
 def get_api_key(
     api_key_id: int,
     request: Request,
@@ -86,7 +82,6 @@ def get_api_key(
 
 
 @router.delete("/{api_key_id}", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("50/hour")  # Revocar es sensible
 def delete_api_key(
     api_key_id: int,
     request: Request,

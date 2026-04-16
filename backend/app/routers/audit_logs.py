@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
-from app.middleware.rate_limit import limiter
 from app.models.usuario import Usuario
 from app.schemas.audit_log import AuditLogListResponse, AuditLogResponse
 from app.services.audit_service import get_audit_log_by_id, get_audit_logs
@@ -13,7 +12,6 @@ router = APIRouter(prefix="/audit-logs", tags=["audit-logs"])
 
 
 @router.get("", response_model=AuditLogListResponse)
-@limiter.limit("100/hour")  # Audit logs pueden ser muchos, limitar
 def list_audit_logs(
     request: Request,
     usuario_id: int | None = Query(None, description="Filtrar por ID de usuario"),
@@ -47,7 +45,6 @@ def list_audit_logs(
 
 
 @router.get("/{log_id}", response_model=AuditLogResponse)
-@limiter.limit("200/hour")
 def get_audit_log(
     log_id: int,
     request: Request,

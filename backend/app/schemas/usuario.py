@@ -53,6 +53,8 @@ class UsuarioResponse(UsuarioBase):
     """Representación pública de usuario."""
 
     id: int
+    telefono: str | None = None
+    avatar: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -78,10 +80,11 @@ class Token(BaseModel):
 
 
 class UsuarioUpdate(BaseModel):
-    """Payload para actualizar usuario."""
+    """Payload para actualizar usuario (desde admin)."""
 
     nombre: str | None = None
     email: str | None = None
+    telefono: str | None = None
     rol: Literal["admin", "tecnico", "visualizador"] | None = None
     is_active: bool | None = None
 
@@ -117,3 +120,32 @@ class UsuarioListResponse(BaseModel):
     total: int
     page: int
     per_page: int
+
+
+class ProfileUpdate(BaseModel):
+    """Payload para que el usuario edite su propio perfil (solo nombre y avatar).
+
+    Teléfono no es editable - se configura desde admin.
+    """
+
+    nombre: str | None = None
+    avatar: str | None = None
+
+    @field_validator("nombre")
+    def validate_nombre(cls, value: str | None) -> str | None:
+        if value is not None and len(value.strip()) < 2:
+            raise ValueError("nombre debe tener al menos 2 caracteres")
+        return value.strip() if value else value
+
+
+class ProfileResponse(BaseModel):
+    """Respuesta del perfil del usuario autenticado."""
+
+    id: int
+    nombre: str
+    email: str
+    telefono: str | None = None
+    avatar: str | None = None
+    rol: str
+
+    model_config = {"from_attributes": True}

@@ -7,7 +7,6 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
-from app.middleware.rate_limit import limiter
 from app.models.audit_log import AuditLog
 from app.models.usuario import Usuario
 from app.schemas.usuario import (
@@ -22,7 +21,6 @@ router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
 
 @router.get("", response_model=UsuarioListResponse)
-@limiter.limit("100/hour")
 def list_usuarios(
     request: Request,
     rol: str | None = Query(None, description="Filtrar por rol"),
@@ -61,7 +59,6 @@ def list_usuarios(
 
 
 @router.get("/{usuario_id}", response_model=UsuarioResponse)
-@limiter.limit("200/hour")
 def get_usuario(
     usuario_id: int,
     request: Request,
@@ -80,7 +77,6 @@ def get_usuario(
 
 
 @router.post("", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit("10/hour")  # Crear usuarios es más sensible
 def create_usuario(
     payload: UsuarioCreate,
     request: Request,
@@ -105,7 +101,6 @@ def create_usuario(
 
 
 @router.put("/{usuario_id}", response_model=UsuarioResponse)
-@limiter.limit("50/hour")
 def update_usuario(
     usuario_id: int,
     payload: UsuarioUpdate,
@@ -136,6 +131,8 @@ def update_usuario(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Email ya en uso"
             )
         usuario.email = payload.email
+    if payload.telefono is not None:
+        usuario.telefono = payload.telefono
     if payload.rol is not None:
         usuario.rol = payload.rol
     if payload.is_active is not None:
@@ -148,7 +145,6 @@ def update_usuario(
 
 
 @router.delete("/{usuario_id}", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("20/hour")  # Eliminar usuarios es muy sensible
 def delete_usuario(
     usuario_id: int,
     request: Request,
@@ -180,7 +176,6 @@ def delete_usuario(
 
 
 @router.get("/{usuario_id}/exportar-datos")
-@limiter.limit("10/hour")
 def exportar_datos_usuario(
     usuario_id: int,
     request: Request,
@@ -243,7 +238,6 @@ def exportar_datos_usuario(
 
 
 @router.delete("/{usuario_id}/datos-personales", status_code=status.HTTP_200_OK)
-@limiter.limit("5/hour")
 def eliminar_datos_personales(
     usuario_id: int,
     request: Request,

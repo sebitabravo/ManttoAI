@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
-from app.middleware.rate_limit import limiter
 from app.schemas.alerta import (
     AlertaCountResponse,
     AlertaMarkReadResponse,
@@ -20,7 +19,6 @@ router = APIRouter(prefix="/alertas", tags=["alertas"])
     response_model=list[AlertaResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("200/hour")
 def get_alertas(
     request: Request,
     equipo_id: int | None = Query(default=None),
@@ -43,7 +41,6 @@ def get_alertas(
     response_model=AlertaMarkReadResponse,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("100/hour")
 def patch_alerta(
     alerta_id: int,
     request: Request,
@@ -59,7 +56,6 @@ def patch_alerta(
     response_model=AlertaCountResponse,
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("200/hour")
 def get_alertas_count(
     request: Request,
     equipo_id: int | None = Query(default=None),

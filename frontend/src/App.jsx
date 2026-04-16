@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import Layout from "./components/layout/Layout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
+import OnboardingGuard from "./components/onboarding/OnboardingGuard";
 import { AuthProvider } from "./context/AuthContext";
 import useAuth from "./hooks/useAuth";
 import AdminPage from "./pages/AdminPage";
@@ -12,6 +13,8 @@ import EquiposPage from "./pages/EquiposPage";
 import HistorialPage from "./pages/HistorialPage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import OnboardingPage from "./pages/OnboardingPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function AuthBootstrapFallback() {
   return <div className="flex min-h-screen items-center justify-center bg-neutral-50 text-sm text-neutral-600">Validando sesión...</div>;
@@ -60,7 +63,9 @@ export default function App() {
             path="/"
             element={(
               <ProtectedRoute fallback={<AuthBootstrapFallback />}>
-                <Layout />
+                <OnboardingGuard>
+                  <Layout />
+                </OnboardingGuard>
               </ProtectedRoute>
             )}
           >
@@ -70,6 +75,8 @@ export default function App() {
             <Route path="equipos/:equipoId" element={<EquipoDetallePage />} />
             <Route path="alertas" element={<AlertasPage />} />
             <Route path="historial" element={<HistorialPage />} />
+            <Route path="onboarding" element={<OnboardingPage />} />
+            <Route path="perfil" element={<ProfilePage />} />
             <Route path="admin" element={<AdminRoute />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />

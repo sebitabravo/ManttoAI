@@ -17,6 +17,8 @@ function sanitizeUserForStorage(user) {
     rol: user.rol,
     // email se incluye porque se usa para mostrar en la UI (Header)
     email: user.email,
+    // avatar se incluye para mostrar en el UserMenu
+    avatar: user.avatar,
   };
 }
 

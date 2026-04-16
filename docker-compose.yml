@@ -38,12 +38,18 @@ services:
       SEED_TECNICO_NAME: ${SEED_TECNICO_NAME:-Tecnico ManttoAI}
       SEED_TECNICO_EMAIL: ${SEED_TECNICO_EMAIL:-tecnico@manttoai.local}
       SEED_ALLOW_NON_DEV: ${SEED_ALLOW_NON_DEV:-false}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-manttoai_redis_dev}
     depends_on:
       mysql:
         condition: service_healthy
       mosquitto:
         condition: service_healthy
       mailpit:
+        condition: service_started
+      redis:
         condition: service_started
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
@@ -106,5 +112,15 @@ services:
       - "8025:8025"
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-manttoai_redis_dev}
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
 volumes:
   mysql_data:
+  redis_data:

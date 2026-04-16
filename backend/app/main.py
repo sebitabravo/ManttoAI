@@ -27,6 +27,7 @@ from app.routers import (
     legal,
     mantenciones,
     metrics,
+    onboarding,
     predicciones,
     reportes,
     umbrales,
@@ -157,6 +158,7 @@ app.include_router(
 
 # Routers existentes con RBAC aplicado directamente en cada router
 # Se exponen también en raíz por compatibilidad con test suite legado.
+include_router_with_legacy_support(onboarding.router)
 include_router_with_legacy_support(equipos.router)
 include_router_with_legacy_support(lecturas.router)
 include_router_with_legacy_support(alertas.router)

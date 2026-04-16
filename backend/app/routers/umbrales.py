@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
-from app.middleware.rate_limit import limiter
 from app.schemas.umbral import UmbralCreate, UmbralResponse, UmbralUpdate
 from app.services.umbral_service import (
     create_umbral,
@@ -22,7 +21,6 @@ router = APIRouter(prefix="/umbrales", tags=["umbrales"])
     response_model=list[UmbralResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("200/hour")
 def get_umbrales(
     request: Request,
     equipo_id: int | None = Query(default=None),
@@ -38,7 +36,6 @@ def get_umbrales(
     response_model=list[UmbralResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("200/hour")
 def get_umbrales_by_equipo(
     equipo_id: int,
     request: Request,
@@ -54,7 +51,6 @@ def get_umbrales_by_equipo(
     response_model=UmbralResponse,
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("200/hour")
 def get_umbral_by_id(
     umbral_id: int,
     request: Request,
@@ -71,7 +67,6 @@ def get_umbral_by_id(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role("admin"))],
 )
-@limiter.limit("50/hour")
 def post_umbral(
     payload: UmbralCreate,
     request: Request,
@@ -93,7 +88,6 @@ def post_umbral(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role("admin"))],
 )
-@limiter.limit("50/hour")
 def post_umbral_by_equipo(
     equipo_id: int,
     payload: UmbralCreate,
@@ -116,7 +110,6 @@ def post_umbral_by_equipo(
     response_model=UmbralResponse,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("50/hour")
 def put_umbral(
     umbral_id: int,
     payload: UmbralUpdate,
@@ -133,7 +126,6 @@ def put_umbral(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role("admin"))],
 )
-@limiter.limit("30/hour")
 def delete_umbral_by_id(
     umbral_id: int,
     request: Request,

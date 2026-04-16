@@ -35,6 +35,7 @@ Los marcados con 👑 requieren rol `admin`.
 | GET | `/api/v1/equipos` | Lista equipos disponibles | 🔒 |
 | GET | `/api/v1/equipos/{equipo_id}` | Obtiene un equipo por ID | 🔒 |
 | POST | `/api/v1/equipos` | Crea un equipo | 🔒 admin/técnico |
+| POST | `/api/v1/equipos/full-setup` | Crea equipo + umbrales en transacción atómica | 🔒 admin/técnico |
 | PUT | `/api/v1/equipos/{equipo_id}` | Actualiza un equipo | 🔒 admin/técnico |
 | DELETE | `/api/v1/equipos/{equipo_id}` | Elimina un equipo | 👑 |
 

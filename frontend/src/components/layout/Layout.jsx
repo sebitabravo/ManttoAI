@@ -75,6 +75,7 @@ export default function Layout() {
           onMenuToggle={toggleSidebar}
           sidebarAbierto={sidebarAbierto}
           menuBtnRef={menuBtnRef}
+          onReplayTour={() => setMostrarOnboarding(true)}
         />
         <main id="main-content" tabIndex={-1} className="bg-neutral-50 px-4 py-5 md:px-6 md:py-6 xl:px-8 xl:py-7">
           <Outlet />

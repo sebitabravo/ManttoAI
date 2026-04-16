@@ -132,6 +132,8 @@ describe("AdminPage", () => {
         email: "test@test.com",
         password: "password123",
         rol: "visualizador",
+        prefijo: "+56",
+        telefono: "",
       });
     });
   });

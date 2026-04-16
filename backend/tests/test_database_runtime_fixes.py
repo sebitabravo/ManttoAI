@@ -239,6 +239,7 @@ def test_apply_runtime_schema_fixes_logs_info_when_any_patch_applies(
         ("usuarios", "onboarding_step"),
         ("usuarios", "onboarding_completed"),
         ("usuarios", "telefono"),
+        ("usuarios", "avatar"),
     ]
     assert "Se aplicaron parches de compatibilidad de esquema" in caplog.text
 

@@ -271,6 +271,7 @@ def apply_runtime_schema_fixes() -> None:
                 usuario_onboarding_step_changed,
                 usuario_onboarding_completed_changed,
                 usuario_telefono_changed,
+                usuario_avatar_changed,
                 alerta_index_changed,
             )
     except (RuntimeError, SQLAlchemyError, DBAPIError):

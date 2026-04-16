@@ -16,7 +16,7 @@ router = APIRouter(prefix="/predicciones", tags=["predicciones"])
     response_model=PrediccionResponse,
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("200/hour")
+@limiter.limit("600/hour")  # Mayor límite para navegación frecuente
 def get_prediccion(
     equipo_id: int,
     request: Request,

@@ -29,7 +29,7 @@ router = APIRouter(prefix="/equipos", tags=["equipos"])
     response_model=list[EquipoResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("200/hour")
+@limiter.limit("600/hour")  # Mayor límite para navegación frecuente
 def get_equipos(
     request: Request,
     db: Session = Depends(get_db),
@@ -44,7 +44,7 @@ def get_equipos(
     response_model=EquipoResponse,
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("200/hour")
+@limiter.limit("600/hour")  # Mayor límite para navegación frecuente
 def get_equipo_by_id(
     equipo_id: int,
     request: Request,

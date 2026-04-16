@@ -28,7 +28,6 @@ router = APIRouter(prefix="/mantenciones", tags=["mantenciones"])
     response_model=list[MantencionResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("6000/hour")  # Mayor límite para polling frecuente desde historial
 def get_mantenciones(
     request: Request,
     equipo_id: int | None = Query(default=None),
@@ -46,7 +45,6 @@ def get_mantenciones(
     response_model=MantencionResponse,
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("6000/hour")  # Igual que list para evitar 429 en detalle
 def get_mantencion_by_id(
     mantencion_id: int,
     request: Request,
@@ -63,7 +61,6 @@ def get_mantencion_by_id(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("6000/hour")
 def post_mantencion(
     payload: MantencionCreate,
     request: Request,
@@ -84,7 +81,6 @@ def post_mantencion(
     response_model=MantencionResponse,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("6000/hour")
 def put_mantencion(
     mantencion_id: int,
     payload: MantencionUpdate,
@@ -101,7 +97,6 @@ def put_mantencion(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role("admin"))],
 )
-@limiter.limit("6000/hour")
 def delete_mantencion_by_id(
     mantencion_id: int,
     request: Request,

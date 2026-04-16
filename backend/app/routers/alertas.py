@@ -20,7 +20,6 @@ router = APIRouter(prefix="/alertas", tags=["alertas"])
     response_model=list[AlertaResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("6000/hour")
 def get_alertas(
     request: Request,
     equipo_id: int | None = Query(default=None),
@@ -43,7 +42,6 @@ def get_alertas(
     response_model=AlertaMarkReadResponse,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("6000/hour")
 def patch_alerta(
     alerta_id: int,
     request: Request,
@@ -59,7 +57,6 @@ def patch_alerta(
     response_model=AlertaCountResponse,
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("6000/hour")
 def get_alertas_count(
     request: Request,
     equipo_id: int | None = Query(default=None),

@@ -58,6 +58,12 @@ export const EQUIPOS_POLLING_INTERVAL_MS = resolvePollingInterval(
   60000
 );
 
+// Detalle de equipo: 60s default
+export const EQUIPO_DETALLE_POLLING_INTERVAL_MS = resolvePollingInterval(
+  ENV_EQUIPO_DETALLE_POLLING_INTERVAL_MS,
+  60000
+);
+
 // === Constantes de negocio ===
 
 // Prefijos telefónicos de Latinoamérica

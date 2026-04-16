@@ -60,7 +60,6 @@ def _content_disposition_attachment(filename: str) -> str:
     "/lecturas.csv",
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limit_by_role(
     admin_limit="80/hour",
     tecnico_limit="60/hour",
     visualizador_limit="40/hour",
@@ -97,7 +96,6 @@ def get_lecturas_csv(
     "/alertas.csv",
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limit_by_role(
     admin_limit="80/hour",
     tecnico_limit="60/hour",
     visualizador_limit="40/hour",
@@ -136,7 +134,6 @@ def get_alertas_csv(
     "/mantenciones.csv",
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limit_by_role(
     admin_limit="80/hour",
     tecnico_limit="60/hour",
     visualizador_limit="40/hour",
@@ -175,7 +172,6 @@ def get_mantenciones_csv(
     "/ejecutivo.pdf",
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limit_by_role(
     admin_limit="40/hour",
     tecnico_limit="30/hour",
     visualizador_limit="20/hour",

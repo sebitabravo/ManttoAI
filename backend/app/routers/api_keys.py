@@ -20,7 +20,6 @@ router = APIRouter(prefix="/api-keys", tags=["api-keys"])
 @router.post(
     "", response_model=APIKeyDetailResponse, status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("6000/hour")
 def create_new_api_key(
     payload: APIKeyCreate,
     request: Request,
@@ -52,7 +51,6 @@ def create_new_api_key(
 
 
 @router.get("", response_model=list[APIKeyResponse])
-@limiter.limit("6000/hour")
 def get_api_keys(
     request: Request,
     include_inactive: bool = False,
@@ -67,7 +65,6 @@ def get_api_keys(
 
 
 @router.get("/{api_key_id}", response_model=APIKeyResponse)
-@limiter.limit("6000/hour")
 def get_api_key(
     api_key_id: int,
     request: Request,
@@ -86,7 +83,6 @@ def get_api_key(
 
 
 @router.delete("/{api_key_id}", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("6000/hour")
 def delete_api_key(
     api_key_id: int,
     request: Request,

@@ -22,7 +22,6 @@ router = APIRouter(prefix="/umbrales", tags=["umbrales"])
     response_model=list[UmbralResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("6000/hour")
 def get_umbrales(
     request: Request,
     equipo_id: int | None = Query(default=None),
@@ -38,7 +37,6 @@ def get_umbrales(
     response_model=list[UmbralResponse],
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("6000/hour")
 def get_umbrales_by_equipo(
     equipo_id: int,
     request: Request,
@@ -54,7 +52,6 @@ def get_umbrales_by_equipo(
     response_model=UmbralResponse,
     dependencies=[Depends(require_role("admin", "tecnico", "visualizador"))],
 )
-@limiter.limit("6000/hour")
 def get_umbral_by_id(
     umbral_id: int,
     request: Request,
@@ -71,7 +68,6 @@ def get_umbral_by_id(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role("admin"))],
 )
-@limiter.limit("6000/hour")
 def post_umbral(
     payload: UmbralCreate,
     request: Request,
@@ -93,7 +89,6 @@ def post_umbral(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role("admin"))],
 )
-@limiter.limit("6000/hour")
 def post_umbral_by_equipo(
     equipo_id: int,
     payload: UmbralCreate,
@@ -116,7 +111,6 @@ def post_umbral_by_equipo(
     response_model=UmbralResponse,
     dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-@limiter.limit("6000/hour")
 def put_umbral(
     umbral_id: int,
     payload: UmbralUpdate,
@@ -133,7 +127,6 @@ def put_umbral(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role("admin"))],
 )
-@limiter.limit("6000/hour")
 def delete_umbral_by_id(
     umbral_id: int,
     request: Request,

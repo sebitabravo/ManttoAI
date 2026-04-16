@@ -30,10 +30,12 @@ class Usuario(Base):
     )
     # Campos para el wizard de onboarding (RNF-26)
     # onboarding_step: paso actual del wizard (1-5), null si completado
+    # Constraint a nivel DB para garantizar integridad (nullable permite null cuando已完成)
     onboarding_step: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         default=1,
+        comment="Paso actual del wizard (1-5), null si completado",
     )
     # onboarding_completed: flag que indica si el usuario completó el wizard
     onboarding_completed: Mapped[bool] = mapped_column(

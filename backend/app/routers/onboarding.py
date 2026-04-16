@@ -64,6 +64,15 @@ def update_onboarding_step(
             detail="El onboarding ya está completado",
         )
 
+    # Validar secuencia de pasos: no puede saltar más de 1 paso
+    current_step = usuario.onboarding_step or 1
+    new_step = payload.step
+    if abs(new_step - current_step) > 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No puedes saltar pasos. current_step={current_step}",
+        )
+
     # Actualizar paso
     usuario.onboarding_step = payload.step
     db.commit()
@@ -92,7 +101,7 @@ def complete_onboarding(
             status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
         )
 
-    # Validar que el equipo existe solo si se proporcionó uno
+    # Validar que el equipo existe y pertenece al usuario u organización
     if payload.equipo_id is not None:
         from app.models.equipo import Equipo
 
@@ -100,6 +109,14 @@ def complete_onboarding(
         if not equipo:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Equipo no encontrado"
+            )
+        # Validar propiedad: equipo debe ser del usuario o de su organización
+        if equipo.usuario_id != current_user.id and equipo.organizacion_id != getattr(
+            current_user, "organizacion_id", None
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permiso para usar este equipo",
             )
 
     # Marcar como completado

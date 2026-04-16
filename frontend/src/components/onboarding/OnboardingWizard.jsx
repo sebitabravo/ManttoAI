@@ -135,6 +135,12 @@ export default function OnboardingWizard() {
     setError(null);
 
     try {
+      // Si ya existe un equipo vinculado, no crear otro
+      if (apiKeyData?.equipoId) {
+        await handleNextStep();
+        return;
+      }
+
       const equipo = await createEquipo(equipoData);
       setApiKeyData((prev) => ({ ...prev, equipoId: equipo.id }));
       await handleNextStep();

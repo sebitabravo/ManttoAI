@@ -30,7 +30,12 @@ export default function OnboardingGuard({ children }) {
         }
       } catch (err) {
         console.error("Error al verificar estado del onboarding:", err);
-        // Si hay un error, no bloqueamos al usuario
+        // Si hay un error de red, mostrar estado de carga y redirigir al onboarding
+        // para evitar saltar el wizard involuntariamente
+        if (pathname !== "/onboarding") {
+          navigate("/onboarding", { replace: true });
+          return;
+        }
       } finally {
         setChecking(false);
       }
@@ -39,7 +44,8 @@ export default function OnboardingGuard({ children }) {
     checkOnboardingStatus();
   }, [pathname, navigate]);
 
-  // Evitar flash del dashboard antes de que resuelva el primer chequeo
+  // Mostrar loading mientras resuelve el estado del onboarding
+  // Nunca renderizar hijos hasta confirmar el estado
   if (checking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-neutral-50">

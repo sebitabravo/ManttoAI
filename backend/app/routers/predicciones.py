@@ -4,7 +4,6 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
-from app.middleware.rate_limit import limiter
 from app.schemas.prediccion import PrediccionResponse
 from app.services.prediccion_service import execute_prediction, get_prediction
 

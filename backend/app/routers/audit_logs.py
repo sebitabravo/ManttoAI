@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
-from app.middleware.rate_limit import limiter
 from app.models.usuario import Usuario
 from app.schemas.audit_log import AuditLogListResponse, AuditLogResponse
 from app.services.audit_service import get_audit_log_by_id, get_audit_logs

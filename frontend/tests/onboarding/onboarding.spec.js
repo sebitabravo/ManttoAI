@@ -57,17 +57,21 @@ test.describe("Onboarding Wizard", () => {
         });
       });
 
-      // Mock de creación de equipo
-      await page.route("**/api/v1/equipos", async (route) => {
+      // Mock de creación de equipo (full-setup)
+      await page.route("**/api/v1/equipos/full-setup", async (route) => {
         const requestBody = await route.request().postDataJSON();
         await route.fulfill({
           status: 201,
           contentType: "application/json",
           body: JSON.stringify({
-            id: 1,
-            ...requestBody,
-            descripcion: "Equipo monitoreado por ManttoAI",
-            estado: "operativo",
+            equipo: {
+              id: 1,
+              ...requestBody,
+              descripcion: "Equipo monitoreado por ManttoAI",
+              estado: "operativo",
+            },
+            umbral_temperatura_id: 101,
+            umbral_vibracion_id: 102
           }),
         });
       });
@@ -148,10 +152,21 @@ test.describe("Onboarding Wizard", () => {
       await page.getByLabel("Nombre del equipo *").fill("Motor de prueba");
       await page.getByLabel("Ubicación").fill("Planta de pruebas");
 
-      // Avanzar (equipo + umbrales se crean juntos en paso 2)
+      // Avanzar (equipo + umbrales se crean juntos en paso 2 usando full-setup)
       await page.getByRole("button", { name: "Siguiente" }).click();
 
-      // PASO 4: Generar API Key (Paso 3 se salta automáticamente)
+      // PASO 3: Umbrales (el frontend muestra paso 3 por compatibilidad)
+      await expect(page.getByRole("heading", { name: "Configura umbrales de alerta" })).toBeVisible();
+      await expect(page.getByText("Paso 3 de 5")).toBeVisible();
+      
+      // Verificar campos pre-llenados
+      await expect(page.getByLabel("Temperatura máxima (°C)")).toHaveValue("80");
+      await expect(page.getByLabel("Vibración máxima (g)")).toHaveValue("0.5");
+
+      // Avanzar al paso 4
+      await page.getByRole("button", { name: "Siguiente" }).click();
+
+      // PASO 4: Generar API Key
       await expect(page.getByRole("heading", { name: "Conecta tu dispositivo IoT" })).toBeVisible();
       await expect(page.getByText("Paso 4 de 5")).toBeVisible();
 
@@ -300,8 +315,8 @@ test.describe("Onboarding Wizard", () => {
         });
       });
 
-      // Mock de error al crear equipo
-      await page.route("**/api/v1/equipos", async (route) => {
+      // Mock de error al crear equipo (full-setup)
+      await page.route("**/api/v1/equipos/full-setup", async (route) => {
         await route.fulfill({
           status: 500,
           contentType: "application/json",

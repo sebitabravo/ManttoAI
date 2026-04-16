@@ -13,7 +13,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db
-from app.middleware.rate_limit import limiter
 from app.models.alerta import Alerta
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura

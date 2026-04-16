@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
-from app.middleware.rate_limit import limiter
 from app.schemas.umbral import UmbralCreate, UmbralResponse, UmbralUpdate
 from app.services.umbral_service import (
     create_umbral,

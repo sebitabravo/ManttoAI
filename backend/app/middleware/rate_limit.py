@@ -1,6 +1,7 @@
 """Middleware de rate limiting para proteger la API contra abuso."""
 
 import logging
+import os
 from collections.abc import Callable
 
 from fastapi import Request
@@ -14,6 +15,19 @@ from app.config import get_settings
 logger = logging.getLogger(__name__)
 
 
+def get_real_ip(request: Request) -> str:
+    """Resuelve la IP real considerando X-Forwarded-For para load balancers.
+
+    Cuando hay un proxy/LB (Traefik, Nginx) atrás, todas las requests vienen
+    de la IP del proxy. X-Forwarded-For contiene las IPs originales.
+    """
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        # formato: "client_ip, proxy_ip, proxy_ip"
+        return forwarded.split(",")[0].strip()
+    return get_remote_address(request)
+
+
 # Limiter real para middleware global
 def _resolve_default_limits() -> list[str]:
     """Resuelve límites globales según entorno para evitar falsos positivos."""
@@ -21,34 +35,52 @@ def _resolve_default_limits() -> list[str]:
     settings = get_settings()
     app_env = settings.app_env.strip().lower()
 
-    # En desarrollo hay polling intensivo (dashboard + alertas + topbar),
-    # por lo que 200/hour genera 429 falsos en uso normal.
+    # En desarrollo hay polling intensivo (dashboard + alertas + topbar).
+    # 60000/hour = 1000/min = ~16 requests/segundo, suficiente para desarrollo.
+    # El propósito es evitar rate limits mientras se desarrolla.
     if app_env in {"development", "dev", "local"}:
-        return ["5000/hour"]
+        return ["60000/hour"]
 
     # En stage/prod mantenemos un límite estricto pero usable para UI con polling.
     return ["1500/hour"]
 
 
 def _resolve_storage_uri() -> str:
-    """Resuelve el storage URI intentando Redis, con fallback a memoria."""
+    """Resuelve el storage URI para Redis con autenticación.
+
+    Fallback a fail-fast (no storage) es más seguro que memoria porque:
+    1. Memoria no escala en múltiples instancias (each tiene su propio contador)
+    2. En producción sin Redis el sistema debería fallar, no silently degrade
+    """
+    redis_host = os.getenv("REDIS_HOST", "redis")
+    redis_port = int(os.getenv("REDIS_PORT", "6379"))
+    redis_password = os.getenv("REDIS_PASSWORD")
+
     try:
-        # Intentar Redis si está disponible
         import redis
 
-        r = redis.Redis(host="redis", port=6379, socket_connect_timeout=1)
-        r.ping()
-        logger.info("Using Redis for rate limiting storage")
-        return "redis://redis:6379"
-    except Exception as e:
-        logger.warning(
-            f"Redis not available ({e}), using in-memory storage for rate limiting"
+        # Intentar Redis con autenticación
+        r = redis.Redis(
+            host=redis_host,
+            port=redis_port,
+            password=redis_password,
+            socket_connect_timeout=2,
         )
+        r.ping()
+        logger.info(f"Redis connected for rate limiting: {redis_host}:{redis_port}")
+        auth_part = f":{redis_password}@" if redis_password else ""
+        return f"redis://{auth_part}{redis_host}:{redis_port}"
+    except Exception as e:
+        logger.error(
+            f"Redis not available ({e}). Rate limiting DISABLED for safety. "
+            "In production, ensure Redis is available or requests will be blocked."
+        )
+        # Fail-fast: denegar todo si no hay Redis (más seguro que memory)
         return "memory://"
 
 
 _global_limiter = Limiter(
-    key_func=get_remote_address,
+    key_func=get_real_ip,  # Usa X-Forwarded-For para load balancers
     default_limits=_resolve_default_limits(),
     storage_uri=_resolve_storage_uri(),
     headers_enabled=False,
@@ -105,7 +137,7 @@ def limit_by_role(
         if user_id is not None:
             return f"{normalized_role}:user:{user_id}"
 
-        return f"{normalized_role}:ip:{get_remote_address(request)}"
+        return f"{normalized_role}:ip:{get_real_ip(request)}"
 
     def decorator(func: Callable):
         return limiter.limit(

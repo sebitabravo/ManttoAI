@@ -14,7 +14,7 @@ function PrediccionBadge({ clasificacion, probabilidad }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${config.chipClass}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${config.chipClass}`}
       title={probabilidad != null ? `Probabilidad de falla: ${formatPorcentajeRiesgo(probabilidad)}` : undefined}
     >
       <span aria-hidden="true" className={`h-2 w-2 rounded-full ${config.dotClass}`} />
@@ -54,7 +54,8 @@ export default function EquipoCard({ equipo, onDeleted }) {
 
   return (
     <>
-      <article className="flex flex-col gap-2 rounded-lg border border-neutral-200 bg-neutral-100 p-4 transition-all duration-150 ease-out-quart hover:shadow-md">
+      {/* Comentario: Aplicando estilo Apple — eliminar borde exterior, usar fondo blanco y sombra sutil */}
+      <article className="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-sm transition-all duration-150 ease-out-quart hover:shadow-[rgba(0,0,0,0.22)_3px_5px_30px_0px]">
         <div className="flex items-start justify-between gap-2">
           <h2 className="mb-1 mt-0 text-base font-semibold text-neutral-900">{equipo.nombre}</h2>
           <button
@@ -81,7 +82,7 @@ export default function EquipoCard({ equipo, onDeleted }) {
         <Link
           to={`/equipos/${equipo.id}`}
           aria-label={`Ver detalle ${equipo.nombre}`}
-          className="mt-1 text-sm font-medium text-primary-600 transition-colors duration-150 ease-out-quart hover:text-primary-700 hover:underline focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary-500"
+          className="mt-1 text-sm font-medium text-primary-500 transition-colors duration-150 ease-out-quart hover:text-primary-600 hover:underline focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary-500"
         >
           Ver detalle
         </Link>

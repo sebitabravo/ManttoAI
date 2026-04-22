@@ -57,7 +57,7 @@ export default function QuickConfig({ onReplayTour }) {
       <button
         type="button"
         onClick={() => setAbierto((a) => !a)}
-        className="flex items-center justify-center rounded-sm p-1.5 text-neutral-500 transition-colors duration-150 hover:bg-neutral-200 hover:text-neutral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+        className="flex items-center justify-center rounded-lg p-1.5 text-neutral-500 transition-colors duration-150 hover:bg-neutral-100 hover:text-neutral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         aria-label="Configuración rápida"
         aria-expanded={abierto}
         aria-haspopup="true"
@@ -72,7 +72,7 @@ export default function QuickConfig({ onReplayTour }) {
       {/* Dropdown */}
       {abierto && (
         <div
-          className="absolute right-0 top-full z-50 mt-1 w-56 rounded-md border border-neutral-200 bg-neutral-100 py-1 shadow-md"
+          className="absolute right-0 top-full z-50 mt-1 w-56 rounded-2xl bg-white py-1 shadow-apple"
           role="menu"
           aria-label="Opciones de configuración"
         >

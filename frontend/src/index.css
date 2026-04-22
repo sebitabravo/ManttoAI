@@ -4,33 +4,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Tipografía ──────────────────────────────────────────────────────────── */
+/* ─── Design System: Apple-inspired ──────────────────────────────────────── */
 
 /*
- * Geist: fuente principal moderna y técnica (Vercel Design System)
- * Geist Mono: valores numéricos tabulares para tablas y métricas
+ * Tipografía: Inter como alternativa web a SF Pro
+ * Inter tiene optical sizing similar y negative letter-spacing nativo
  * 
- * Las fuentes se cargan desde index.html con <link> tags para evitar
- * conflictos con @import order en PostCSS/Tailwind.
- * 
- * Estrategia de carga:
- * - preconnect para DNS prefetching
- * - font-display: swap para evitar FOIT (Flash of Invisible Text)
- * - Pesos: 400 (Regular), 500 (Medium), 600 (Semibold)
- * - Subsetting: latin (optimización)
+ * Pesos disponibles: 300 (light), 400 (normal), 500 (medium), 600 (semibold), 700 (bold)
  */
 
-/*
- * Variables CSS personalizadas para tipografía
- * Usado en componentes que necesitan valores dinámicos
- */
 :root {
-  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "Geist Mono", "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+  /* Fuentes */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  
+  /* Colores Apple core */
+  --apple-black: #000000;
+  --apple-white: #ffffff;
+  --apple-gray: #f5f5f7;
+  --apple-gray-dark: #1d1d1f;
+  --apple-blue: #0071e3;
+  --apple-link: #0066cc;
+  --apple-link-dark: #2997ff;
+  
+  /* Semánticos */
+  --apple-green: #34c759;
+  --apple-orange: #ff9500;
+  --apple-red: #ff3b30;
+  --apple-cyan: #5ac8fa;
 }
 
 /*
- * Reset base + configuración tipográfica global
+ * Reset base + configuración global Apple-style
  */
 * {
   margin: 0;
@@ -39,131 +43,120 @@
 }
 
 html {
-  /* Base 16px para rem scaling accesible */
   font-size: 16px;
-  /* Evita saltos horizontales en mobile cuando aparece scrollbar */
   overflow-x: hidden;
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: var(--font-sans);
   font-weight: 400;
-  line-height: 1.5;
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  color: var(--apple-gray-dark);
+  background-color: var(--apple-gray);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Mejora renderizado en pantallas no-retina */
   text-rendering: optimizeLegibility;
+  /* Feature settings para Inter */
+  font-feature-settings: "ss01" on, "cv01" on;
 }
 
 /*
- * Números tabulares para tablas y valores numéricos
- * Evita que los números "salten" al cambiar (ej. 999 → 1000)
+ * Selección de texto con Apple Blue
+ */
+::selection {
+  background-color: rgba(0, 113, 227, 0.2);
+  color: var(--apple-gray-dark);
+}
+
+/*
+ * Focus visible global — Apple Blue ring
+ */
+:focus-visible {
+  outline: 2px solid var(--apple-blue);
+  outline-offset: 2px;
+}
+
+/*
+ * Links base
+ */
+a {
+  color: var(--apple-link);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/*
+ * Headings con negative letter-spacing Apple
+ */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  color: var(--apple-gray-dark);
+}
+
+/*
+ * Escala tipográfica Apple-style
+ */
+h1 {
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.4px;
+}
+
+h2 {
+  font-size: 28px;
+  line-height: 1.14;
+  letter-spacing: -0.28px;
+}
+
+h3 {
+  font-size: 21px;
+  line-height: 1.19;
+  letter-spacing: -0.21px;
+}
+
+/*
+ * Números tabulares para tablas y métricas
  */
 .tabular-nums {
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-/*
- * Clase para valores numéricos destacados (dashboard, métricas)
- */
 .metric-value {
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   letter-spacing: -0.02em;
 }
 
-/*
- * Headings con jerarquía clara
- * Aplicar manualmente en componentes para control preciso
- */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-
-/*
- * Escala tipográfica fija para app (4 niveles visuales).
- * Mantiene densidad controlada y evita drift de tamaños aleatorios.
- */
-@layer utilities {
-  .text-xs {
-    font-size: 0.75rem;
-    line-height: 1rem;
-  }
-
-  .text-sm,
-  .text-base {
-    font-size: 0.875rem;
-    line-height: 1.375rem;
-  }
-
-  .text-md,
-  .text-lg,
-  .text-xl {
-    font-size: 1.125rem;
-    line-height: 1.625rem;
-    letter-spacing: -0.01em;
-  }
-
-  .text-2xl,
-  .text-3xl,
-  .text-4xl,
-  .text-5xl,
-  .text-6xl {
-    font-size: 1.875rem;
-    line-height: 2.25rem;
-    letter-spacing: -0.02em;
-  }
-}
-
-/*
- * Los datos tabulares (históricos y sensores) deben mantener ancho estable.
- */
 table td,
 table th {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-/*
- * Container queries para cards críticas del dashboard.
- * Ajustan escala tipográfica según ancho real del card.
- */
-.resumen-hero {
-  container-type: inline-size;
-}
-
-@container (max-width: 22rem) {
-  .resumen-hero__value {
-    font-size: 1.5rem;
-    line-height: 2rem;
-  }
-
-  .resumen-hero__label {
-    letter-spacing: 0.02em;
-  }
-}
-
-/* ─── Layout principal ─────────────────────────────────────────────────────── */
+/* ─── Layout principal Apple-style ─────────────────────────────────────────── */
 
 /*
- * En desktop (>= 769px): sidebar fijo de 240px + contenido principal.
- * En tablet (<= 768px): una sola columna; el sidebar se superpone como drawer.
+ * Layout con sidebar fijo y contenido principal
+ * Sidebar: 260px en desktop, drawer en mobile
  */
 .layout-root {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   min-height: 100vh;
+  background-color: var(--apple-gray);
 }
 
-/*
- * Defaults para desktop: overlay y botón hamburguesa ocultos.
- * Deben declararse ANTES del media query para que éste pueda sobrescribirlos.
- */
 .layout-overlay {
   display: none;
 }
@@ -172,12 +165,8 @@ table th {
   display: none;
 }
 
-/* ─── Responsive tablet ─────────────────────────────────────────────────────── */
+/* ─── Responsive tablet/mobile ────────────────────────────────────────────── */
 
-/*
- * En tablet el sidebar sale del flujo normal y se convierte en un drawer
- * que se desliza desde la izquierda. Por defecto está oculto fuera de pantalla.
- */
 @media (max-width: 768px) {
   .layout-root {
     grid-template-columns: minmax(0, 1fr);
@@ -188,41 +177,76 @@ table th {
     top: 0;
     left: 0;
     height: 100vh;
-    width: 240px;
+    width: 260px;
     z-index: 100;
-    /* Oculto fuera de pantalla por defecto */
     transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
-    box-shadow: 2px 0 8px oklch(15% 0.015 250 / 0.12);
+    transition: transform 0.3s cubic-bezier(0.42, 0, 0.58, 1);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
   }
 
-  /* Clase que activa el drawer cuando el usuario abre el menú */
   .layout-sidebar--abierto {
     transform: translateX(0);
   }
 
-  /* Overlay semitransparente detrás del drawer — visible solo en tablet */
   .layout-overlay {
     display: block;
     position: fixed;
     inset: 0;
     z-index: 99;
-    background: oklch(15% 0.015 250 / 0.35);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
   }
 
-  /* Botón hamburguesa: visible solo en tablet */
   .btn-menu-tablet {
     display: flex;
   }
 }
 
-/* ─── Accesibilidad: movimiento reducido ─────────────────────────────────────── */
+/* ─── Container queries para cards ─────────────────────────────────────────── */
 
-/*
- * Desactiva animaciones para usuarios que prefieren movimiento reducido.
- * Cumple con WCAG 2.2 Criterion 2.3.3 (Animation from Interactions, Level AAA).
- * Afecta: spinners, skeletons (pulse), polling dot, transiciones del sidebar.
- */
+.resumen-hero {
+  container-type: inline-size;
+}
+
+@container (max-width: 22rem) {
+  .resumen-hero__value {
+    font-size: 1.75rem;
+    line-height: 2rem;
+  }
+
+  .resumen-hero__label {
+    letter-spacing: 0.02em;
+  }
+}
+
+/* ─── Scrollbar Apple-style ──────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* ─── Accesibilidad: movimiento reducido ─────────────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -231,28 +255,25 @@ table th {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* ─── Onboarding tour ──────────────────────────────────────────────────────── */
 
-/*
- * Animación de entrada del tooltip del tour.
- * Fade-in + desplazamiento sutil desde abajo.
- */
 .onboarding-tooltip {
-  animation: onboarding-fade-in 0.25s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: onboarding-fade-in 0.25s cubic-bezier(0.42, 0, 0.58, 1) forwards;
 }
 
-/*
- * Modal de bienvenida: centrado en pantalla con max-width.
- */
 .onboarding-tooltip--welcome {
   left: 50% !important;
   top: 50% !important;
   transform: translate(-50%, -50%);
   width: calc(100vw - 2rem);
   max-width: 420px;
-  animation: onboarding-welcome-in 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: onboarding-welcome-in 0.3s cubic-bezier(0.42, 0, 0.58, 1) forwards;
 }
 
 .onboarding-spotlight {
@@ -290,10 +311,6 @@ table th {
   }
 }
 
-/*
- * Tooltip responsivo: en mobile (sidebar como drawer cerrado),
- * el tooltip se posiciona en el centro de la pantalla.
- */
 @media (max-width: 768px) {
   .onboarding-tooltip:not(.onboarding-tooltip--welcome) {
     left: 50% !important;
@@ -301,5 +318,34 @@ table th {
     transform: translate(-50%, -50%);
     width: calc(100vw - 2rem);
     max-width: 360px;
+  }
+}
+
+/* ─── Utilities Apple ────────────────────────────────────────────────────── */
+
+@layer utilities {
+  /* Glass effect para navigation */
+  .glass-nav {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+  
+  .glass-nav-dark {
+    background: rgba(29, 29, 31, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+  
+  /* Card sin border Apple-style */
+  .card-apple {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Pill button shape */
+  .btn-pill {
+    border-radius: 980px;
   }
 }

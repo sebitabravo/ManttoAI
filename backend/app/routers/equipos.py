@@ -1,6 +1,6 @@
 """Endpoints de equipos."""
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
@@ -19,6 +19,14 @@ from app.services.equipo_service import (
     list_equipos,
     update_equipo,
 )
+from app.schemas.equipo import AutoRegisterRequest
+from app.config import get_settings
+from jose import JWTError, jwt
+from datetime import datetime, timedelta, timezone
+from sqlalchemy.exc import IntegrityError
+
+settings = get_settings()
+JWT_ALGORITHM = "HS256"
 
 router = APIRouter(prefix="/equipos", tags=["equipos"])
 
@@ -35,6 +43,30 @@ def get_equipos(
     """Lista equipos disponibles."""
 
     return list_equipos(db)
+
+
+@router.get(
+    "/provisioning-token",
+    dependencies=[Depends(require_role("admin", "tecnico"))],
+)
+def get_provisioning_token(request: Request) -> dict:
+    """Genera un token seguro para provisionamiento (SoftAP + QR).
+
+    Implementación simple: JWT firmado con SECRET_KEY y propósito 'provision'.
+    El token expira en 1 hora.
+    Solo accesible por admin/tecnico.
+    """
+
+    now = datetime.now(timezone.utc)
+    exp = now + timedelta(hours=1)
+    payload = {
+        "purpose": "provision",
+        "iat": int(now.timestamp()),
+        "exp": int(exp.timestamp()),
+    }
+
+    token = jwt.encode(payload, settings.secret_key, algorithm=JWT_ALGORITHM)
+    return {"token": token, "expires_at": exp.isoformat()}
 
 
 @router.get(
@@ -163,3 +195,49 @@ def create_equipo_with_umbrales(
         umbral_temperatura_id=umbral_temp.id,
         umbral_vibracion_id=umbral_vib.id,
     )
+
+
+@router.post("/auto-register", status_code=status.HTTP_201_CREATED)
+def auto_register(payload: AutoRegisterRequest, db: Session = Depends(get_db)):
+    """Endpoint público para que un dispositivo (ESP32) se registre usando el token.
+
+    Se valida el JWT y se crea un Equipo con la mac_address proporcionada.
+    """
+
+    # Validar token
+    try:
+        claims = jwt.decode(
+            payload.token, settings.secret_key, algorithms=[JWT_ALGORITHM]
+        )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido"
+        )
+
+    if claims.get("purpose") != "provision":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token no autorizado para provisioning",
+        )
+
+    mac = payload.mac_address
+    if not mac:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="mac_address es requerido"
+        )
+
+    # Crear equipo mínimo usando nombre por defecto
+    from app.schemas.equipo import EquipoCreate
+
+    nombre = f"Equipo {mac[-5:]}"
+    equipo_payload = EquipoCreate(nombre=nombre, mac_address=mac)
+
+    try:
+        equipo = create_equipo(db, equipo_payload)
+    except IntegrityError:
+        # Probablemente mac_address duplicada
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Equipo con esa MAC ya existe"
+        )
+
+    return equipo

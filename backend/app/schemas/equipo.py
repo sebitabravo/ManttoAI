@@ -1,8 +1,10 @@
 """Schemas de equipos."""
 
 from typing import Literal
-
-from pydantic import BaseModel
+import re
+from datetime import datetime
+from pydantic import BaseModel, Field, field_validator
+from typing import Any
 
 
 EstadoEquipo = Literal[
@@ -14,6 +16,14 @@ EstadoEquipo = Literal[
 ]
 
 
+def validate_mac_address(v: str | None) -> str | None:
+    if v is None:
+        return v
+    if not re.match(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$", v):
+        raise ValueError("Formato de MAC address inválido")
+    return v
+
+
 class EquipoBase(BaseModel):
     """Campos base de un equipo."""
 
@@ -22,6 +32,11 @@ class EquipoBase(BaseModel):
     tipo: str = "Motor"
     descripcion: str = "Equipo monitoreado por ManttoAI"
     estado: EstadoEquipo = "operativo"
+    mac_address: str | None = Field(default=None, max_length=17)
+
+    @field_validator("mac_address", mode="before")
+    def validate_mac(cls, v):
+        return validate_mac_address(v)
 
 
 class EquipoCreate(EquipoBase):
@@ -36,12 +51,18 @@ class EquipoUpdate(BaseModel):
     tipo: str | None = None
     descripcion: str | None = None
     estado: EstadoEquipo | None = None
+    mac_address: str | None = Field(default=None, max_length=17)
+
+    @field_validator("mac_address", mode="before")
+    def validate_mac(cls, v):
+        return validate_mac_address(v)
 
 
 class EquipoResponse(EquipoBase):
     """Representación pública de un equipo."""
 
     id: int
+    created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -61,8 +82,13 @@ class EquipoFullSetupRequest(BaseModel):
     ubicacion: str | None = None
     tipo: str | None = None
     descripcion: str | None = None
+    mac_address: str | None = Field(default=None, max_length=17)
     temperatura_max: float = 80.0
     vibracion_max: float = 0.5
+
+    @field_validator("mac_address", mode="before")
+    def validate_mac(cls, v):
+        return validate_mac_address(v)
 
 
 class EquipoFullSetupResponse(BaseModel):
@@ -70,6 +96,22 @@ class EquipoFullSetupResponse(BaseModel):
 
     equipo: EquipoResponse
     umbral_temperatura_id: int
+    created_at: datetime | None = None
     umbral_vibracion_id: int
+    created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
+
+
+class AutoRegisterRequest(BaseModel):
+    """Payload recibido desde el dispositivo durante el provisioning.
+
+    El token es un JWT firmado por el backend con propósito 'provision'.
+    """
+
+    mac_address: str | None = Field(default=None, max_length=17)
+    token: str
+
+    @field_validator("mac_address", mode="before")
+    def validate_mac(cls, v):
+        return validate_mac_address(v)

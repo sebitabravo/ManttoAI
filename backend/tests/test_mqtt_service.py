@@ -14,7 +14,7 @@ from app.database import Base
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.services.mqtt_service import (
-    extract_equipo_id,
+    extract_mac_address,
     parse_message,
     process_mqtt_message,
     start_mqtt_subscriber,
@@ -45,7 +45,7 @@ def session_factory() -> Generator[sessionmaker, None, None]:
     engine.dispose()
 
 
-def _create_equipo(session_factory: sessionmaker, nombre: str = "Equipo MQTT") -> int:
+def _create_equipo(session_factory: sessionmaker, nombre: str = "Equipo MQTT", mac_address: str = "00:1A:2B:3C:4D:5E") -> int:
     """Crea un equipo auxiliar para validar FK de lecturas."""
 
     db = session_factory()
@@ -55,6 +55,7 @@ def _create_equipo(session_factory: sessionmaker, nombre: str = "Equipo MQTT") -
             ubicacion="Laboratorio",
             tipo="Motor",
             estado="operativo",
+            mac_address=mac_address,
         )
         db.add(equipo)
         db.commit()
@@ -64,18 +65,18 @@ def _create_equipo(session_factory: sessionmaker, nombre: str = "Equipo MQTT") -
         db.close()
 
 
-def test_extract_equipo_id_from_valid_topic():
+def test_extract_mac_address_from_valid_topic():
     """Valida extracción de equipo_id cuando el topic es válido."""
 
-    equipo_id = extract_equipo_id("manttoai/equipo/7/lecturas")
-    assert equipo_id == 7
+    mac_address = extract_mac_address("manttoai/telemetria/00:1A:2B:3C:4D:5E")
+    assert mac_address == "00:1A:2B:3C:4D:5E"
 
 
-def test_extract_equipo_id_rejects_invalid_topic():
+def test_extract_mac_address_rejects_invalid_topic():
     """Valida rechazo cuando el topic no cumple formato esperado."""
 
     with pytest.raises(ValueError, match="Topic MQTT inválido"):
-        extract_equipo_id("manttoai/equipo/x/lecturas")
+        extract_mac_address("manttoai/equipo/x/lecturas")
 
 
 def test_parse_message_rejects_invalid_json():
@@ -88,7 +89,7 @@ def test_parse_message_rejects_invalid_json():
 def test_process_mqtt_message_persists_lectura(session_factory: sessionmaker):
     """Valida persistencia en DB cuando llega mensaje MQTT válido."""
 
-    equipo_id = _create_equipo(session_factory)
+    equipo_id = _create_equipo(session_factory, mac_address="00:1A:2B:3C:4D:5E")
     payload = {
         "temperatura": 44.2,
         "humedad": 57.4,
@@ -98,7 +99,7 @@ def test_process_mqtt_message_persists_lectura(session_factory: sessionmaker):
     }
 
     processed = process_mqtt_message(
-        topic=f"manttoai/equipo/{equipo_id}/lecturas",
+        topic=f"manttoai/telemetria/00:1A:2B:3C:4D:5E",
         payload=json.dumps(payload).encode("utf-8"),
         session_factory=session_factory,
     )
@@ -120,10 +121,10 @@ def test_process_mqtt_message_invalid_payload_does_not_break_loop(
 ):
     """Valida que payload inválido no rompa el proceso de ingesta."""
 
-    equipo_id = _create_equipo(session_factory)
+    equipo_id = _create_equipo(session_factory, mac_address="00:1A:2B:3C:4D:5E")
 
     processed = process_mqtt_message(
-        topic=f"manttoai/equipo/{equipo_id}/lecturas",
+        topic=f"manttoai/telemetria/00:1A:2B:3C:4D:5E",
         payload=b"{json_invalido",
         session_factory=session_factory,
     )

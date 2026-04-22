@@ -3,7 +3,7 @@ import { formatMetric, resolveMaxVibration } from "../../utils/metrics";
 
 export default function EquipoLecturasSection({ lecturas }) {
   return (
-    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+    <section className="rounded-2xl bg-white p-5 shadow-sm">
       <h2 className="mt-0 text-lg font-semibold text-neutral-900">Últimas lecturas</h2>
       {lecturas.length === 0 ? (
         <p className="mb-0 text-sm text-neutral-600">
@@ -16,7 +16,7 @@ export default function EquipoLecturasSection({ lecturas }) {
               Últimas lecturas registradas del equipo ordenadas desde la más reciente.
             </caption>
             <thead>
-              <tr className="border-b border-neutral-200">
+              <tr className="border-b border-neutral-100">
                 <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Fecha</th>
                 <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Temperatura</th>
                 <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Humedad</th>

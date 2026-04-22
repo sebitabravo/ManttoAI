@@ -2,11 +2,14 @@ import { useId, useState } from "react";
 
 /**
  * Tooltip informativo compacto para métricas y labels de contexto.
+ * 
+ * Versión corregida: posicionamiento seguro que no solapa elementos vecinos.
+ * El tooltip aparece debajo del botón "?" con z-index alto y se limita
+ * al ancho disponible del contenedor padre.
  *
  * Accesibilidad:
  * - Visible en hover y focus (teclado)
  * - role="tooltip" + aria-describedby
- * - Botón con touch target mínimo de 44px a través del contenedor
  */
 export default function InfoTooltip({ label = "Ver información", text = "" }) {
   const tooltipId = useId();
@@ -26,7 +29,7 @@ export default function InfoTooltip({ label = "Ver información", text = "" }) {
 
   return (
     <span 
-      className="group relative inline-flex min-h-[32px] items-center"
+      className="relative inline-flex items-center"
       onPointerEnter={handleFocus}
       onPointerLeave={handleBlur}
     >
@@ -39,21 +42,22 @@ export default function InfoTooltip({ label = "Ver información", text = "" }) {
         onClick={handleToggle}
         onBlur={handleBlur}
         onFocus={handleFocus}
-        className="relative inline-flex h-5 w-5 items-center justify-center rounded-full border border-neutral-300 bg-neutral-50 text-[11px] font-semibold text-neutral-600 transition-all duration-150 ease-out-quart hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 after:absolute after:-inset-3 after:content-['']"
+        className="inline-flex h-[20px] w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[11px] font-semibold text-neutral-500 transition-colors duration-150 hover:bg-neutral-200 hover:text-neutral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
       >
         ?
       </button>
 
-      <span
-        id={tooltipId}
-        role="tooltip"
-        aria-hidden={!openedByTap}
-        className={`pointer-events-none absolute left-0 top-full z-20 mt-1 w-56 rounded-md border border-neutral-300 bg-neutral-50 px-2.5 py-2 text-xs text-neutral-700 shadow-lg transition-opacity duration-150 ease-out-quart ${
-          openedByTap ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        {text}
-      </span>
+      {openedByTap && (
+        <span
+          id={tooltipId}
+          role="tooltip"
+          className="absolute left-1/2 -translate-x-1/2 top-full z-50 mt-2 max-w-[200px] rounded-lg bg-neutral-800 px-3 py-2 text-xs text-white shadow-lg"
+        >
+          {text}
+          {/* Flecha del tooltip */}
+          <span className="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 bg-neutral-800" />
+        </span>
+      )}
     </span>
   );
 }

@@ -18,7 +18,7 @@ export default function EquipoMantencionesSection({
   updateMantencionErrorMessage,
 }) {
   return (
-    <section className="grid grid-cols-1 gap-3 rounded-lg border border-neutral-300 bg-neutral-100 p-4 shadow-sm">
+    <section className="grid grid-cols-1 gap-3 rounded-2xl bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Mantenciones recientes</h2>
         <Button
@@ -32,7 +32,7 @@ export default function EquipoMantencionesSection({
       </div>
 
       {showCreateMantencionForm ? (
-        <div className="border-t border-neutral-200 pt-3">
+        <div className="border-t border-neutral-100 pt-3">
           <h3 className="mt-0 text-base font-semibold text-neutral-900">Registrar mantención</h3>
           <MantencionForm
             onSubmit={handleCreateMantencion}
@@ -55,7 +55,7 @@ export default function EquipoMantencionesSection({
               Mantenciones recientes del equipo y acciones de edición disponibles.
             </caption>
             <thead>
-              <tr className="border-b border-neutral-200">
+              <tr className="border-b border-neutral-100">
                 <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">ID</th>
                 <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Tipo</th>
                 <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Descripción</th>
@@ -92,7 +92,7 @@ export default function EquipoMantencionesSection({
       )}
 
       {selectedMantencion ? (
-        <div className="border-t border-neutral-200 pt-3">
+        <div className="border-t border-neutral-100 pt-3">
           <h3 className="mt-0 text-base font-semibold text-neutral-900">Editar mantención #{selectedMantencion.id}</h3>
           <MantencionForm
             initialValues={{

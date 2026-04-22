@@ -291,14 +291,14 @@ function AdminPage() {
       ) : null}
 
       {/* Tabs */}
-      <div className="border-b border-neutral-200">
+      <div className="border-b border-neutral-100">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab("usuarios")}
             className={`${
               activeTab === "usuarios"
                 ? "border-primary-500 text-primary-600"
-                : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
+                : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-200"
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Usuarios
@@ -308,7 +308,7 @@ function AdminPage() {
             className={`${
               activeTab === "api-keys"
                 ? "border-primary-500 text-primary-600"
-                : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
+                : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-200"
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             API Keys
@@ -318,7 +318,7 @@ function AdminPage() {
             className={`${
               activeTab === "audit-logs"
                 ? "border-primary-500 text-primary-600"
-                : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
+                : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-200"
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Audit Logs
@@ -328,21 +328,21 @@ function AdminPage() {
 
       {/* Tab Content: Usuarios */}
       {activeTab === "usuarios" && (
-        <div className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+        <div className="rounded-2xl bg-white p-5 shadow-sm">
           <div className="mb-4 flex justify-end">
             <Button onClick={() => setShowUserModal(true)}>Nuevo Usuario</Button>
           </div>
 
           {loadingByTab.usuarios && users.length === 0 ? (
-            <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-600">
+            <div className="rounded-xl border border-neutral-100 bg-white p-8 text-center text-sm text-neutral-600">
               Cargando usuarios...
             </div>
           ) : users.length === 0 ? (
             <EmptyState title="No hay usuarios" description="Crea tu primer usuario" />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
-              <table className="min-w-full divide-y divide-neutral-200">
-                <thead className="bg-neutral-100">
+            <div className="overflow-x-auto rounded-xl border border-neutral-100">
+              <table className="min-w-full divide-y divide-neutral-100">
+                <thead className="bg-[#fcfcfc]">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Nombre</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Email</th>
@@ -352,11 +352,14 @@ function AdminPage() {
                     <th className="px-6 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-neutral-200">
+                <tbody className="bg-white divide-y divide-neutral-100">
                   {users.map((usuario) => (
                     <tr key={usuario.id}>
                       <td className="px-6 py-4 whitespace-nowrap">{usuario.nombre}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{usuario.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                        {usuario.telefono || "-"}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeClass(usuario.rol)}`}>
                           {usuario.rol}
@@ -366,9 +369,6 @@ function AdminPage() {
                         {usuario.created_at
                           ? new Date(usuario.created_at).toLocaleDateString()
                           : "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                        {usuario.telefono || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
@@ -397,21 +397,21 @@ function AdminPage() {
 
       {/* Tab Content: API Keys */}
       {activeTab === "api-keys" && (
-        <div className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+        <div className="rounded-2xl bg-white p-5 shadow-sm">
           <div className="mb-4 flex justify-end">
             <Button onClick={() => setShowApiKeyModal(true)}>Nueva API Key</Button>
           </div>
 
           {loadingByTab["api-keys"] && apiKeys.length === 0 ? (
-            <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-600">
+            <div className="rounded-xl border border-neutral-100 bg-white p-8 text-center text-sm text-neutral-600">
               Cargando API keys...
             </div>
           ) : apiKeys.length === 0 ? (
             <EmptyState title="No hay API keys" description="Crea tu primera API key para dispositivos IoT" />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
-              <table className="min-w-full divide-y divide-neutral-200">
-                <thead className="bg-neutral-100">
+            <div className="overflow-x-auto rounded-xl border border-neutral-100">
+              <table className="min-w-full divide-y divide-neutral-100">
+                <thead className="bg-[#fcfcfc]">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Prefix</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Device ID</th>
@@ -420,7 +420,7 @@ function AdminPage() {
                     <th className="px-6 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-neutral-200">
+                <tbody className="bg-white divide-y divide-neutral-100">
                   {apiKeys.map((apiKey) => (
                     <tr key={apiKey.id}>
                       <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">{apiKey.key_prefix}</td>
@@ -454,17 +454,17 @@ function AdminPage() {
 
       {/* Tab Content: Audit Logs */}
       {activeTab === "audit-logs" && (
-        <div className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+        <div className="rounded-2xl bg-white p-5 shadow-sm">
           {loadingByTab["audit-logs"] && auditLogs.length === 0 ? (
-            <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-600">
+            <div className="rounded-xl border border-neutral-100 bg-white p-8 text-center text-sm text-neutral-600">
               Cargando audit logs...
             </div>
           ) : auditLogs.length === 0 ? (
             <EmptyState title="No hay audit logs" description="Los logs de auditoría aparecerán aquí" />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
-              <table className="min-w-full divide-y divide-neutral-200">
-                <thead className="bg-neutral-100">
+            <div className="overflow-x-auto rounded-xl border border-neutral-100">
+              <table className="min-w-full divide-y divide-neutral-100">
+                <thead className="bg-[#fcfcfc]">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Fecha</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Acción</th>
@@ -473,7 +473,7 @@ function AdminPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">IP</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-neutral-200">
+                <tbody className="bg-white divide-y divide-neutral-100">
                   {auditLogs.map((log) => (
                     <tr key={log.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
@@ -673,7 +673,7 @@ function AdminPage() {
           <p className="text-sm text-neutral-600">
             Esta es tu API key. <strong className="text-red-600">Guárdala ahora</strong>, no se volverá a mostrar.
           </p>
-          <div className="bg-neutral-100 p-4 rounded-md">
+          <div className="bg-[#fcfcfc] p-4 rounded-md">
             <code className="text-sm font-mono break-all">{newApiKey}</code>
           </div>
           <div className="flex justify-end space-x-3">

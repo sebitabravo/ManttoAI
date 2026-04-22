@@ -30,6 +30,9 @@ class Equipo(Base):
         default="Equipo monitoreado por ManttoAI",
     )
     estado: Mapped[str] = mapped_column(String(30), default="operativo")
+    mac_address: Mapped[str | None] = mapped_column(
+        String(17), unique=True, index=True, nullable=True
+    )
     # Punto de extensión para multi-tenancy (RNF-28).
     # Nullable en MVP single-tenant. Para multi-tenant: agregar FK a organizaciones.
     organizacion_id: Mapped[int | None] = mapped_column(

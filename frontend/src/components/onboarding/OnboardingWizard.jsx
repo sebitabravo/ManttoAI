@@ -39,6 +39,7 @@ export default function OnboardingWizard() {
     nombre: "",
     ubicacion: "Laboratorio",
     tipo: "Motor",
+    mac_address: "",
   });
   const [umbralesData, setUmbralesData] = useState({
     temperatura_max: 80,
@@ -152,6 +153,7 @@ export default function OnboardingWizard() {
         nombre: equipoData.nombre,
         ubicacion: equipoData.ubicacion,
         tipo: equipoData.tipo,
+        mac_address: equipoData.mac_address?.trim() || undefined,
         temperatura_max: umbralesData.temperatura_max,
         vibracion_max: umbralesData.vibracion_max,
       });
@@ -273,7 +275,7 @@ export default function OnboardingWizard() {
                   required
                   value={equipoData.nombre}
                   onChange={(e) => setEquipoData({ ...equipoData, nombre: e.target.value })}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Ej: Motor principal Bomba #1"
                 />
               </div>
@@ -286,7 +288,7 @@ export default function OnboardingWizard() {
                   type="text"
                   value={equipoData.ubicacion}
                   onChange={(e) => setEquipoData({ ...equipoData, ubicacion: e.target.value })}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Ej: Planta Norte - Línea 3"
                 />
               </div>
@@ -298,7 +300,7 @@ export default function OnboardingWizard() {
                   id="tipo"
                   value={equipoData.tipo}
                   onChange={(e) => setEquipoData({ ...equipoData, tipo: e.target.value })}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="Motor">Motor</option>
                   <option value="Bomba">Bomba</option>
@@ -306,6 +308,22 @@ export default function OnboardingWizard() {
                   <option value="Ventilador">Ventilador</option>
                   <option value="Otro">Otro</option>
                 </select>
+              </div>
+              <div>
+                <label htmlFor="mac_address" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Dirección MAC (Opcional)
+                </label>
+                <input
+                  id="mac_address"
+                  type="text"
+                  value={equipoData.mac_address}
+                  onChange={(e) => setEquipoData({ ...equipoData, mac_address: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Ej: 00:1A:2B:3C:4D:5E"
+                />
+                <p className="text-xs text-neutral-500 mt-1">
+                  Requerido para asociar automáticamente las lecturas de los sensores.
+                </p>
               </div>
             </form>
           </div>
@@ -337,7 +355,7 @@ export default function OnboardingWizard() {
                   onChange={(e) =>
                     setUmbralesData({ ...umbralesData, temperatura_max: parseInt(e.target.value) })
                   }
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
                 <p className="text-xs text-neutral-500 mt-1">
                   Se generará una alerta si la temperatura supera este valor
@@ -358,7 +376,7 @@ export default function OnboardingWizard() {
                   onChange={(e) =>
                     setUmbralesData({ ...umbralesData, vibracion_max: parseFloat(e.target.value) })
                   }
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
                 <p className="text-xs text-neutral-500 mt-1">
                   Se generará una alerta si la vibración supera este valor
@@ -445,7 +463,7 @@ export default function OnboardingWizard() {
   // Renderizar botones de acción según el paso
   const renderActions = () => {
     return (
-      <div className="flex items-center justify-between pt-4 border-t border-neutral-200">
+      <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
         <div>
           {currentStep > 1 && (
             <Button type="button" variant="outline" onClick={handlePrevStep}>
@@ -503,10 +521,10 @@ export default function OnboardingWizard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-neutral-100 py-12 px-4">
+    <div className="min-h-screen bg-[#f5f5f7] py-12 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header con progreso */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold text-neutral-900">Configuración inicial</h1>
             <span className="text-sm text-neutral-500">
@@ -523,14 +541,14 @@ export default function OnboardingWizard() {
         </div>
 
         {/* Contenido del paso */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-2xl shadow-sm p-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6">
               {error}
             </div>
           )}
           {showRedirectMessage && (
-            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md mb-6">
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-xl mb-6">
               No pudimos verificar tu estado anterior. Por seguridad, te pedimos completar la configuración inicial.
             </div>
           )}

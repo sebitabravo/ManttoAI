@@ -1,6 +1,6 @@
 import { useId, useMemo, useState } from "react";
 
-import { formatDate } from "../../utils/formatDate";
+import { formatDate, formatAxisTime } from "../../utils/formatDate";
 import { formatMetric } from "../../utils/metrics";
 
 /**
@@ -317,8 +317,8 @@ export default function GraficoLineaBase({
   );
   const geometry = useMemo(() => buildChartGeometry(values), [values]);
   const points = geometry.points;
-  const linePath = useMemo(() => toSmoothLinePath(points), [points]);
-  const areaPath = useMemo(() => toSmoothAreaPath(points), [points]);
+  const linePath = useMemo(() => toSmoothLinePath(points, 0.05), [points]);
+  const areaPath = useMemo(() => toSmoothAreaPath(points, 0.05), [points]);
 
   const latestValue = values[values.length - 1];
   const minValue = geometry.minValue;
@@ -354,10 +354,10 @@ export default function GraficoLineaBase({
 
   if (isEmpty) {
     return (
-      <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
-        <h3 className="mb-1 mt-0 text-md font-semibold text-neutral-800">{title}</h3>
-        <p className="mb-4 mt-0 text-sm text-neutral-500">{subtitle}</p>
-        <div className="my-4 flex h-36 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50">
+      <section className="rounded-2xl bg-white p-6 shadow-sm">
+        <h3 className="mb-1 mt-0 text-lg font-semibold text-neutral-600 tracking-tight">{title}</h3>
+        <p className="mb-6 mt-0 text-sm text-neutral-400">{subtitle}</p>
+        <div className="my-4 flex h-40 items-center justify-center rounded-xl bg-neutral-100">
           <span className="text-sm text-neutral-400">{emptyMessage}</span>
         </div>
       </section>
@@ -451,16 +451,16 @@ export default function GraficoLineaBase({
   }
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
-      <h3 className="mb-1 mt-0 text-md font-semibold text-neutral-800">{title}</h3>
-      <p className="mb-3 mt-0 text-sm text-neutral-500">{subtitle}</p>
+    <section className="rounded-2xl bg-white p-6 shadow-sm">
+      <h3 className="mb-1 mt-0 text-lg font-semibold text-neutral-600 tracking-tight">{title}</h3>
+      <p className="mb-4 mt-0 text-sm text-neutral-400">{subtitle}</p>
 
       {normalizedZones.length > 0 ? (
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-5 flex flex-wrap gap-2">
           {normalizedZones.map((zone) => (
             <span
               key={`${zone.label}-${zone.min}-${zone.max}`}
-              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-neutral-50 px-2.5 py-1 text-[11px] text-neutral-700"
+              className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1.5 text-xs text-neutral-500"
             >
               <span
                 className="inline-block h-2 w-2 rounded-full"
@@ -468,7 +468,7 @@ export default function GraficoLineaBase({
                 aria-hidden="true"
               />
               {zone.label}
-              <span className="text-neutral-500">· {formatZoneRange(zone, unit)}</span>
+              <span className="text-neutral-400">· {formatZoneRange(zone, unit)}</span>
             </span>
           ))}
         </div>
@@ -478,11 +478,10 @@ export default function GraficoLineaBase({
         width="100%"
         viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
         role="img"
-        aria-labelledby={titleId}
+        aria-label={`Serie temporal de ${safeTitle.toLowerCase()}`}
         aria-describedby={descId}
-        className="mb-4"
+        className="mb-4 overflow-hidden"
       >
-        <title id={titleId}>{`Serie temporal de ${safeTitle.toLowerCase()}`}</title>
         <desc id={descId}>{description}</desc>
 
         <defs>
@@ -691,7 +690,7 @@ export default function GraficoLineaBase({
               fontSize="11"
               className="tabular-nums"
             >
-              {raw ? formatDate(raw) : ""}
+              {raw ? formatAxisTime(raw) : ""}
             </text>
           );
         })}
@@ -704,47 +703,47 @@ export default function GraficoLineaBase({
           : ""}
       </div>
 
-      {/* Métricas resumen */}
-      <div className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
-        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Último</div>
-          <strong className="metric-value text-lg text-neutral-800">{formatMetric(latestValue, unit)}</strong>
+      {/* Métricas resumen — layout flexible que no fuerza 5 columnas */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        <div className="flex items-baseline gap-1.5 rounded-lg bg-neutral-100 px-3 py-2">
+          <span className="text-[11px] font-medium uppercase text-neutral-400">Último</span>
+          <strong className="metric-value text-sm font-semibold text-neutral-600">{formatMetric(latestValue, unit)}</strong>
         </div>
 
-        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Variación</div>
-          <strong className="metric-value text-lg" style={{ color: theme.accent }}>
+        <div className="flex items-baseline gap-1.5 rounded-lg bg-neutral-100 px-3 py-2">
+          <span className="text-[11px] font-medium uppercase text-neutral-400">Δ</span>
+          <strong className="metric-value text-sm font-semibold" style={{ color: theme.accent }}>
             {formatDelta(deltaValue, unit)}
           </strong>
         </div>
 
-        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Mínimo</div>
-          <strong className="metric-value text-lg text-neutral-800">{formatMetric(minValue, unit)}</strong>
+        <div className="flex items-baseline gap-1.5 rounded-lg bg-neutral-100 px-3 py-2">
+          <span className="text-[11px] font-medium uppercase text-neutral-400">Mín</span>
+          <strong className="metric-value text-sm font-semibold text-neutral-600">{formatMetric(minValue, unit)}</strong>
         </div>
 
-        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Máximo</div>
-          <strong className="metric-value text-lg text-neutral-800">{formatMetric(maxValue, unit)}</strong>
+        <div className="flex items-baseline gap-1.5 rounded-lg bg-neutral-100 px-3 py-2">
+          <span className="text-[11px] font-medium uppercase text-neutral-400">Máx</span>
+          <strong className="metric-value text-sm font-semibold text-neutral-600">{formatMetric(maxValue, unit)}</strong>
         </div>
 
-        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Estado</div>
-          <strong className="metric-value inline-flex items-center gap-2 text-base text-neutral-800">
-            <span
-              className="inline-block h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: currentZone?.color || theme.accent }}
-              aria-hidden="true"
-            />
-            {currentZone?.label || "Sin clasificación"}
+        <div className="flex items-center gap-1.5 rounded-lg bg-neutral-100 px-3 py-2">
+          <span
+            className="inline-block h-2 w-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: currentZone?.color || theme.accent }}
+            aria-hidden="true"
+          />
+          <span className="text-[11px] font-medium uppercase text-neutral-400">Estado</span>
+          <strong className="text-sm font-semibold text-neutral-600">
+            {currentZone?.label || "—"}
           </strong>
         </div>
       </div>
 
-      {/* Rango temporal completo */}
-      <div className="flex justify-between border-t border-neutral-200 pt-3 text-xs tabular-nums text-neutral-500">
-        <span>{formatDate(firstTimestamp)}</span>
-        <span>{formatDate(lastTimestamp)}</span>
+      {/* Rango temporal */}
+      <div className="flex justify-between gap-2 border-t border-neutral-100 pt-3 text-xs tabular-nums text-neutral-400">
+        <span className="truncate">{formatDate(firstTimestamp)}</span>
+        <span className="truncate text-right">{formatDate(lastTimestamp)}</span>
       </div>
     </section>
   );

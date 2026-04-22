@@ -16,7 +16,8 @@ export default function EquipoUmbralesSection({
   formatVariableLabel,
 }) {
   return (
-    <section className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 shadow-sm">
+    // Comentario: Se adapta a Apple style — tarjeta sin borde exterior, fondo blanco y sombra sutil
+    <section className="rounded-2xl bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Umbrales operativos</h2>
         <Button
@@ -35,7 +36,7 @@ export default function EquipoUmbralesSection({
       {umbralesLoading ? <SkeletonTable rows={3} cols={4} className="mt-2" /> : null}
 
       {umbralesErrorMessage ? (
-        <div className="rounded-lg border border-warning-300 bg-warning-50 px-3 py-2 text-sm text-warning-800">
+        <div className="rounded-2xl bg-warning-50 px-3 py-2 text-sm text-warning-800">
           {umbralesErrorMessage}
         </div>
       ) : null}
@@ -52,15 +53,15 @@ export default function EquipoUmbralesSection({
             <caption className="pb-2 text-left text-sm text-neutral-600">
               Umbrales operativos editables para las próximas evaluaciones del equipo.
             </caption>
-            <thead>
-              <tr className="border-b border-neutral-200">
+             <thead>
+               <tr className="border-b border-neutral-100">
                 <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Variable</th>
                 <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Valor mínimo</th>
                 <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Valor máximo</th>
                 <th scope="col" className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200">
+             <tbody className="divide-y divide-neutral-100">
               {umbrales.map((umbral) => {
                 const resolvedUmbralId = Number(umbral.id);
                 const draft = umbralDrafts[resolvedUmbralId] || {
@@ -74,8 +75,8 @@ export default function EquipoUmbralesSection({
                 return (
                   <tr key={umbral.id} className="hover:bg-neutral-50 transition-colors duration-150 ease-out-quart">
                     <td className="py-2 pr-4 text-sm font-medium text-neutral-900">{formatVariableLabel(umbral.variable)}</td>
-                    <td className="py-2 pr-4">
-                      <input
+                     <td className="py-2 pr-4">
+                       <input
                         type="number"
                         step="0.01"
                         value={draft.valor_min}
@@ -84,8 +85,8 @@ export default function EquipoUmbralesSection({
                         }
                         disabled={isSaving}
                         aria-label={`Valor mínimo para ${umbral.variable}`}
-                        className="w-full min-h-[44px] rounded border border-neutral-300 bg-neutral-100 px-3 py-2.5 text-sm tabular-nums shadow-sm transition-all duration-150 ease-out-quart focus:border-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
-                      />
+                         className="w-full min-h-[44px] rounded-xl bg-neutral-50 px-3 py-2.5 text-sm tabular-nums shadow-sm transition-all duration-150 ease-out-quart focus:border-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-500"
+                       />
                     </td>
                     <td className="py-2 pr-4">
                       <input
@@ -96,8 +97,8 @@ export default function EquipoUmbralesSection({
                           handleUmbralDraftChange(resolvedUmbralId, "valor_max", event.target.value)
                         }
                         disabled={isSaving}
-                        aria-label={`Valor máximo para ${umbral.variable}`}
-                        className="w-full min-h-[44px] rounded border border-neutral-300 bg-neutral-100 px-3 py-2.5 text-sm tabular-nums shadow-sm transition-all duration-150 ease-out-quart focus:border-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
+                       aria-label={`Valor máximo para ${umbral.variable}`}
+                        className="w-full min-h-[44px] rounded-xl bg-neutral-50 px-3 py-2.5 text-sm tabular-nums shadow-sm transition-all duration-150 ease-out-quart focus:border-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-500"
                       />
                     </td>
                     <td className="py-2">

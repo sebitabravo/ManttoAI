@@ -4,7 +4,8 @@ export default function EquipoResumenCard({ equipo }) {
   }
 
   return (
-    <article className="grid grid-cols-1 gap-3 rounded-lg border border-neutral-300 bg-neutral-100 p-4 shadow-sm">
+    // Comentario: Estilo Apple — tarjeta sin borde, fondo blanco y borde redondeado grande
+    <article className="grid grid-cols-1 gap-3 rounded-2xl bg-white p-4 shadow-sm">
       <h2 className="m-0 text-lg font-semibold text-neutral-900">{equipo.nombre}</h2>
       <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <div>

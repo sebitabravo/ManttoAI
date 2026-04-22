@@ -28,8 +28,8 @@ void buildMqttTopic() {
   const int written = std::snprintf(
       mqtt_topic,
       sizeof(mqtt_topic),
-      "manttoai/equipo/%d/lecturas",
-      EQUIPO_ID);
+      "manttoai/telemetria/%s",
+      WiFi.macAddress().c_str());
 
   if (written <= 0 || static_cast<size_t>(written) >= sizeof(mqtt_topic)) {
     mqtt_topic[0] = '\0';
@@ -80,7 +80,7 @@ void connectMqttIfNeeded() {
   last_mqtt_retry_ms = now;
 
   char client_id[48] = {0};
-  std::snprintf(client_id, sizeof(client_id), "manttoai-esp32-%d", EQUIPO_ID);
+  std::snprintf(client_id, sizeof(client_id), "manttoai-esp32-%d", WiFi.macAddress().c_str());
 
   Serial.print("[mqtt] Conectando broker ");
   Serial.print(MQTT_HOST);

@@ -7,6 +7,7 @@ import { AuthProvider } from "./context/AuthContext";
 import useAuth from "./hooks/useAuth";
 import AdminPage from "./pages/AdminPage";
 import AlertasPage from "./pages/AlertasPage";
+import ChatHistoryPage from "./pages/ChatHistoryPage";
 import DashboardPage from "./pages/DashboardPage";
 import EquipoDetallePage from "./pages/EquipoDetallePage";
 import EquiposPage from "./pages/EquiposPage";
@@ -34,7 +35,7 @@ function LoginRoute() {
   return <LoginPage />;
 }
 
-function AdminRoute() {
+function AdminGuard({ children }) {
   const { isAuthenticated, isAuthResolved, user } = useAuth();
 
   if (!isAuthResolved) {
@@ -50,13 +51,18 @@ function AdminRoute() {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <AdminPage />;
+  return children;
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Routes>
           <Route path="/login" element={<LoginRoute />} />
           <Route
@@ -77,7 +83,8 @@ export default function App() {
             <Route path="historial" element={<HistorialPage />} />
             <Route path="onboarding" element={<OnboardingPage />} />
             <Route path="perfil" element={<ProfilePage />} />
-            <Route path="admin" element={<AdminRoute />} />
+            <Route path="admin" element={<AdminGuard><AdminPage /></AdminGuard>} />
+            <Route path="chat-historial" element={<AdminGuard><ChatHistoryPage /></AdminGuard>} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

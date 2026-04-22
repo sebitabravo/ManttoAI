@@ -42,6 +42,7 @@ services:
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-manttoai_redis_dev}
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
     depends_on:
       mysql:
         condition: service_healthy
@@ -121,6 +122,32 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        limits:
+          memory: 800M
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  ollama-pull:
+    image: curlimages/curl:latest
+    command: -X POST http://ollama:11434/api/pull -d '{"name":"qwen2.5:0.5b"}'
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
 volumes:
   mysql_data:
   redis_data:
+  ollama_data:

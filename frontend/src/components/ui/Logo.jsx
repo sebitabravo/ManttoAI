@@ -1,31 +1,21 @@
 import { memo } from "react";
 
 /**
- * Componente de logo de marca ManttoAI.
- * Círculo azul con inicial "M" — consistente con el favicon de index.html.
+ * Logo de marca ManttoAI — Estilo Apple.
+ * Círculo Apple Blue con inicial "M".
  *
  * Props:
  *  - size: número (ancho y alto en px). Por defecto 24.
- *  - title: string opcional. Si se pasa, el SVG es semántico (role="img" + <title>)
- *           para lectores de pantalla. Si se omite, es decorativo (aria-hidden=true).
+ *  - title: string opcional. Si se pasa, el SVG es semántico.
  *
- * Uso decorativo (cuando hay texto visible al lado):
- *   <Logo size={24} />
- *
- * Uso semántico (cuando el logo aparece solo sin texto):
- *   <Logo size={52} title="ManttoAI — Mantenimiento Predictivo" />
- *
- * Memoizado con React.memo para evitar re-renders innecesarios en layouts
- * que se re-renderizan frecuentemente (Header, Sidebar).
+ * Memoizado para evitar re-renders innecesarios.
  */
-
 const Logo = memo(function Logo({ size = 24, title, className = "" }) {
-  // Si no hay título, el SVG es puramente decorativo y se oculta a tecnologías asistivas
   const esDecorativo = !title;
 
   return (
     <svg
-      className={`text-primary-600 ${className}`.trim()}
+      className={`flex-shrink-0 ${className}`.trim()}
       width={size}
       height={size}
       viewBox="0 0 32 32"
@@ -34,16 +24,18 @@ const Logo = memo(function Logo({ size = 24, title, className = "" }) {
       role={esDecorativo ? undefined : "img"}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {title ? <title>{title}</title> : null}
-      <circle cx="16" cy="16" r="16" fill="currentColor" />
+      {title && <title>{title}</title>}
+      {/* Círculo Apple Blue */}
+      <circle cx="16" cy="16" r="16" fill="#0071e3" />
+      {/* Inicial M */}
       <text
-        className="fill-neutral-50"
         x="16"
-        y="22"
-        fontSize="20"
-        fontWeight="700"
+        y="21.5"
+        fontSize="17"
+        fontWeight="600"
         textAnchor="middle"
-        fontFamily="system-ui, sans-serif"
+        fontFamily="Inter, -apple-system, SF Pro Display, system-ui, sans-serif"
+        fill="#ffffff"
       >
         M
       </text>

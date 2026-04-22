@@ -45,13 +45,14 @@ export default function ProfilePage() {
   }
 
   return (
+    // Comentario: Ajustes visuales al estilo Apple — eliminar bordes visibles en contenedores
     <div className="p-6">
       <h1 className="mb-2 text-2xl font-semibold text-neutral-800">Mi Perfil</h1>
       <p className="mb-6 text-sm text-neutral-600">Actualiza tu información personal.</p>
 
       <form onSubmit={handleSubmit} className="max-w-md">
-        {error ? <div className="mb-4 rounded-sm border border-danger-300 bg-danger-50 px-3 py-2 text-sm text-danger-700">{error}</div> : null}
-        {success ? <div className="mb-4 rounded-sm border border-success-300 bg-success-50 px-3 py-2 text-sm text-success-700">{success}</div> : null}
+        {error ? <div className="mb-4 rounded-2xl bg-danger-50 px-3 py-2 text-sm text-danger-700">{error}</div> : null}
+        {success ? <div className="mb-4 rounded-2xl bg-success-50 px-3 py-2 text-sm text-success-700">{success}</div> : null}
 
         {/* Selector de avatar */}
         <div className="mb-6">
@@ -80,7 +81,7 @@ export default function ProfilePage() {
         {/* Teléfono: solo lectura, se configura desde admin */}
         <div className="mt-4">
           <label className="block text-sm font-medium text-neutral-700">Teléfono</label>
-          <div className="mt-1 flex items-center gap-2 rounded-sm border border-neutral-300 bg-neutral-100 px-3 py-2 text-sm text-neutral-600">
+          <div className="mt-1 flex items-center gap-2 rounded-xl bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
             <span>{user?.telefono || "No configurado"}</span>
             <span className="text-xs text-neutral-400">(configurado por admin)</span>
           </div>

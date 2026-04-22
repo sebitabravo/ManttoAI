@@ -150,7 +150,7 @@ export default function EquipoDetallePage() {
       <EquipoResumenCard equipo={equipo} />
 
       {equipo && showEditForm ? (
-        <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+        <section className="rounded-2xl bg-white p-5 shadow-sm">
           <h2 className="mt-0 text-lg font-semibold text-neutral-900">Editar equipo</h2>
           <EquipoForm
             initialValues={{

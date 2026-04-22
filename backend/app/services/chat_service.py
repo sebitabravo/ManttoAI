@@ -131,7 +131,7 @@ Respuesta:"""
             raise
         except httpx.HTTPStatusError as e:
             logger.error(
-                f"[CHATBOT] Error HTTP de Ollama: {e.status_code} {e.response.text}"
+                f"[CHATBOT] Error HTTP de Ollama: {e.response.status_code} {e.response.text}"
             )
             raise
         except Exception as e:

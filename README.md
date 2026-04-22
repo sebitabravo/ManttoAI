@@ -1,4 +1,4 @@
-# 🚀 ManttoAI - IoT Predictive Maintenance Platform
+# 🚀 ManttoAI - Plataforma de Mantenimiento Predictivo IoT
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg?logo=fastapi&logoColor=white)
@@ -6,89 +6,90 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg?logo=docker&logoColor=white)
 ![Machine Learning](https://img.shields.io/badge/ML-Scikit_Learn-F7931E.svg)
 
-**ManttoAI** is an open-source, lightweight predictive maintenance platform. It captures real-time telemetry from IoT devices (ESP32) via MQTT, evaluates operational thresholds, and runs a Machine Learning model (Random Forest) to predict equipment failures before they happen.
+**ManttoAI** es una plataforma open-source de mantenimiento predictivo. Captura telemetría en tiempo real desde dispositivos IoT (ESP32) vía MQTT, evalúa umbrales operacionales y ejecuta un modelo de Machine Learning (Random Forest) para predecir fallas en los equipos antes de que ocurran.
 
 ---
 
-## ✨ Key Features
+## ✨ Características Principales
 
-- **📡 Real-time IoT Telemetry:** Native MQTT integration (Mosquitto) for capturing temperature, humidity, and vibration.
-- **🧠 Machine Learning Predictions:** Built-in Random Forest model (94.1% F1-Score) to evaluate failure risks.
-- **🚨 Smart Alerts:** Automated evaluation of operational thresholds with email notifications.
-- **📊 Interactive Dashboard:** React SPA with auto-refresh, historical trends, and equipment management.
-- **🛠️ Built-in IoT Simulator:** No hardware? No problem. Includes a 24/7 software simulator to generate realistic sensor data out of the box.
+- **📡 Telemetría IoT en Tiempo Real:** Integración nativa con MQTT (Mosquitto) para capturar temperatura, humedad y vibración.
+- **🧠 Predicciones con Machine Learning:** Modelo Random Forest integrado (94.1% F1-Score) para evaluar riesgo de falla.
+- **🚨 Alertas Inteligentes:** Evaluación automática de umbrales operacionales con notificaciones por email.
+- **📊 Dashboard Interactivo:** SPA en React con auto-refresh, tendencias históricas y gestión de equipos.
+- **🛠️ Simulador IoT Integrado:** ¿No tenés hardware? Incluye un simulador por software 24/7 que genera datos realistas de sensores.
+- **🤖 Asistente de Mantenimiento:** Chat híbrido (reglas + IA con Ollama) para consultas técnicas del operador.
 
-## 🏗️ Tech Stack
+## 🏗️ Stack Tecnológico
 
 - **Backend:** FastAPI, SQLAlchemy, Pydantic, MySQL 8
 - **Frontend:** React 18, Vite, Tailwind CSS
-- **IoT & Messaging:** ESP32 (Firmware), Eclipse Mosquitto (MQTT)
+- **IoT y Mensajería:** ESP32 (Firmware), Eclipse Mosquitto (MQTT)
 - **Machine Learning:** Scikit-learn, Pandas, Numpy
-- **Infrastructure:** Docker, Docker Compose, Nginx (Dokploy ready)
+- **Infraestructura:** Docker, Docker Compose, Nginx (compatible con Dokploy)
 
 ---
 
-## 🚀 Quick Start (Local Development)
+## 🚀 Inicio Rápido (Desarrollo Local)
 
-You can run the entire platform locally using Docker Compose. No external dependencies are required.
+Podés ejecutar toda la plataforma localmente usando Docker Compose. No requiere dependencias externas.
 
-### Prerequisites
-- Docker & Docker Compose V2
+### Requisitos Previos
+- Docker y Docker Compose V2
 - GNU Make
 
-### 1. Start the platform
+### 1. Levantar la plataforma
 ```bash
-# Generate local .env files and MQTT credentials
+# Generar archivos .env locales y credenciales MQTT
 make setup-env
 
-# Spin up the entire stack (Backend, Frontend, MySQL, Mosquitto)
+# Levantar todo el stack (Backend, Frontend, MySQL, Mosquitto)
 make up
 ```
 
-### 2. Seed data & simulate
+### 2. Cargar datos y simular
 ```bash
-# Create the admin user, sample equipment, and thresholds
+# Crear usuario admin, equipos de ejemplo y umbrales
 make seed
 
-# Start sending realistic simulated MQTT telemetry
+# Iniciar la simulación de telemetría MQTT realista
 make simulate
 ```
 
-### 3. Access the Dashboard
-- **Frontend:** `http://localhost:5173` (or port 80 if fully deployed)
-- **API Docs (Swagger):** `http://localhost:8000/docs`
-- **Default Login:** `admin@manttoai.local` (Password generated in `backend/.env` after `make setup-env`)
+### 3. Acceder al Dashboard
+- **Frontend:** `http://localhost:5173` (o puerto 80 si está desplegado completo)
+- **Documentación API (Swagger):** `http://localhost:8000/docs`
+- **Login por defecto:** `admin@manttoai.local` (Contraseña generada en `backend/.env` tras ejecutar `make setup-env`)
 
 ---
 
-## 📂 Repository Structure
+## 📂 Estructura del Repositorio
 
 ```text
-├── backend/       # FastAPI application, ML models, and business logic
-├── frontend/      # React 18 SPA dashboard
-├── iot/           # ESP32 C++ firmware and MQTT simulation scripts
-├── mosquitto/     # MQTT broker configuration and auth
-├── scripts/       # Operational and deployment utilities
-└── docs/          # Architecture and academic documentation
+├── backend/       # Aplicación FastAPI, modelos ML y lógica de negocio
+├── frontend/      # Dashboard SPA en React 18
+├── iot/           # Firmware C++ para ESP32 y scripts de simulación MQTT
+├── mosquitto/     # Configuración del broker MQTT y autenticación
+├── scripts/       # Utilidades operacionales y de despliegue
+└── docs/          # Documentación de arquitectura y académica
 ```
 
-## 🤝 Contributing
+## 🤝 Contribuir
 
-We welcome contributions from the community! If you'd like to help:
-1. Check the [Issues](https://github.com/sebitabravo/ManttoAI/issues) tab for open tasks.
-2. Fork the repository and create a feature branch (`feature/amazing-idea`).
-3. Ensure your code passes all checks (`make lint` and `make test`).
-4. Open a Pull Request.
+¡Las contribuciones son bienvenidas! Si querés colaborar:
+1. Revisá la pestaña [Issues](https://github.com/sebitabravo/ManttoAI/issues) para tareas abiertas.
+2. Hacé un fork del repositorio y creá una rama feature (`feature/amazing-idea`).
+3. Asegurate de que tu código pase todos los checks (`make lint` y `make test`).
+4. Abrí un Pull Request.
 
 ---
 
-## 🎓 Academic Context (PMBOK)
+## 🎓 Contexto Académico (PMBOK)
 
-*This project originated as a Capstone Project (Gestión de Proyectos Informáticos) at INACAP.* 
+*Este proyecto se originó como Proyecto de Título (Gestión de Proyectos Informáticos) en INACAP.*
 
-If you are an academic evaluator or looking for the formal PMBOK project management artifacts (Project Charter, WBS, RACI, Risk Matrix, etc.), please refer to the dedicated management index:
+Si sos evaluador académico o buscás los artefactos formales de gestión del proyecto bajo PMBOK (Acta de Constitución, EDT, RACI, Matriz de Riesgos, etc.), consultá el índice dedicado:
 
 👉 **[Ver Documentación PMBOK / Evaluación Académica](docs/gestion-proyecto/INDEX.md)**
 
 ---
-*Maintained by the ManttoAI Team. Open source for the community.*
+*Mantenido por el equipo ManttoAI. Código abierto para la comunidad.*

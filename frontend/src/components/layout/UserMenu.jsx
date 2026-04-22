@@ -8,16 +8,13 @@ import { resetOnboarding } from "../../api/onboarding";
 import { clearOnboardingDone } from "../../utils/onboardingStorage";
 
 /**
- * Menú de usuario integrado con opciones de configuración.
+ * Menú de usuario — Estilo Apple.
  * 
- * Muestra en un solo dropdown:
- * - Opciones de configuración (solo admin): Repetir asistente, Ver tour
- * - Mi Perfil
- * - Cerrar sesión
- * 
- * Props:
- *  - onReplayTour: callback opcional para lanzar el tour de producto
+ * Botón trigger: avatar circular, sin borders pesados.
+ * Dropdown: fondo blanco, sin borders, sombra Apple.
+ * Items: hover sutil, texto limpio.
  */
+
 export default function UserMenu({ onReplayTour }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -26,7 +23,6 @@ export default function UserMenu({ onReplayTour }) {
   const triggerRef = useRef(null);
   const panelRef = useRef(null);
 
-  // Obtener el emoji del avatar seleccionado o usar iniciales
   const avatarEmoji = user?.avatar ? AVATAR_MAP[user.avatar] : null;
   const initials = avatarEmoji || (user?.nombre || "?")
     .split(" ")
@@ -44,10 +40,7 @@ export default function UserMenu({ onReplayTour }) {
     }
 
     function onKey(e) {
-      if (e.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
+      if (e.key === "Escape") { setOpen(false); triggerRef.current?.focus(); }
     }
 
     document.addEventListener("pointerdown", onPointerDown);
@@ -58,7 +51,6 @@ export default function UserMenu({ onReplayTour }) {
     };
   }, [open]);
 
-  // Resetear wizard de onboarding y navegar
   async function handleResetWizard() {
     if (loadingReset) return;
     setLoadingReset(true);
@@ -73,7 +65,6 @@ export default function UserMenu({ onReplayTour }) {
     }
   }
 
-  // Lanzar tour de producto
   function handleReplayTour() {
     clearOnboardingDone();
     setOpen(false);
@@ -95,37 +86,38 @@ export default function UserMenu({ onReplayTour }) {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((s) => !s)}
-        className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-neutral-50 px-2 py-1.5 text-sm text-neutral-800 hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+        className="inline-flex items-center gap-2 rounded-full bg-neutral-100 pl-1 pr-3 py-1 text-sm transition-colors duration-200 hover:bg-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
       >
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-lg font-semibold text-white">{avatarEmoji || initials}</span>
-        <span className="hidden sm:inline">{user?.nombre || "Invitado"}</span>
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 text-lg font-semibold text-white">
+          {avatarEmoji || initials}
+        </span>
+        <span className="hidden text-neutral-600 font-medium sm:inline">{user?.nombre || "Invitado"}</span>
       </button>
 
-      {open ? (
+      {open && (
         <div
           ref={panelRef}
           role="menu"
           aria-label="Menú de usuario"
-          className="absolute right-0 mt-2 w-60 rounded-lg border border-neutral-200 bg-white shadow-lg z-40"
+          className="absolute right-0 mt-2 w-60 rounded-2xl bg-white p-2 shadow-apple z-40"
         >
           {/* Info del usuario */}
-          <div className="px-3 py-2 border-b border-neutral-100">
-            <p className="m-0 text-sm font-semibold text-neutral-800">{user?.nombre}</p>
-            <p className="m-0 text-xs text-neutral-500">{user?.email}</p>
+          <div className="px-3 py-2.5 mb-1">
+            <p className="m-0 text-sm font-semibold text-neutral-600">{user?.nombre}</p>
+            <p className="m-0 text-xs text-neutral-400">{user?.email}</p>
           </div>
 
-          {/* Opciones de configuración (solo admin) */}
+          {/* Configuración (solo admin) */}
           {isAdmin && (
-            <div className="border-b border-neutral-100 px-2 py-1.5">
-              <p className="px-2 py-1 text-xs font-medium text-neutral-400 uppercase tracking-wide">Configuración</p>
+            <div className="border-t border-neutral-100 pt-1 pb-1">
+              <p className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">Configuración</p>
               <button
                 type="button"
                 role="menuitem"
                 disabled={loadingReset}
                 onClick={handleResetWizard}
-                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-neutral-600 transition-colors duration-200 hover:bg-neutral-100 disabled:opacity-50"
               >
-                {/* Ícono de replay */}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <polyline points="1 4 1 10 7 10" />
                   <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
@@ -136,9 +128,8 @@ export default function UserMenu({ onReplayTour }) {
                 type="button"
                 role="menuitem"
                 onClick={handleReplayTour}
-                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50"
+                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-neutral-600 transition-colors duration-200 hover:bg-neutral-100"
               >
-                {/* Ícono de tour/play */}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10" />
                   <polygon points="10 8 16 12 10 16 10 8" />
@@ -149,14 +140,13 @@ export default function UserMenu({ onReplayTour }) {
           )}
 
           {/* Perfil */}
-          <div className="border-b border-neutral-100 px-2 py-1.5">
+          <div className="border-t border-neutral-100 pt-1 pb-1">
             <button
               type="button"
               role="menuitem"
               onClick={() => { setOpen(false); navigate("/perfil"); }}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50"
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-neutral-600 transition-colors duration-200 hover:bg-neutral-100"
             >
-              {/* Ícono de usuario */}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
@@ -166,19 +156,23 @@ export default function UserMenu({ onReplayTour }) {
           </div>
 
           {/* Cerrar sesión */}
-          <div className="px-2 py-1.5">
-            <Button type="button" variant="outline" className="w-full justify-start" onClick={handleLogout}>
-              {/* Ícono de logout */}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2">
+          <div className="border-t border-neutral-100 pt-1">
+            <button
+              type="button"
+              role="menuitem"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-danger-600 transition-colors duration-200 hover:bg-danger-50"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
               Cerrar sesión
-            </Button>
+            </button>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

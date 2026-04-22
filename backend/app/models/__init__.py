@@ -9,6 +9,7 @@ from app.models.mantencion import Mantencion
 from app.models.prediccion import Prediccion
 from app.models.umbral import Umbral
 from app.models.usuario import Usuario
+from app.models.chat import MensajeChat
 
 __all__ = [
     "Usuario",
@@ -20,4 +21,5 @@ __all__ = [
     "Umbral",
     "APIKey",
     "AuditLog",
+    "MensajeChat",
 ]

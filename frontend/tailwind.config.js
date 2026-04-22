@@ -3,136 +3,230 @@ export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
+      // Tipografía Apple: Inter como alternativa web a SF Pro
+      // Inter tiene optical sizing similar y características comparables
       fontFamily: {
         sans: [
-          "Geist",
+          "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
-          '"Segoe UI"',
+          '"SF Pro Display"',
+          '"SF Pro Text"',
+          "system-ui",
           "sans-serif",
         ],
-        mono: [
-          "Geist Mono",
-          '"SF Mono"',
-          "Monaco",
-          '"Cascadia Code"',
-          '"Courier New"',
-          "monospace",
+        display: [
+          "Inter",
+          "-apple-system",
+          '"SF Pro Display"',
+          "system-ui",
+          "sans-serif",
         ],
       },
+      // Paleta Apple: binaria con único acento azul
       colors: {
-        // Neutrales tintados azul-grisáceo industrial (OKLCH)
-        neutral: {
-          50: "oklch(98% 0.003 250)",   // bg-page, casi blanco tintado
-          100: "oklch(96% 0.005 250)",  // bg-card, superficie elevada
-          200: "oklch(92% 0.008 250)",  // border-subtle
-          300: "oklch(85% 0.012 250)",  // border-default
-          400: "oklch(70% 0.015 250)",  // text-muted, placeholders
-          500: "oklch(55% 0.018 250)",  // text-secondary
-          600: "oklch(40% 0.020 250)",  // text-primary
-          700: "oklch(30% 0.022 250)",  // headings, emphasis
-          800: "oklch(22% 0.020 250)",  // casi negro, títulos grandes
-          900: "oklch(15% 0.015 250)",  // máximo contraste
+        // Superficies Apple
+        apple: {
+          black: "#000000",         // Hero backgrounds, immersive
+          white: "#ffffff",         // Text on dark, button text
+          gray: "#f5f5f7",          // Section backgrounds, cards
+          "gray-dark": "#1d1d1f",   // Primary text on light bg
         },
-        // Primario: azul petróleo industrial sobrio
+        // Primary: Apple Blue — único acento cromático
         primary: {
-          50: "oklch(96% 0.020 250)",
-          100: "oklch(92% 0.035 250)",
-          200: "oklch(85% 0.050 250)",
-          300: "oklch(75% 0.070 250)",
-          400: "oklch(65% 0.090 250)",
-          500: "oklch(55% 0.110 250)",  // azul petróleo base
-          600: "oklch(48% 0.120 250)",  // hover, activo
-          700: "oklch(40% 0.110 250)",  // pressed
-          800: "oklch(32% 0.095 250)",
-          900: "oklch(25% 0.075 250)",
+          50: "#e8f4ff",
+          100: "#d4ebff",
+          200: "#b0daff",
+          300: "#7ac2ff",
+          400: "#3a9eff",
+          500: "#0071e3",  // Apple Blue principal
+          600: "#0066cc",  // Links on light bg
+          700: "#0056b3",
+          800: "#004999",
+          900: "#003d80",
         },
-        // Semánticos profesionales (alta saturación, legibles)
+        // Neutrales Apple (escala reducida, sin tintes)
+        neutral: {
+          50: "#fafafa",
+          100: "#f5f5f7",   // Apple gray
+          200: "#e8e8ed",
+          300: "#d2d2d7",
+          400: "#86868b",   // Secondary text
+          500: "#6e6e73",
+          600: "#1d1d1f",   // Primary text
+          700: "#1d1d1f",
+          800: "#000000",
+          900: "#000000",
+        },
+        // Semánticos — versión Apple (más sutiles)
         success: {
-          50: "oklch(96% 0.030 145)",
-          100: "oklch(90% 0.060 145)",
-          200: "oklch(82% 0.090 145)",
-          300: "oklch(72% 0.120 145)",
-          400: "oklch(62% 0.145 145)",
-          500: "oklch(52% 0.165 145)",  // verde industrial
-          600: "oklch(45% 0.160 145)",  // operativo, success
-          700: "oklch(38% 0.145 145)",
-          800: "oklch(30% 0.120 145)",
-          900: "oklch(24% 0.095 145)",
+          50: "#e8f8ee",
+          100: "#d1f1dd",
+          200: "#a3e3bb",
+          300: "#75d599",
+          400: "#47c777",
+          500: "#34c759",  // Apple green
+          600: "#2db14d",
+          700: "#248f3e",
+          800: "#1b6d2f",
+          900: "#124b20",
         },
         warning: {
-          50: "oklch(96% 0.025 85)",
-          100: "oklch(92% 0.055 85)",
-          200: "oklch(85% 0.095 85)",
-          300: "oklch(78% 0.130 85)",
-          400: "oklch(70% 0.155 85)",
-          500: "oklch(62% 0.175 85)",   // amarillo-naranja profesional
-          600: "oklch(55% 0.170 85)",   // advertencia
-          700: "oklch(48% 0.155 85)",
-          800: "oklch(40% 0.130 85)",
-          900: "oklch(32% 0.105 85)",
+          50: "#fff8e6",
+          100: "#fff0cc",
+          200: "#ffe199",
+          300: "#ffd266",
+          400: "#ffc333",
+          500: "#ff9500",  // Apple orange
+          600: "#e68600",
+          700: "#cc7600",
+          800: "#b36600",
+          900: "#995600",
         },
         danger: {
-          50: "oklch(96% 0.022 25)",
-          100: "oklch(92% 0.048 25)",
-          200: "oklch(86% 0.085 25)",
-          300: "oklch(78% 0.125 25)",
-          400: "oklch(68% 0.160 25)",
-          500: "oklch(58% 0.185 25)",   // rojo industrial
-          600: "oklch(50% 0.195 25)",   // crítico, error
-          700: "oklch(42% 0.180 25)",
-          800: "oklch(34% 0.150 25)",
-          900: "oklch(27% 0.120 25)",
+          50: "#ffebeb",
+          100: "#ffd6d6",
+          200: "#ffadad",
+          300: "#ff8585",
+          400: "#ff5c5c",
+          500: "#ff3b30",  // Apple red
+          600: "#e63529",
+          700: "#cc2f24",
+          800: "#b3291f",
+          900: "#99231a",
         },
         info: {
-          50: "oklch(96% 0.018 240)",
-          100: "oklch(92% 0.032 240)",
-          200: "oklch(86% 0.050 240)",
-          300: "oklch(78% 0.075 240)",
-          400: "oklch(68% 0.095 240)",
-          500: "oklch(58% 0.110 240)",
-          600: "oklch(50% 0.118 240)",
-          700: "oklch(42% 0.105 240)",
-          800: "oklch(34% 0.085 240)",
-          900: "oklch(27% 0.070 240)",
+          50: "#e5f6ff",
+          100: "#ccedff",
+          200: "#99daff",
+          300: "#66c8ff",
+          400: "#33b5ff",
+          500: "#5ac8fa",  // Apple cyan
+          600: "#4fb4e1",
+          700: "#45a0c8",
+          800: "#3a8caf",
+          900: "#307896",
         },
       },
+      // Border radius Apple
       borderRadius: {
-        sm: "6px",   // chips, badges, nav items
-        DEFAULT: "8px",   // botones, inputs
-        md: "10px",  // cards pequeñas
-        lg: "12px",  // cards principales, modales
+        none: "0",
+        micro: "5px",      // Chips, tags
+        DEFAULT: "8px",    // Buttons, cards estándar
+        comfortable: "11px", // Search inputs
+        lg: "12px",        // Feature panels
+        xl: "16px",        // Large cards
+        pill: "980px",     // CTAs pill (Learn more, Shop)
+        full: "9999px",    // Círculos
       },
+      // Tipografía Apple: escala con negative letter-spacing
       fontSize: {
-        // Escala fija (4 niveles visuales) para UI densa de operación.
-        xs: ["0.75rem", { lineHeight: "1rem", letterSpacing: "0" }],
-        sm: ["0.875rem", { lineHeight: "1.375rem", letterSpacing: "0" }],
-        base: ["0.875rem", { lineHeight: "1.375rem", letterSpacing: "0" }],
-        lg: ["1.125rem", { lineHeight: "1.625rem", letterSpacing: "-0.01em" }],
-        xl: ["1.875rem", { lineHeight: "2.25rem", letterSpacing: "-0.02em" }],
+        // Escala Display (20px+)
+        "display-hero": ["56px", { lineHeight: "1.07", letterSpacing: "-0.5px", fontWeight: "600" }],
+        "display-lg": ["40px", { lineHeight: "1.10", letterSpacing: "-0.4px", fontWeight: "600" }],
+        "display-md": ["28px", { lineHeight: "1.14", letterSpacing: "-0.28px", fontWeight: "400" }],
+        "display-sm": ["21px", { lineHeight: "1.19", letterSpacing: "-0.21px", fontWeight: "400" }],
+        // Escala Text (<20px)
+        xl: ["1.25rem", { lineHeight: "1.47", letterSpacing: "-0.32px" }],
+        lg: ["1.125rem", { lineHeight: "1.47", letterSpacing: "-0.29px" }],
+        base: ["1.0625rem", { lineHeight: "1.47", letterSpacing: "-0.374px" }], // 17px Apple body
+        sm: ["0.875rem", { lineHeight: "1.43", letterSpacing: "-0.224px" }],    // 14px
+        xs: ["0.75rem", { lineHeight: "1.33", letterSpacing: "-0.12px" }],      // 12px
+        micro: ["0.625rem", { lineHeight: "1.47", letterSpacing: "-0.08px" }],  // 10px
       },
       fontWeight: {
+        light: "300",
         normal: "400",
         medium: "500",
         semibold: "600",
-      },
-      lineHeight: {
-        tight: "1.2",
-        normal: "1.5",
-        relaxed: "1.7",
+        bold: "700",
       },
       letterSpacing: {
-        tighter: "-0.02em",
-        tight: "-0.01em",
-        normal: "0",
+        tighter: "-0.5px",
+        tight: "-0.374px",
+        normal: "-0.224px",
+        wide: "0",
       },
+      lineHeight: {
+        none: "1",
+        tight: "1.07",
+        snug: "1.14",
+        normal: "1.47",
+        relaxed: "1.6",
+      },
+      // Sombras Apple: soft, diffused, minimal
       boxShadow: {
-        sm: "0 1px 2px 0 oklch(15% 0.015 250 / 0.05)",
-        DEFAULT: "0 1px 3px 0 oklch(15% 0.015 250 / 0.1), 0 1px 2px -1px oklch(15% 0.015 250 / 0.1)",
-        md: "0 4px 6px -1px oklch(15% 0.015 250 / 0.1), 0 2px 4px -2px oklch(15% 0.015 250 / 0.1)",
+        none: "none",
+        sm: "0 1px 2px rgba(0, 0, 0, 0.04)",
+        DEFAULT: "0 2px 8px rgba(0, 0, 0, 0.08)",
+        md: "0 4px 12px rgba(0, 0, 0, 0.1)",
+        lg: "3px 5px 30px rgba(0, 0, 0, 0.12)",  // Apple product card shadow
+        apple: "3px 5px 30px rgba(0, 0, 0, 0.22)",  // Elevated product cards
+      },
+      // Backdrop blur para glass navigation
+      backdropBlur: {
+        glass: "20px",
+      },
+      backdropSaturate: {
+        glass: "1.8",
+      },
+      // Transiciones Apple: smooth, 200-300ms
+      transitionDuration: {
+        DEFAULT: "200ms",
+        fast: "150ms",
+        slow: "300ms",
       },
       transitionTimingFunction: {
+        DEFAULT: "cubic-bezier(0.25, 0.1, 0.25, 1)",
         "out-quart": "cubic-bezier(0.25, 1, 0.5, 1)",
+        apple: "cubic-bezier(0.42, 0, 0.58, 1)",
+      },
+      // Spacing Apple (base 8px)
+      spacing: {
+        0.5: "2px",
+        1: "4px",
+        1.5: "6px",
+        2: "8px",
+        2.5: "10px",
+        3: "12px",
+        3.5: "14px",
+        4: "16px",
+        5: "20px",
+        6: "24px",
+        7: "28px",
+        8: "32px",
+        9: "36px",
+        10: "40px",
+        11: "44px",  // Touch target mínimo
+        12: "48px",
+        14: "56px",
+        16: "64px",
+        20: "80px",
+        24: "96px",
+      },
+      // Max width para contenido centrado (Apple style)
+      maxWidth: {
+        prose: "980px",  // Apple content width
+      },
+      // Animaciones
+      animation: {
+        "fade-in": "fadeIn 0.3s ease-out",
+        "slide-up": "slideUp 0.3s ease-out",
+        "pulse-subtle": "pulseSubtle 2s ease-in-out infinite",
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        slideUp: {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        pulseSubtle: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
       },
     },
   },

@@ -31,3 +31,8 @@ export async function createEquipoFull(payload) {
   const { data } = await client.post("/equipos/full-setup", payload);
   return data;
 }
+
+export async function getProvisioningToken() {
+  const { data } = await client.get("/equipos/provisioning-token");
+  return data;
+}

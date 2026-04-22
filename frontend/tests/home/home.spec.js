@@ -109,7 +109,7 @@ test("el usuario puede iniciar sesión y entrar al dashboard", async ({ page }) 
   // Llenar formulario y enviar
   await page.getByLabel("Email").fill("demo@example.com");
   await page.getByLabel("Contraseña").fill("123456");
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await page.getByRole("button", { name: "Continuar" }).click();
 
   // Esperar a que la URL cambie (cualquier página autenticada)
   await page.waitForURL(/\/(dashboard|onboarding|equipos)$/, { timeout: 15000 });

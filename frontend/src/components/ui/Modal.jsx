@@ -134,7 +134,7 @@ export default function Modal({ open = false, title = "Modal", onClose, children
         tabIndex={-1}
         className="
           relative w-full max-w-lg max-h-[90vh] overflow-y-auto
-          rounded-lg border border-neutral-300 bg-neutral-100 p-5 shadow
+          rounded-2xl bg-white p-6 shadow-apple border border-white/20
           focus:outline-none
         "
       >

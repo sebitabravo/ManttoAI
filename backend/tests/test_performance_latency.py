@@ -47,7 +47,7 @@ def session_factory_sqlite() -> Generator[sessionmaker, None, None]:
     engine.dispose()
 
 
-def _crear_equipo(session_factory: sessionmaker, equipo_id_hint: int = 1) -> int:
+def _crear_equipo(session_factory: sessionmaker, equipo_id_hint: int = 1, mac_address: str = "00:1A:2B:3C:4D:5E") -> int:
     """Crea un equipo auxiliar y retorna su ID real persistido."""
 
     db = session_factory()
@@ -57,6 +57,7 @@ def _crear_equipo(session_factory: sessionmaker, equipo_id_hint: int = 1) -> int
             ubicacion="Laboratorio",
             tipo="Motor",
             estado="operativo",
+            mac_address=mac_address,
         )
         db.add(equipo)
         db.commit()
@@ -82,7 +83,7 @@ class TestRNF01LatenciaMQTT:
         + persistencia en DB) debe completarse en menos de 5 segundos.
         """
         equipo_id = _crear_equipo(session_factory_sqlite)
-        topic = f"manttoai/equipo/{equipo_id}/lecturas"
+        topic = "manttoai/telemetria/00:1A:2B:3C:4D:5E"
         payload = (
             '{"temperatura": 45.2, "humedad": 60.0, '
             '"vib_x": 0.3, "vib_y": 0.1, "vib_z": 9.8}'
@@ -108,7 +109,7 @@ class TestRNF01LatenciaMQTT:
         Valida que no hay degradación acumulativa en el pipeline.
         """
         equipo_id = _crear_equipo(session_factory_sqlite, equipo_id_hint=2)
-        topic = f"manttoai/equipo/{equipo_id}/lecturas"
+        topic = "manttoai/telemetria/00:1A:2B:3C:4D:5E"
         n_lecturas = 10
         latencias: list[float] = []
 

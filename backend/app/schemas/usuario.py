@@ -1,5 +1,6 @@
 """Schemas de usuario y autenticación."""
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, field_validator
@@ -53,6 +54,7 @@ class UsuarioResponse(UsuarioBase):
     """Representación pública de usuario."""
 
     id: int
+    created_at: datetime | None = None
     telefono: str | None = None
     avatar: str | None = None
 
@@ -142,6 +144,7 @@ class ProfileResponse(BaseModel):
     """Respuesta del perfil del usuario autenticado."""
 
     id: int
+    created_at: datetime | None = None
     nombre: str
     email: str
     telefono: str | None = None

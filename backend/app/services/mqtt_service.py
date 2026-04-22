@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.database import SessionLocal
 from app.schemas.lectura import LecturaMqttPayload
+from app.models.equipo import Equipo
 from app.services.lectura_service import create_lectura_from_mqtt_payload
 
 # Configuración de reintentos para tolerancia a fallos de DB (RNF-17)
@@ -40,42 +41,38 @@ def _normalize_base_topic(raw: str) -> str:
     return raw.strip("/")
 
 
-def build_topic(equipo_id: int) -> str:
+def build_topic(mac_address: str) -> str:
     """Construye el topic MQTT esperado para un equipo."""
 
     settings = get_settings()
-    base = _normalize_base_topic(settings.mqtt_base_topic)
-    return f"{base}/{equipo_id}/lecturas"
+    base = _normalize_base_topic(settings.mqtt_telemetry_topic)
+    return f"{base}/{mac_address}"
 
 
 def build_subscription_topic() -> str:
     """Construye el topic de suscripción wildcard para todas las lecturas."""
 
     settings = get_settings()
-    base = _normalize_base_topic(settings.mqtt_base_topic)
-    return f"{base}/+/lecturas"
+    base = _normalize_base_topic(settings.mqtt_telemetry_topic)
+    return f"{base}/+"
 
 
-def extract_equipo_id(topic: str) -> int:
-    """Extrae equipo_id desde un topic `.../equipo/{id}/lecturas`."""
+def extract_mac_address(topic: str) -> str:
+    """Extrae mac_address desde un topic `manttoai/telemetria/{mac_address}`."""
 
     settings = get_settings()
     # Usar la misma normalización que build_topic para consistencia
-    base_parts = _normalize_base_topic(settings.mqtt_base_topic).split("/")
+    base_parts = _normalize_base_topic(settings.mqtt_telemetry_topic).split("/")
     topic_parts = topic.strip("/").split("/")
 
-    expected_len = len(base_parts) + 2
+    expected_len = len(base_parts) + 1
     if len(topic_parts) != expected_len:
         raise ValueError("Topic MQTT inválido")
 
-    if topic_parts[: len(base_parts)] != base_parts or topic_parts[-1] != "lecturas":
+    if topic_parts[: len(base_parts)] != base_parts:
         raise ValueError("Topic MQTT inválido")
 
-    equipo_id_raw = topic_parts[len(base_parts)]
-    try:
-        return int(equipo_id_raw)
-    except ValueError as exc:
-        raise ValueError("Topic MQTT inválido") from exc
+    return topic_parts[-1]
 
 
 def parse_message(payload: str | bytes) -> LecturaMqttPayload:
@@ -101,7 +98,7 @@ def parse_message(payload: str | bytes) -> LecturaMqttPayload:
 
 def _persist_lectura_with_retry(
     topic: str,
-    equipo_id: int,
+    mac_address: str,
     lectura_payload: LecturaMqttPayload,
     session_factory: SessionFactory,
     max_attempts: int = _MQTT_DB_RETRY_ATTEMPTS,
@@ -120,13 +117,20 @@ def _persist_lectura_with_retry(
     for intento in range(1, max_attempts + 1):
         db = session_factory()
         try:
+            equipo = db.query(Equipo).filter(Equipo.mac_address == mac_address).first()
+            if not equipo:
+                logger.warning(
+                    "[MQTT] Equipo no encontrado para mac_address=%s", mac_address
+                )
+                return False
+
             lectura = create_lectura_from_mqtt_payload(
-                db, equipo_id, lectura_payload, background_tasks=None
+                db, equipo.id, lectura_payload, background_tasks=None
             )
             logger.info(
                 "[MQTT] Lectura persistida: equipo_id=%d lectura_id=%s "
                 "timestamp=%s temp=%.1f humedad=%.1f",
-                equipo_id,
+                equipo.id,
                 getattr(lectura, "id", "n/a"),
                 getattr(lectura, "timestamp", "n/a"),
                 lectura_payload.temperatura or 0,
@@ -180,7 +184,7 @@ def process_mqtt_message(
     """Procesa un mensaje MQTT y persiste lectura sin romper el loop."""
 
     try:
-        equipo_id = extract_equipo_id(topic)
+        mac_address = extract_mac_address(topic)
         lectura_payload = parse_message(payload)
     except ValueError as exc:
         logger.warning("Mensaje MQTT descartado topic=%s error=%s", topic, str(exc))
@@ -188,7 +192,7 @@ def process_mqtt_message(
 
     return _persist_lectura_with_retry(
         topic=topic,
-        equipo_id=equipo_id,
+        mac_address=mac_address,
         lectura_payload=lectura_payload,
         session_factory=session_factory,
     )

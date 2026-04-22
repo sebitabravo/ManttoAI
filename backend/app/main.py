@@ -32,6 +32,7 @@ from app.routers import (
     reportes,
     umbrales,
     usuarios,
+    chat,
 )
 from app.services.mqtt_service import start_mqtt_subscriber, stop_mqtt_subscriber
 from app.services.prediccion_scheduler_service import (
@@ -167,6 +168,7 @@ include_router_with_legacy_support(mantenciones.router)
 include_router_with_legacy_support(umbrales.router)
 include_router_with_legacy_support(dashboard.router)
 include_router_with_legacy_support(reportes.router)
+include_router_with_legacy_support(chat.router)
 
 # Métricas (requiere auth)
 app.include_router(

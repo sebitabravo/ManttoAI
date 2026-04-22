@@ -41,7 +41,7 @@ def session_factory_sqlite() -> Generator[sessionmaker, None, None]:
     engine.dispose()
 
 
-def _crear_equipo(session_factory: sessionmaker) -> int:
+def _crear_equipo(session_factory: sessionmaker, mac_address: str = "00:1A:2B:3C:4D:5E") -> int:
     """Crea un equipo auxiliar y retorna su ID."""
 
     db = session_factory()
@@ -51,6 +51,7 @@ def _crear_equipo(session_factory: sessionmaker) -> int:
             ubicacion="Laboratorio",
             tipo="Motor",
             estado="operativo",
+            mac_address=mac_address,
         )
         db.add(equipo)
         db.commit()
@@ -88,8 +89,8 @@ class TestPersistLecturaWithRetry:
         payload = _build_lectura_payload()
 
         resultado = _persist_lectura_with_retry(
-            topic=f"manttoai/equipo/{equipo_id}/lecturas",
-            equipo_id=equipo_id,
+            topic=f"manttoai/telemetria/00:1A:2B:3C:4D:5E",
+            mac_address="00:1A:2B:3C:4D:5E",
             lectura_payload=payload,
             session_factory=session_factory_sqlite,
             max_attempts=3,
@@ -107,7 +108,7 @@ class TestPersistLecturaWithRetry:
         """
         equipo_id = _crear_equipo(session_factory_sqlite)
         payload = _build_lectura_payload()
-        topic = f"manttoai/equipo/{equipo_id}/lecturas"
+        topic = "manttoai/telemetria/00:1A:2B:3C:4D:5E"
 
         llamadas = {"count": 0}
         original_factory = session_factory_sqlite
@@ -130,7 +131,7 @@ class TestPersistLecturaWithRetry:
 
             resultado = _persist_lectura_with_retry(
                 topic=topic,
-                equipo_id=equipo_id,
+                mac_address="00:1A:2B:3C:4D:5E",
                 lectura_payload=payload,
                 session_factory=session_factory_sqlite,
                 max_attempts=3,
@@ -149,7 +150,7 @@ class TestPersistLecturaWithRetry:
         """
         equipo_id = _crear_equipo(session_factory_sqlite)
         payload = _build_lectura_payload()
-        topic = f"manttoai/equipo/{equipo_id}/lecturas"
+        topic = "manttoai/telemetria/00:1A:2B:3C:4D:5E"
 
         with patch(
             "app.services.mqtt_service.create_lectura_from_mqtt_payload"
@@ -158,7 +159,7 @@ class TestPersistLecturaWithRetry:
 
             resultado = _persist_lectura_with_retry(
                 topic=topic,
-                equipo_id=equipo_id,
+                mac_address="00:1A:2B:3C:4D:5E",
                 lectura_payload=payload,
                 session_factory=session_factory_sqlite,
                 max_attempts=3,
@@ -177,8 +178,9 @@ class TestPersistLecturaWithRetry:
         """
         from fastapi import HTTPException
 
+        equipo_id = _crear_equipo(session_factory_sqlite, mac_address="99:99:99:99:99:99")
         payload = _build_lectura_payload()
-        topic = "manttoai/equipo/99999/lecturas"
+        topic = "manttoai/telemetria/99:99:99:99:99:99"
 
         with patch(
             "app.services.mqtt_service.create_lectura_from_mqtt_payload"
@@ -189,7 +191,7 @@ class TestPersistLecturaWithRetry:
 
             resultado = _persist_lectura_with_retry(
                 topic=topic,
-                equipo_id=99999,
+                mac_address="99:99:99:99:99:99",
                 lectura_payload=payload,
                 session_factory=session_factory_sqlite,
                 max_attempts=3,
@@ -207,7 +209,7 @@ class TestPersistLecturaWithRetry:
         garantizando que el retry está activo en el pipeline completo.
         """
         equipo_id = _crear_equipo(session_factory_sqlite)
-        topic = f"manttoai/equipo/{equipo_id}/lecturas"
+        topic = "manttoai/telemetria/00:1A:2B:3C:4D:5E"
         payload = (
             '{"temperatura": 50.0, "humedad": 55.0, '
             '"vib_x": 0.2, "vib_y": 0.1, "vib_z": 9.7}'
@@ -226,4 +228,4 @@ class TestPersistLecturaWithRetry:
         assert mock_retry.call_count == 1
         # Verificar que se pasaron los argumentos correctos
         call_kwargs = mock_retry.call_args
-        assert call_kwargs.kwargs["equipo_id"] == equipo_id
+        assert call_kwargs.kwargs["mac_address"] == "00:1A:2B:3C:4D:5E"

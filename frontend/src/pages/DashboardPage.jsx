@@ -19,6 +19,15 @@ const resumenInicial = {
   equipos: [],
 };
 
+/**
+ * Dashboard principal — Estilo Apple.
+ * 
+ * Características:
+ * - Cards limpias sin bordes
+ * - Tipografía con negative letter-spacing
+ * - Espaciado generoso
+ * - Jerarquía visual clara
+ */
 export default function DashboardPage() {
   const { data, loading, error, refresh } = usePolling(getDashboardData, DASHBOARD_POLLING_INTERVAL_MS, null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
@@ -40,81 +49,101 @@ export default function DashboardPage() {
         minute: "2-digit",
         second: "2-digit",
       })
-    : "sin sincronización";
+    : "—";
 
   return (
-    <section className="grid grid-cols-1 gap-8">
-      {/* Header orientado a valor operacional (no solo visual) */}
-      <div className="space-y-1">
+    <div className="space-y-10">
+      {/* Header del dashboard */}
+      <header className="space-y-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-neutral-800 tracking-tight">Centro de control operacional</h1>
-          {loading && data ? (
-            <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" aria-hidden="true" />
+          <h1 className="text-display-md font-semibold text-neutral-600 tracking-tight">
+            Centro de control
+          </h1>
+          {loading && data && (
+            <span className="inline-flex items-center gap-2 text-xs text-neutral-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" aria-hidden="true" />
               Actualizando
             </span>
-          ) : null}
+          )}
         </div>
-        <p className="text-sm text-neutral-500">
-          Priorizá intervención antes de una detención no planificada.
-          <span className="ml-2 text-xs text-neutral-500">Última actualización: {lastUpdatedLabel}</span>
+        <p className="text-base text-neutral-400">
+          Monitoreá el estado de tus equipos y anticipá fallas antes de que ocurran.
+          <span className="ml-3 text-sm">
+            Última actualización: {lastUpdatedLabel}
+          </span>
         </p>
-      </div>
+      </header>
 
-      {lastUpdatedAt ? (
+      {/* Live region para screen readers */}
+      {lastUpdatedAt && (
         <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
           Dashboard actualizado a las {lastUpdatedLabel}.
         </div>
-      ) : null}
+      )}
 
-      {/* Bloque crítico: resumen operativo */}
-      <section data-tour="dashboard-resumen" className="grid grid-cols-1 gap-5" aria-label="Resumen operativo crítico">
+      {/* Resumen operativo */}
+      <section data-tour="dashboard-resumen" aria-label="Resumen operativo">
         {isInitialLoading ? (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-            <SkeletonMetric className="xl:col-span-7" />
-            <SkeletonMetric className="xl:col-span-5" />
-            <SkeletonMetric className="xl:col-span-4" />
-            <SkeletonMetric className="xl:col-span-4" />
-            <SkeletonMetric className="xl:col-span-4" />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            <SkeletonMetric className="lg:col-span-4" />
+            <SkeletonMetric className="lg:col-span-4" />
+            <SkeletonMetric className="lg:col-span-4" />
+            <SkeletonMetric className="lg:col-span-6" />
+            <SkeletonMetric className="lg:col-span-6" />
           </div>
         ) : (
           <ResumenCards resumen={resumen} />
         )}
       </section>
 
-      {error ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-500 bg-warning-50 px-4 py-3 text-sm text-warning-700">
-          <p className="m-0">
-            No se pudo actualizar el backend.
-            <span className="ml-1">Se muestran los últimos datos válidos ({lastUpdatedLabel}).</span>
+      {/* Error banner */}
+      {error && (
+        <div className="flex items-center justify-between gap-4 rounded-xl bg-warning-50 px-5 py-4">
+          <p className="text-sm text-warning-700">
+            No se pudo conectar con el backend. Se muestran los últimos datos válidos.
           </p>
-          <Button type="button" variant="outline" onClick={refresh} disabled={loading}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refresh} 
+            disabled={loading}
+          >
             {loading ? "Reintentando..." : "Reintentar"}
           </Button>
         </div>
-      ) : null}
+      )}
 
-      {/* Gráficos lado a lado — grid adaptativo */}
-      <section data-tour="dashboard-graficos" className="grid grid-cols-1 gap-5 lg:grid-cols-2" aria-label="Tendencias de sensores">
-        {isInitialLoading ? (
-          <>
-            <SkeletonChart />
-            <SkeletonChart />
-          </>
-        ) : (
-          <>
-            <GraficoTemperatura lecturas={lecturas} />
-            <GraficoVibracion lecturas={lecturas} />
-          </>
-        )}
-      </section>
-
-      {/* Bloque analítico: estado equipos (al final) */}
-      <section className="w-full" aria-label="Estado general de equipos">
-        <div className="min-w-0">
-          {isInitialLoading ? <SkeletonTable rows={5} cols={6} /> : <TablaEstadoEquipos equipos={resumen.equipos || []} />}
+      {/* Gráficos de tendencias */}
+      <section data-tour="dashboard-graficos" aria-label="Tendencias de sensores">
+        <h2 className="mb-6 text-xl font-semibold text-neutral-600 tracking-tight">
+          Tendencias
+        </h2>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {isInitialLoading ? (
+            <>
+              <SkeletonChart />
+              <SkeletonChart />
+            </>
+          ) : (
+            <>
+              <GraficoTemperatura lecturas={lecturas} />
+              <GraficoVibracion lecturas={lecturas} />
+            </>
+          )}
         </div>
       </section>
-    </section>
+
+      {/* Estado de equipos */}
+      <section aria-label="Estado de equipos">
+        <h2 className="mb-6 text-xl font-semibold text-neutral-600 tracking-tight">
+          Estado de equipos
+        </h2>
+        {isInitialLoading ? (
+          <SkeletonTable rows={5} cols={6} />
+        ) : (
+          <TablaEstadoEquipos equipos={resumen.equipos || []} />
+        )}
+      </section>
+    </div>
   );
 }

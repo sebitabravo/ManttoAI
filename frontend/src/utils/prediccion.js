@@ -52,8 +52,8 @@ const CONFIG_DESCONOCIDA = {
   dotClass: "bg-neutral-400",
   textClass: "text-neutral-600",
   barClass: "bg-neutral-400",
-  surfaceClass: "border-neutral-300 bg-neutral-100",
-  chipClass: "border-neutral-300 bg-neutral-200 text-neutral-700",
+  surfaceClass: "border-neutral-100 bg-[#f5f5f7]",
+  chipClass: "border-neutral-200 bg-neutral-100 text-neutral-700",
   nivel: -1,
 };
 

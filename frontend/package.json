@@ -13,9 +13,12 @@
   },
   "dependencies": {
     "axios": "^1.8.4",
+    "axios-cookiejar-support": "^6.0.5",
+    "lucide-react": "^1.8.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.30.0"
+    "react-router-dom": "^6.30.0",
+    "tough-cookie": "^6.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",

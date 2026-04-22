@@ -216,7 +216,7 @@ export default function HistorialPage() {
         </EmptyState>
       ) : null}
 
-      <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+      <section className="rounded-2xl bg-white p-5 shadow-sm">
         <h2 className="mt-0 text-lg font-semibold text-neutral-900">Lecturas recientes</h2>
         {lecturasRecientes.length === 0 ? (
           <p className="mb-0 text-sm text-neutral-600">No hay lecturas históricas para mostrar.</p>
@@ -227,7 +227,7 @@ export default function HistorialPage() {
                 Historial cronológico de lecturas persistidas para auditoría del prototipo.
               </caption>
               <thead>
-                <tr className="border-b border-neutral-200">
+                <tr className="border-b border-neutral-100">
                   <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Equipo</th>
                   <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Temperatura</th>
                   <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Humedad</th>
@@ -251,7 +251,7 @@ export default function HistorialPage() {
         )}
       </section>
 
-      <section className="grid grid-cols-1 gap-3 rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+      <section className="grid grid-cols-1 gap-3 rounded-2xl bg-white p-5 shadow-sm">
         <h2 className="mb-0 mt-0 text-lg font-semibold text-neutral-900">Mantenciones recientes</h2>
         {mantencionesRecientes.length === 0 ? (
           <p className="mb-0 text-sm text-neutral-600">
@@ -264,7 +264,7 @@ export default function HistorialPage() {
                 Mantenciones recientes con estado y acciones disponibles desde historial.
               </caption>
               <thead>
-                <tr className="border-b border-neutral-200">
+                <tr className="border-b border-neutral-100">
                   <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">ID</th>
                   <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Equipo</th>
                   <th scope="col" className="pb-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-700">Tipo</th>
@@ -303,7 +303,7 @@ export default function HistorialPage() {
         )}
 
         {selectedMantencion ? (
-          <div className="border-t border-neutral-200 pt-3">
+          <div className="border-t border-neutral-100 pt-3">
             <h3 className="mt-0 text-base font-semibold text-neutral-900">Actualizar mantención #{selectedMantencion.id}</h3>
             <MantencionForm
               initialValues={{

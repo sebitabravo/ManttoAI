@@ -35,11 +35,12 @@ function BarraRiesgo({ probabilidad, config }) {
 export default function EquipoPrediccionCard({ prediccion }) {
   // Configuración visual según clasificación del modelo
   const config = getConfigPrediccion(prediccion?.clasificacion);
-  const cardToneClass = prediccion ? config.surfaceClass : "border-neutral-300 bg-neutral-100";
+  const cardToneClass = prediccion ? config.surfaceClass : "bg-white";
 
   return (
+    // Comentario: Tarjeta de predicción al estilo Apple — sin borde exterior, fondo blanco y sombra sutil
     <section
-      className={`rounded-lg border p-4 transition-all duration-150 ease-out-quart ${cardToneClass}`}
+      className={`rounded-2xl bg-white p-4 transition-all duration-150 ease-out-quart shadow-sm ${cardToneClass}`}
     >
       <h2 className="mb-3 mt-0 text-lg font-semibold text-neutral-900">Última predicción</h2>
 

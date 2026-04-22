@@ -5,34 +5,30 @@ import Header from "./Header";
 import OnboardingTour from "../onboarding/OnboardingTour";
 import { isOnboardingDone } from "../../utils/onboardingStorage";
 import Sidebar from "./Sidebar";
+import ChatBot from "../chat/ChatBot";
 
 /**
- * Layout principal de la aplicación.
+ * Layout principal de la aplicación — Estilo Apple.
  * 
  * Estructura:
- * - Desktop (>768px): sidebar fijo 240px + header + main
+ * - Desktop (>768px): sidebar fijo 260px + header glass + main
  * - Tablet/Mobile (<=768px): header + main, sidebar como drawer superpuesto
  * 
- * Accesibilidad:
- * - Cierre del drawer con Escape
- * - Cierre del drawer al hacer clic en overlay
- * - Cierre del drawer al navegar (onNavClick)
- * - Restauración de foco al cerrar
+ * Características Apple:
+ * - Fondo gris Apple (#f5f5f7)
+ * - Header con efecto glass
+ * - Espaciado generoso
+ * - Transiciones suaves
  */
 export default function Layout() {
-  // Estado del drawer de navegación en resolución tablet
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
-
-  // Onboarding: se muestra solo la primera vez que el usuario ingresa
   const [mostrarOnboarding, setMostrarOnboarding] = useState(() => !isOnboardingDone());
-
-  // Ref al botón hamburguesa para devolver el foco al cerrarlo
   const menuBtnRef = useRef(null);
 
   const toggleSidebar = useCallback(() => setSidebarAbierto((s) => !s), []);
   const cerrarSidebar = useCallback(() => setSidebarAbierto(false), []);
 
-  // Cerrar el drawer con la tecla Escape (accesibilidad)
+  // Cerrar el drawer con Escape
   useEffect(() => {
     if (!sidebarAbierto) return;
 
@@ -45,15 +41,16 @@ export default function Layout() {
   }, [sidebarAbierto, cerrarSidebar]);
 
   return (
-    <div className="layout-root">
+    <div className="layout-root min-h-screen bg-neutral-100">
+      {/* Skip link para accesibilidad */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[120] focus:rounded-sm focus:bg-neutral-100 focus:px-3 focus:py-2 focus:text-sm focus:text-neutral-800 focus:ring-2 focus:ring-primary-500"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[120] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-500 focus:shadow-lg focus:ring-2 focus:ring-primary-500"
       >
         Saltar al contenido principal
       </a>
 
-      {/* Overlay semitransparente: cierra el sidebar al hacer clic fuera en tablet */}
+      {/* Overlay para cerrar sidebar en mobile */}
       {sidebarAbierto && (
         <div
           className="layout-overlay"
@@ -62,6 +59,7 @@ export default function Layout() {
         />
       )}
 
+      {/* Sidebar */}
       <Sidebar
         className={sidebarAbierto ? "layout-sidebar--abierto" : ""}
         sidebarAbierto={sidebarAbierto}
@@ -70,6 +68,7 @@ export default function Layout() {
         retornarFocoRef={menuBtnRef}
       />
 
+      {/* Contenido principal */}
       <div className="flex min-w-0 flex-col">
         <Header
           onMenuToggle={toggleSidebar}
@@ -77,15 +76,25 @@ export default function Layout() {
           menuBtnRef={menuBtnRef}
           onReplayTour={() => setMostrarOnboarding(true)}
         />
-        <main id="main-content" tabIndex={-1} className="bg-neutral-50 px-4 py-5 md:px-6 md:py-6 xl:px-8 xl:py-7">
-          <Outlet />
+        
+        <main 
+          id="main-content" 
+          tabIndex={-1} 
+          className="flex-1 bg-neutral-100 px-6 py-8 md:px-8 md:py-10 xl:px-12"
+        >
+          <div className="mx-auto max-w-6xl">
+            <Outlet />
+          </div>
         </main>
       </div>
 
-      {/* Tour de onboarding para nuevos usuarios */}
+      {/* Tour de onboarding */}
       {mostrarOnboarding && (
         <OnboardingTour onComplete={() => setMostrarOnboarding(false)} />
       )}
+
+      {/* Asistente de IA */}
+      <ChatBot />
     </div>
   );
 }

@@ -2,134 +2,156 @@ import { formatProbability } from "../../utils/metrics";
 import InfoTooltip from "../ui/InfoTooltip";
 
 /**
- * Cards de resumen con jerarquía visual asimétrica.
+ * Cards de resumen operativo — Estilo Apple.
  *
- * Principio de diseño: Data is the Hero
- * - Alertas activas y Equipos en riesgo son PROMINENTES (críticas para decisiones)
- * - Métricas secundarias (total equipos, clasificación, probabilidad) son compactas
- * - Layout asimétrico con variación de tamaño según importancia operativa
- *
- * Grid adaptativo:
- * - Desktop: 2 grandes (alertas, riesgo) + row de métricas compactas
- * - Tablet: 2 columnas
- * - Mobile: 1 columna
- *
- * NOTA: Las clases de color se resuelven con un mapa explícito porque Tailwind JIT
- * no detecta clases construidas con interpolación dinámica (ej. `bg-${variable}-50`).
+ * Características Apple:
+ * - Cards sin borders, solo sombra sutil
+ * - Fondo blanco limpio
+ * - Colores semánticos sutiles (no agresivos)
+ * - Tipografía con negative letter-spacing
+ * - Espaciado generoso
  */
 
-// Mapa explícito de clases por severidad — Tailwind JIT necesita ver las clases completas
-const SEVERITY_CLASSES = {
+// Configuración de colores por severidad (Apple-style: más sutiles)
+const SEVERITY_CONFIG = {
   success: {
-    card: "bg-success-50 border-success-500",
-    label: "text-success-700",
-    value: "text-success-700",
+    bg: "bg-success-50",
+    text: "text-success-600",
+    value: "text-success-600",
+    icon: "✓",
   },
   warning: {
-    card: "bg-warning-50 border-warning-500",
-    label: "text-warning-700",
-    value: "text-warning-700",
+    bg: "bg-warning-50",
+    text: "text-warning-600",
+    value: "text-warning-600",
+    icon: "!",
   },
   danger: {
-    card: "bg-danger-50 border-danger-500",
-    label: "text-danger-700",
-    value: "text-danger-700",
+    bg: "bg-danger-50",
+    text: "text-danger-600",
+    value: "text-danger-600",
+    icon: "⚠",
   },
 };
 
+/**
+ * Card individual de métrica.
+ */
+function MetricCard({ 
+  label, 
+  value, 
+  description, 
+  severity = null, 
+  tooltip = null,
+  className = "",
+}) {
+  const config = severity ? SEVERITY_CONFIG[severity] : null;
+  
+  return (
+    <article 
+      className={`
+        rounded-2xl bg-white p-6 shadow-sm
+        transition-shadow duration-200 hover:shadow-apple
+        ${config?.bg || ""}
+        ${className}
+      `.replace(/\s+/g, " ").trim()}
+    >
+      {/* Label con tooltip opcional */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className={`text-xs font-medium uppercase tracking-wide ${config?.text || "text-neutral-400"}`}>
+          {label}
+        </span>
+        {tooltip && (
+          <InfoTooltip label={`Ayuda: ${label}`} text={tooltip} />
+        )}
+      </div>
+      
+      {/* Valor principal */}
+      <div className={`metric-value text-4xl font-semibold tracking-tight ${config?.value || "text-neutral-600"}`}>
+        {value}
+      </div>
+      
+      {/* Descripción */}
+      {description && (
+        <p className="mt-3 text-sm text-neutral-500">
+          {description}
+        </p>
+      )}
+    </article>
+  );
+}
+
+/**
+ * Grid de cards de resumen.
+ */
 export default function ResumenCards({ resumen }) {
   const alertasActivas = resumen.alertas_activas || 0;
   const equiposEnRiesgo = resumen.equipos_en_riesgo || 0;
   const totalEquipos = resumen.total_equipos || 0;
   const clasificacion = resumen.ultima_clasificacion || "normal";
-  const probabilidad = formatProbability(resumen.probabilidad_falla, "Sin datos");
+  const probabilidad = formatProbability(resumen.probabilidad_falla, "—");
 
-  // Determinar severidad visual para alertas (color semántico)
+  // Determinar severidad
   const alertasSeveridad = alertasActivas === 0 ? "success" : alertasActivas >= 5 ? "danger" : "warning";
   const riesgoSeveridad = equiposEnRiesgo === 0 ? "success" : equiposEnRiesgo >= 3 ? "danger" : "warning";
 
-  const alertasClasses = SEVERITY_CLASSES[alertasSeveridad];
-  const riesgoClasses = SEVERITY_CLASSES[riesgoSeveridad];
+  // Descripción contextual para alertas
+  const alertasDesc = alertasActivas === 0
+    ? "Sistema operando normalmente"
+    : alertasActivas === 1
+    ? "1 alerta requiere atención"
+    : `${alertasActivas} alertas requieren atención`;
+
+  // Descripción contextual para riesgo
+  const riesgoDesc = equiposEnRiesgo === 0
+    ? "Todos los equipos en condiciones óptimas"
+    : totalEquipos > 0
+    ? `${Math.round((equiposEnRiesgo / totalEquipos) * 100)}% del total monitoreado`
+    : "Monitoreo activo";
 
   return (
-    <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
-      {/* ALERTAS ACTIVAS — card hero primaria */}
-      <article
-        className={`resumen-hero rounded-lg border-2 p-6 md:p-7 xl:col-span-7 ${alertasClasses.card} transition-colors duration-150 ease-out-quart`}
-      >
-        <div className={`resumen-hero__label mb-2 text-xs font-semibold uppercase tracking-wide ${alertasClasses.label}`}>
-          Alertas activas
-        </div>
-        <div className={`resumen-hero__value metric-value mb-2 text-5xl font-semibold ${alertasClasses.value}`}>
-          {alertasActivas}
-        </div>
-        <div className="text-sm text-neutral-700">
-          {alertasActivas === 0
-            ? "Sistema operando dentro de parámetros normales"
-            : alertasActivas === 1
-            ? "1 alerta requiere atención"
-            : `${alertasActivas} alertas requieren atención`}
-        </div>
-      </article>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
+      {/* Alertas activas — Hero card */}
+      <MetricCard
+        label="Alertas activas"
+        value={alertasActivas}
+        description={alertasDesc}
+        severity={alertasSeveridad}
+        className="resumen-hero sm:col-span-2 lg:col-span-4"
+      />
 
-      {/* EQUIPOS EN RIESGO — card hero secundaria */}
-      <article
-        className={`resumen-hero rounded-lg border-2 p-6 md:p-7 xl:col-span-5 ${riesgoClasses.card} transition-colors duration-150 ease-out-quart`}
-      >
-        <div className={`resumen-hero__label mb-2 text-xs font-semibold uppercase tracking-wide ${riesgoClasses.label}`}>
-          Equipos en riesgo
-        </div>
-        <div className={`resumen-hero__value metric-value mb-2 text-5xl font-semibold ${riesgoClasses.value}`}>
-          {equiposEnRiesgo}
-        </div>
-        <div className="text-sm text-neutral-700">
-          {equiposEnRiesgo === 0
-            ? "Todos los equipos en condiciones óptimas"
-            : totalEquipos > 0
-            ? `${Math.round((equiposEnRiesgo / totalEquipos) * 100)}% del total monitoreado`
-            : "Monitoreo activo"}
-        </div>
-      </article>
+      {/* Equipos en riesgo — Hero card */}
+      <MetricCard
+        label="Equipos en riesgo"
+        value={equiposEnRiesgo}
+        description={riesgoDesc}
+        severity={riesgoSeveridad}
+        className="resumen-hero lg:col-span-4"
+      />
 
-      {/* Métricas secundarias compactas */}
-      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
-        <div className="mb-1 flex items-center gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">Total equipos</span>
-          <InfoTooltip
-            label="Ayuda: total equipos"
-            text="Cantidad de equipos registrados y actualmente monitoreados por la plataforma."
-          />
-        </div>
-        <div className="metric-value text-2xl font-semibold text-neutral-700">
-          {totalEquipos}
-        </div>
-      </article>
+      {/* Total equipos */}
+      <MetricCard
+        label="Total equipos"
+        value={totalEquipos}
+        tooltip="Cantidad de equipos registrados y monitoreados activamente."
+        className="lg:col-span-4"
+      />
 
-      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
-        <div className="mb-1 flex items-center gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">Clasificación</span>
-          <InfoTooltip
-            label="Ayuda: clasificación"
-            text="Estado global estimado según telemetría reciente y evaluación del modelo predictivo."
-          />
-        </div>
-        <div className="text-2xl font-semibold text-neutral-700 capitalize">
-          {clasificacion}
-        </div>
-      </article>
+      {/* Clasificación */}
+      <MetricCard
+        label="Clasificación"
+        value={<span className="capitalize">{clasificacion}</span>}
+        tooltip="Estado global estimado según telemetría reciente."
+        className="lg:col-span-6"
+      />
 
-      <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 xl:col-span-4">
-        <div className="mb-1 flex items-center gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">Probabilidad de falla</span>
-          <InfoTooltip
-            label="Ayuda: probabilidad de falla"
-            text="Probabilidad estimada de falla en el estado actual de operación (valor de 0% a 100%)."
-          />
-        </div>
-        <div className="metric-value text-2xl font-semibold text-neutral-700">
-          {probabilidad}
-        </div>
-      </article>
+      {/* Probabilidad de falla */}
+      <MetricCard
+        label="Probabilidad de falla"
+        value={probabilidad}
+        tooltip="Probabilidad estimada de falla en el estado actual (0% a 100%)."
+        className="lg:col-span-6"
+      />
     </div>
   );
 }

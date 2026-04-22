@@ -40,6 +40,7 @@ describe("EquipoForm", () => {
       ubicacion: "Planta Norte",
       tipo: "Compresor",
       estado: "operativo",
+      mac_address: undefined,
     });
   });
 });

@@ -12,7 +12,7 @@ export default function AlertaItem({ alerta, onMarkAsRead, marking = false }) {
   const isLeida = Boolean(alerta.leida);
 
   return (
-    <article className="rounded-lg border border-neutral-300 bg-neutral-100 p-4 shadow-sm transition-all duration-150 ease-out-quart hover:border-neutral-400">
+    <article className="rounded-2xl bg-white p-4 shadow-sm transition-all duration-150 ease-out-quart hover:shadow-apple">
       <strong className="text-base font-semibold text-neutral-900">{formatTipoAlerta(alerta.tipo)}</strong>
       <p className="my-2 text-sm text-neutral-700">{alerta.mensaje}</p>
       <small className="text-xs text-neutral-600">

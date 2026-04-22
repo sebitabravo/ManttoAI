@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     mqtt_username: str = ""
     mqtt_password: str = ""
     mqtt_base_topic: str = "manttoai/equipo"
+    mqtt_telemetry_topic: str = "manttoai/telemetria"
     mqtt_enabled: bool = True
     smtp_host: str = ""
     smtp_port: int = 587
@@ -55,6 +56,9 @@ class Settings(BaseSettings):
     auth_cookie_name: str = "manttoai_token"
     auth_csrf_cookie_name: str = "manttoai_csrf"
     auth_csrf_header_name: str = "X-CSRF-Token"
+    # Integración con Ollama
+    ollama_url: str = "http://ollama:11434"
+    ollama_model: str = "qwen2.5:0.5b"
     # Orígenes CORS permitidos separados por coma.
     # En desarrollo: localhost:5173. En producción: dominio real del frontend.
     # Ejemplo: CORS_ALLOWED_ORIGINS=https://manttoai.ejemplo.com,https://www.manttoai.ejemplo.com

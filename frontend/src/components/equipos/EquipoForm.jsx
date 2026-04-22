@@ -25,6 +25,7 @@ const DEFAULT_VALUES = {
   ubicacion: "Laboratorio",
   tipo: "Motor",
   estado: "operativo",
+  mac_address: "",
 };
 
 function resolveInitialValues(initialValues) {
@@ -34,6 +35,7 @@ function resolveInitialValues(initialValues) {
       typeof initialValues?.ubicacion === "string" ? initialValues.ubicacion : DEFAULT_VALUES.ubicacion,
     tipo: typeof initialValues?.tipo === "string" ? initialValues.tipo : DEFAULT_VALUES.tipo,
     estado: typeof initialValues?.estado === "string" ? initialValues.estado : DEFAULT_VALUES.estado,
+    mac_address: typeof initialValues?.mac_address === "string" ? initialValues.mac_address : DEFAULT_VALUES.mac_address,
   };
 }
 
@@ -54,6 +56,10 @@ function validateForm(values) {
 
   if (!values.estado.trim()) {
     fieldErrors.estado = "El estado es obligatorio.";
+  }
+
+  if (values.mac_address.trim() && !/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(values.mac_address.trim())) {
+    fieldErrors.mac_address = "La dirección MAC no tiene un formato válido (ej: 00:1A:2B:3C:4D:5E).";
   }
 
   return fieldErrors;
@@ -100,6 +106,7 @@ export default function EquipoForm({
       ubicacion: form.ubicacion.trim(),
       tipo: form.tipo.trim(),
       estado: form.estado.trim(),
+      mac_address: form.mac_address.trim() || undefined,
     };
 
     try {
@@ -130,6 +137,15 @@ export default function EquipoForm({
         error={errors.ubicacion}
         disabled={isSubmitting}
         required
+      />
+      <Input
+        label="Dirección MAC (Opcional)"
+        name="mac_address"
+        value={form.mac_address}
+        onChange={handleChange}
+        error={errors.mac_address}
+        disabled={isSubmitting}
+        placeholder="ej: 00:1A:2B:3C:4D:5E"
       />
       <div>
         <label htmlFor="equipo-tipo" className="block mb-1 text-sm font-medium text-neutral-700">

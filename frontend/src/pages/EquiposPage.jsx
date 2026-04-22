@@ -4,6 +4,7 @@ import { getDashboardResumen } from "../api/dashboard";
 import { createEquipo, getEquipos } from "../api/equipos";
 import EquipoCard from "../components/equipos/EquipoCard";
 import EquipoForm from "../components/equipos/EquipoForm";
+import SmartProvisioningModal from "../components/equipos/SmartProvisioningModal";
 import EmptyState from "../components/ui/EmptyState";
 import Button from "../components/ui/Button";
 import { SkeletonCard } from "../components/ui/Skeleton";
@@ -32,6 +33,7 @@ export default function EquiposPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createErrorMessage, setCreateErrorMessage] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [showProvisioning, setShowProvisioning] = useState(false);
 
   // Fetcher estable para usePolling - obtiene equipos enriquecidos con datos del dashboard
   const fetchEquipos = useCallback(async () => {
@@ -123,6 +125,9 @@ export default function EquiposPage() {
           >
             {showCreateForm ? "Cerrar formulario" : "Nuevo equipo"}
           </Button>
+          <Button type="button" variant="outline" onClick={() => setShowProvisioning(true)}>
+            Smart Provisioning
+          </Button>
           <Button type="button" variant="outline" onClick={refresh} disabled={loading || isCreating}>
             {loading ? "Actualizando..." : "Actualizar"}
           </Button>
@@ -130,7 +135,7 @@ export default function EquiposPage() {
       </div>
 
       {showCreateForm ? (
-        <section className="rounded-lg border border-neutral-200 bg-neutral-100 p-4">
+        <section className="rounded-2xl bg-white p-5 shadow-sm">
           <h2 className="mt-0 text-lg font-semibold text-neutral-900">Alta de equipo</h2>
           <EquipoForm
             submitLabel="Crear equipo"
@@ -175,6 +180,8 @@ export default function EquiposPage() {
           <EquipoCard key={equipo.id} equipo={equipo} onDeleted={refresh} />
         ))}
       </div>
+
+      <SmartProvisioningModal open={showProvisioning} onClose={() => setShowProvisioning(false)} />
     </section>
   );
 }

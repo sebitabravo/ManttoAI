@@ -110,7 +110,7 @@ def run_simulator_cycle(session_factory: SessionFactory | None = None) -> dict:
 
     # Obtener equipos activos de la BD
     session = resolved_factory()
-    equipos_data: list[tuple[int, str | None]] = []
+    equipos_data: list[tuple[str, str | None]] = []
 
     try:
         from app.services.equipo_service import list_equipos
@@ -118,7 +118,10 @@ def run_simulator_cycle(session_factory: SessionFactory | None = None) -> dict:
         for equipo in list_equipos(session):
             estado = getattr(equipo, "estado", "").strip().lower()
             if estado in {"operativo", "activo"}:
-                equipos_data.append((equipo.id, getattr(equipo, "tipo", None)))
+                mac = getattr(equipo, "mac_address", None)
+                if not mac:
+                    mac = f"00:1A:2B:3C:{equipo.id:02X}:FF"
+                equipos_data.append((mac, getattr(equipo, "tipo", None)))
     finally:
         session.close()
 
@@ -141,10 +144,10 @@ def run_simulator_cycle(session_factory: SessionFactory | None = None) -> dict:
     publicados = 0
 
     try:
-        for equipo_id, tipo in equipos_data:
+        for mac, tipo in equipos_data:
             profile = _get_equipment_profile(tipo)
             reading = _build_reading(rng, profile)
-            topic = f"{settings.mqtt_base_topic}/{equipo_id}/lecturas"
+            topic = f"{settings.mqtt_telemetry_topic.strip('/')}/{mac}"
 
             result = client.publish(topic, json.dumps(reading))
             if result.rc == 0:

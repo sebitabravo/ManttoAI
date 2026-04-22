@@ -38,5 +38,5 @@
 | 1.3.1 | API FastAPI | Sebastián B. | ✅ Implementado |
 | 1.4.2 | Modelo Random Forest | Ángel R. | ✅ Implementado (F1 94.1%) |
 | 1.5.1 | Dashboard React | Luis L. | ✅ Implementado |
-| 1.6.3 | CI/CD Actions | Carlos G. / Sebastián B. | ✅ Implementado |
+| 1.6.3 | CI/CD Actions | Sebastián B. | ✅ Implementado |
 | 1.7.2 | Pruebas E2E | Equipo QA | ✅ Implementado (7 flujos) |

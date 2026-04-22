@@ -4,7 +4,7 @@ Debido al uso de tecnologías modernas, el equipo incurrió en auto-capacitació
 
 | Tecnología | Responsables | Modalidad | Evidencia en Proyecto |
 |------------|--------------|-----------|-----------------------|
-| FastAPI / Pydantic | Sebastián, Carlos | Autoestudio, Docs Oficiales | Todo el backend API |
+| FastAPI / Pydantic | Sebastián | Autoestudio, Docs Oficiales | Todo el backend API |
 | Scikit-learn / ML | Ángel | Tutoriales, C-MAPSS dataset | `backend/app/ml/` |
 | React + Vite + Tailwind | Luis | Documentación, Cursos | Todo el frontend SPA |
 | MQTT (Mosquitto) | Sebastián, Ángel | Spike Técnico Local | `docker-compose.yml`, scripts de simulación |

@@ -12,8 +12,8 @@
 | A8 | Desarrollo UI Dashboard React | A4 | Luis |
 | A9 | Integración de Alertas y ML en API | A4, A5 | Sebastián |
 | A10| Implementación Polling en UI | A8, A9 | Luis |
-| A11| Pruebas Pytest (Backend) | A9 | Carlos / Sebastián |
-| A12| Pruebas Playwright (Frontend) | A10 | Carlos |
+| A11| Pruebas Pytest (Backend) | A9 | Sebastián |
+| A12| Pruebas Playwright (Frontend) | A10 | Sebastián |
 | A13| Configuración CI/CD GitHub Actions | A11, A12 | Sebastián |
 | A14| Despliegue en Dokploy VPS | A2, A13 | Sebastián |
 | A15| Redacción Artefactos PMBOK | A14 | Todos |

@@ -10,8 +10,8 @@
    ┌───────────┼───────────┐
    │           │           │
 [Frontend]  [Data/Arq]  [QA/DevOps]
-  Luis        Ángel       Carlos
- Loyola      Rubilar      Gómez
+   Luis        Ángel       Sebastián
+  Loyola      Rubilar      Bravo
 ```
 
-*Nota: Sebastián cubre labores de Director y desarrollo Backend/DevOps principal. Carlos asume rol de testing y apoyo transversal para consolidar el equipo de 4 personas requerido.*
+*Nota: Sebastián cubre labores de Director, desarrollo Backend/DevOps principal y testing/transversal para consolidar el equipo de 3 personas requerido.*

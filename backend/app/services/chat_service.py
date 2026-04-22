@@ -2,11 +2,9 @@
 
 import httpx
 import logging
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models.chat import MensajeChat
 from app.services.dashboard_service import get_dashboard_summary
 
 logger = logging.getLogger(__name__)

@@ -276,7 +276,6 @@ export default function GraficoLineaBase({
   const [activeIndex, setActiveIndex] = useState(null);
 
   const chartId = useId().replace(/:/g, "");
-  const titleId = `chart-title-${chartId}`;
   const descId = `chart-desc-${chartId}`;
   const gradientId = `chart-line-gradient-${chartId}`;
   const areaGradientId = `chart-area-gradient-${chartId}`;

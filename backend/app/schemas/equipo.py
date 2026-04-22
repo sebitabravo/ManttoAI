@@ -4,7 +4,6 @@ from typing import Literal
 import re
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
-from typing import Any
 
 
 EstadoEquipo = Literal[

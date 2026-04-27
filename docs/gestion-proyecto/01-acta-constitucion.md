@@ -17,13 +17,13 @@ Desarrollar un prototipo de mantenimiento predictivo de bajo costo que permita a
   3. Desplegar sistema en VPS con alertas en tiempo real.
 
 ## Criterios de Éxito
-- **Calidad ML:** F1-Score ≥ 85% (Logrado: 94.1%)
+- **Calidad ML:** Accuracy ≥ 80% (Logrado: 94.1%) y F1-Score ≥ 80% (Logrado: 93.0%)
 - **Calidad Código:** Cobertura de tests ≥ 70% (Logrado: 82%)
 - **Rendimiento:** Tiempos de respuesta API < 500ms
 - **Completitud:** Repositorio en GitHub con CI/CD automatizado.
 
 ## Premisas y Restricciones
-- **Restricciones:** Uso exclusivo de herramientas open-source y scikit-learn. Equipo máximo de 4 personas. Presupuesto limitado. No se integrará con ERPs corporativos reales.
+- **Restricciones:** Uso exclusivo de herramientas open-source y scikit-learn. Equipo de 3 personas. Presupuesto limitado. No se integrará con ERPs corporativos reales.
 - **Premisas:** Conectividad Wi-Fi disponible para los ESP32.
 
 ## Presupuesto Resumido

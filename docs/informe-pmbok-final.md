@@ -49,7 +49,7 @@
 - ✅ Telemetría IoT con ESP32 + MQTT (Mosquitto)
 - ✅ Backend FastAPI completo (auth, equipos, lecturas, alertas, predicciones, mantenciones, umbrales, dashboard)
 - ✅ Base de datos MySQL con migraciones
-- ✅ Modelo ML Random Forest con 94.1% accuracy
+- ✅ Modelo ML Random Forest con 94.1% accuracy y 93.0% F1-score
 - ✅ Frontend React con 7 páginas (Login, Dashboard, Equipos, Equipos Detalle, Alertas, Historial, NotFound)
 - ✅ Auto-refresh en todas las páginas críticas (polling inteligente)
 - ✅ Simulador IoT 24/7 integrado en backend
@@ -143,9 +143,9 @@
 | Métrica | Meta | Real | Estado |
 |---------|------|------|--------|
 | Accuracy validación | ≥ 80% | 94.1% | ✅ Superado |
-| Precision | ≥ 0.75 | 0.84 | ✅ Superado |
-| Recall | ≥ 0.75 | 0.83 | ✅ Superado |
-| F1-score | ≥ 0.75 | 0.93 | ✅ Superado |
+| Precision | ≥ 0.75 | 0.94 | ✅ Superado |
+| Recall | ≥ 0.75 | 0.92 | ✅ Superado |
+| F1-score | ≥ 0.80 | 0.93 | ✅ Superado |
 
 ### Pruebas ejecutadas
 
@@ -201,12 +201,15 @@ Coverage: 82% (core API)
 
 | ID | Riesgo | Probabilidad | Impacto | Estrategia | Estado Final |
 |----|--------|--------------|---------|------------|--------------|
-| R-01 | Hardware ESP32 no llega a tiempo | Media | Alto | Implementar simulador MQTT | ✅ Mitigado (simulador funcional) |
-| R-02 | Modelo ML no alcanza accuracy mínima | Media | Alto | Dataset sintético + C-MAPSS referencia | ✅ Mitigado (94.1% accuracy) |
-| R-03 | VPS caído durante demo | Baja | Alto | Backup local con docker-compose | ✅ Mitigado (docs/backup-restauracion.md) |
-| R-04 | Equipo sin experiencia en MQTT | Alta | Medio | Spike técnico + documentación Mosquitto | ✅ Mitigado (docs/arquitectura-manttoai.md) |
-| R-05 | Tests E2E lentos o flaky | Media | Medio | Playwright con retry automático | ✅ Mitigado (7 tests estables) |
-| R-06 | Frontend sin actualización automática | Baja | Alto | Se convirtió en issue | ✅ Resuelto (auto-refresh implementado) |
+| R01 | Inestabilidad Wi-Fi en ESP32 | Alta | Alto | Implementar simulador MQTT backend 24/7 | ✅ Mitigado |
+| R02 | Modelo ML con Accuracy < 80% | Media | Alto | Tuning de hiperparámetros y dataset sintético | ✅ Cerrado (Acc=94.1%) |
+| R03 | Retraso importación sensores | Media | Medio | Comprar stock local (MercadoLibre) | ✅ Cerrado |
+| R04 | Frontend desactualizado (Stale Data) | Baja | Alto | Implementar auto-refresh/polling en React | ✅ Mitigado |
+| R05 | Caída VPS durante Demo | Baja | Alto | Script local de Docker Compose de respaldo | Activo |
+| R06 | Falla de Integración Continua (CI) | Media | Medio | Tests automatizados y linting estricto | Activo |
+| R07 | Sobrepaso de presupuesto | Baja | Medio | Uso exclusivo de Open-Source y VPS económico | ✅ Cerrado |
+
+*Nota: El registro formal detallado con puntajes de la matriz P/I se encuentra en [docs/riesgos/24-registro-riesgos.md](../riesgos/24-registro-riesgos.md).*
 
 ### Riesgos residuales
 - **R-RES-01:** MQTT sin TLS (se acepta para prototipo académico, no para producción)
@@ -254,8 +257,8 @@ Coverage: 82% (core API)
 - ✅ docs/demo.md (script de demostración)
 - ✅ docs/arquitectura-manttoai.md
 - ✅ docs/informe-pmbok-final.md (este documento)
-- ✅ Presentación final (docs/presentacion-final.md)
-- ✅ Video de demo (pendiente de grabación)
+- ✅ Presentación final (preparada para defensa)
+- ⏳ Video de demo (pendiente de grabación)
 
 ---
 
@@ -304,8 +307,8 @@ Coverage: 82% (core API)
 1. ✅ Repositorio GitHub público: [github.com/sebitabravo/ManttoAI](https://github.com/sebitabravo/ManttoAI)
 2. ✅ Sistema desplegado en VPS (accesible para demo)
 3. ✅ Informe PMBOK (este documento)
-4. ✅ Presentación final (docs/presentacion-final.md)
-5. ✅ Video de demo (a grabar)
+4. ✅ Presentación final (preparada para defensa)
+5. ⏳ Video de demo (pendiente de grabación)
 6. ✅ Manual de usuario (docs/manual-usuario.md)
 
 ### Recomendaciones para proyectos futuros

@@ -36,7 +36,7 @@
 |--------|------------|-------------|-----------------------|
 | 1.2.2 | Simulador IoT | Sebastián B. | ✅ Implementado |
 | 1.3.1 | API FastAPI | Sebastián B. | ✅ Implementado |
-| 1.4.2 | Modelo Random Forest | Ángel R. | ✅ Implementado (F1 94.1%) |
+| 1.4.2 | Modelo Random Forest | Ángel R. | ✅ Implementado (Acc 94.1%, F1 93.0%) |
 | 1.5.1 | Dashboard React | Luis L. | ✅ Implementado |
 | 1.6.3 | CI/CD Actions | Sebastián B. | ✅ Implementado |
 | 1.7.2 | Pruebas E2E | Equipo QA | ✅ Implementado (7 flujos) |

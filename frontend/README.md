@@ -1,6 +1,6 @@
 # Frontend ManttoAI
 
-Frontend React + Vite para el dashboard de mantenimiento predictivo.
+Frontend React + Vite para el dashboard de monitoreo IoT por rubro.
 
 ## Requisitos
 

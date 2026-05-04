@@ -2,7 +2,7 @@
 
 ## EDT Jerárquica
 
-1. **ManttoAI Predictivo**
+1. **ManttoAI — Plataforma de Monitoreo IoT por Rubro**
    1.1 Gestión del Proyecto
        1.1.1 Planificación PMBOK
        1.1.2 Control y Seguimiento (Sprints)

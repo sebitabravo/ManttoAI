@@ -7,13 +7,13 @@
 2. **Planificación:** Diseño de arquitectura (FastAPI + React + Mosquitto) y PMBOK.
 3. **Ejecución (Desarrollo):** Construcción del backend, frontend, modelo Random Forest y firmware IoT / Simulador.
 4. **Pruebas (QA):** Pytest (Backend), Playwright (Frontend E2E).
-5. **Despliegue:** Configuración en VPS Hetzner usando Dokploy.
+5. **Despliegue:** Configuración en VPS (Hetzner, prototipo) usando Dokploy. Proyección comercial: Digital Ocean (São Paulo).
 6. **Cierre:** Documentación final y defensa académica.
 
 ## Líneas Base
 - **Alcance:** Definido en el [Enunciado del Alcance](../alcance/06-enunciado-alcance.md) y [EDT](../alcance/07-edt-wbs.md).
 - **Cronograma:** Sprints definidos en la [Lista de Actividades](../cronograma/10-lista-actividades.md).
-- **Costos:** Presupuesto académico de CLP $9.790.000 vs real de USD $98.
+- **Costos:** Prototipo real USD $98. Plan de negocios: capital $3.000.000 CLP, costos operacionales $187.100/mes. Ver [`docs/costos/12-plan-gestion-costos.md`](../costos/12-plan-gestion-costos.md).
 
 ## Control de Cambios
 Cualquier modificación al alcance (ej. integración del simulador IoT en el backend) debe ser documentada, evaluada por su impacto en tiempo/costo, y aprobada por el Director del Proyecto antes de integrarse a la rama `main` de GitHub.

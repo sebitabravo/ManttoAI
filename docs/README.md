@@ -1,4 +1,4 @@
-# 📚 Documentación de ManttoAI Predictivo
+# 📚 Documentación de ManttoAI — Plataforma de Monitoreo IoT por Rubro
 
 Bienvenido al directorio central de documentación de **ManttoAI**. Este espacio está diseñado para servir tanto a desarrolladores de la comunidad Open Source que deseen contribuir o entender la plataforma, como a evaluadores académicos que requieran revisar los artefactos formales de gestión del proyecto (PMBOK).
 

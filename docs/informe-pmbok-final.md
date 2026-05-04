@@ -1,4 +1,4 @@
-# Informe Final PMBOK — ManttoAI Predictivo
+# Informe Final PMBOK — ManttoAI (Plataforma de Monitoreo IoT por Rubro)
 
 **Institución:** INACAP  
 **Curso:** Gestión de Proyectos Informáticos  
@@ -13,7 +13,7 @@
 
 ## 1. Resumen Ejecutivo
 
-**ManttoAI Predictivo** es un prototipo académico de sistema de mantenimiento predictivo que captura telemetría en tiempo real desde dispositivos IoT (ESP32), evalúa riesgos de falla mediante un modelo de Machine Learning (scikit-learn Random Forest), y presenta alertas operacionales en un dashboard web.
+**ManttoAI** es una plataforma de monitoreo IoT por rubro (industrial, agrícola, comercial). El prototipo académico captura telemetría en tiempo real desde dispositivos IoT (ESP32), evalúa riesgos de falla mediante un modelo de Machine Learning (scikit-learn Random Forest), y presenta alertas operacionales en un dashboard web.
 
 ### Objetivos del proyecto (alcanzados)
 1. ✅ Capturar lecturas de temperatura, humedad y vibración desde ESP32 vía MQTT
@@ -101,27 +101,24 @@
 
 ## 4. Gestión de Costos
 
-### Presupuesto planificado
-- **Hardware ESP32:** USD $60 (3 kits DevKit v1 + sensores DHT22 + MPU-6050)
-- **VPS:** USD $20/mes × 2 meses = USD $40
-- **Dominio:** USD $0 (se usó IP pública del VPS)
-- **Herramientas:** USD $0 (stack open-source)
-- **Total planificado:** USD $100
-
-### Costos reales
-- **Hardware ESP32:** USD $58 (compra real)
-- **VPS:** USD $20/mes × 2 meses = USD $40 (Hetzner CX22)
-- **Dominio:** USD $0
-- **Herramientas:** USD $0
+### Costos del prototipo (real)
+- **Hardware ESP32:** USD $58 (3 kits DevKit v1 + DHT22 + MPU-6050, MercadoLibre CL)
+- **VPS:** USD $40 (Hetzner CX22, 2 meses)
 - **Total real:** USD $98
+- **Variación:** USD -$2 (2% ahorro en hardware)
 
-### Variación de costos
-- **USD -$2 (2% ahorro):** Se encontró proveedor local con descuento en kits ESP32.
+### Plan de negocios (Evaluación 3 — Gestión de Costos PMBOK)
 
-### ROI académico
-- **Inversión:** USD $98
-- **Retorno esperado:** Aprobación del curso + portfolio técnico + experiencia en stack moderno
-- **ROI no monetario:** Alto (proyecto reutilizable en CV, conocimiento transferible a entorno laboral)
+El detalle completo está en [`docs/costos/12-plan-gestion-costos.md`](../costos/12-plan-gestion-costos.md). Resumen:
+
+- **Capital:** $3.000.000 CLP (3 socios, $1.000.000 c/u)
+- **Activos Año 1:** $492.600 (6 kits ESP32 + infraestructura Digital Ocean)
+- **Costos operacionales:** $187.100 CLP/mes
+- **Autonomía:** ~16 meses sin ingresos
+- **Control:** EVM mensual con CPI ≥ 0,95 a cargo de Luis Loyola (CEO/Comercial)
+- **Proyección:** Año 1 Validación → Año 2 Crecimiento → Año 3 Consolidación
+
+El plan de negocios aplica los 4 procesos de Gestión de Costos (PMBOK 7.1–7.4) y proyecta la viabilidad financiera de ManttoAI como empresa real por rubro (industrial, agrícola, comercial).
 
 ---
 

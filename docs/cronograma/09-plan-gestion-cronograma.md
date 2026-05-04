@@ -1,6 +1,6 @@
 # 09. Plan de Gestión del Cronograma
 
-Este documento define **cómo se planifica, monitorea y controla** el cronograma de ManttoAI Predictivo durante el ciclo académico (Enero–Junio 2025). Complementa al archivo Gantt operativo `docs/office/Cronograma_ManttoAI.xlsx` y a la [Lista de Actividades](./10-lista-actividades.md).
+Este documento define **cómo se planifica, monitorea y controla** el cronograma de ManttoAI (Plataforma de Monitoreo IoT por Rubro) durante el ciclo académico (Febrero–Julio 2026). Complementa al archivo Gantt operativo `docs/office/Gestion de proyecto/Cronograma_ManttoAI.xlsx` y a la [Lista de Actividades](./10-lista-actividades.md).
 
 ---
 

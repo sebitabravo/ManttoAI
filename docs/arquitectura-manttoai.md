@@ -1,4 +1,4 @@
-# ManttoAI Predictivo — Arquitectura de Archivos
+# ManttoAI — Arquitectura de Archivos
 
 > Este documento describe la **estructura objetivo** del proyecto. No implica que todos los archivos existan hoy; sirve como guía para implementar el repo de forma consistente y AI-friendly.
 

@@ -1,6 +1,6 @@
 # 23. Plan de Reuniones y Gestión de Tareas
 
-Define **cuándo, dónde, quién, cómo** se coordina el equipo de ManttoAI Predictivo y **cómo se gestionan las tareas** del día a día. Complementa al [Plan de Comunicaciones](./21-plan-gestion-comunicaciones.md) y a la [Matriz de Comunicaciones](./22-matriz-comunicaciones.md).
+Define **cuándo, dónde, quién, cómo** se coordina el equipo de ManttoAI y **cómo se gestionan las tareas** del día a día. Complementa al [Plan de Comunicaciones](./21-plan-gestion-comunicaciones.md) y a la [Matriz de Comunicaciones](./22-matriz-comunicaciones.md).
 
 ---
 

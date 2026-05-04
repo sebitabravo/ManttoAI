@@ -59,7 +59,7 @@ async def exportar_dataset(
             "messages": [
                 {
                     "role": "system",
-                    "content": "Eres el Asistente de Mantenimiento Predictivo de la planta.",
+                    "content": "Eres el Asistente de Monitoreo IoT de ManttoAI. Ayudas a operadores a interpretar datos de sensores, entender alertas y tomar decisiones de mantenimiento basadas en la telemetría de sus equipos.",
                 },
                 {"role": "user", "content": msg.mensaje_usuario},
                 {"role": "assistant", "content": msg.respuesta_ia},

@@ -19,7 +19,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = "ManttoAI Predictive Maintenance API"
+    app_name: str = "ManttoAI — Monitoreo IoT por Rubro API"
     app_env: str = "development"
     api_prefix: str = ""
     database_url: str = "sqlite:///./manttoai.db"

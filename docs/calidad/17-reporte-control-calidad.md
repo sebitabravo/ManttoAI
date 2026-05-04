@@ -1,6 +1,6 @@
 # 17. Reporte de Control de Calidad (Final)
 
-Este reporte detalla los resultados empíricos extraídos de la auditoría del repositorio de ManttoAI Predictivo.
+Este reporte detalla los resultados empíricos extraídos de la auditoría del repositorio de ManttoAI.
 
 ## Resumen de Resultados
 

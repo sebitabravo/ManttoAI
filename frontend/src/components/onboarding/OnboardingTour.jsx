@@ -23,7 +23,7 @@ const PASOS_BASE = [
     ruta: "/dashboard",
     titulo: "Bienvenido a ManttoAI",
     descripcion:
-      "Esta plataforma de mantenimiento predictivo te permite monitorear equipos en tiempo real, recibir alertas automáticas y predecir fallas antes de que ocurran. Te mostramos las secciones clave.",
+      "Esta plataforma de monitoreo IoT te permite supervisar equipos en tiempo real por rubro, recibir alertas automáticas y predecir fallas antes de que ocurran. Te mostramos las secciones clave.",
     icono: true,
   },
   {

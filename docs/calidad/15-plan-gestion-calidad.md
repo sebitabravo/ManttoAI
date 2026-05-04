@@ -1,6 +1,6 @@
 # 15. Plan de Gestión de Calidad
 
-Define **cómo** ManttoAI Predictivo asegura y controla la calidad del producto y los procesos durante todo el ciclo de vida. Complementa a [Métricas de Calidad](./16-metricas-calidad.md) y al [Reporte de Control de Calidad](./17-reporte-control-calidad.md).
+Define **cómo** ManttoAI (Plataforma de Monitoreo IoT por Rubro) asegura y controla la calidad del producto y los procesos durante todo el ciclo de vida. Complementa a [Métricas de Calidad](./16-metricas-calidad.md) y al [Reporte de Control de Calidad](./17-reporte-control-calidad.md).
 
 ---
 

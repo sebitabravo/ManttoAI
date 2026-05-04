@@ -53,7 +53,7 @@ export default function Header({ onMenuToggle, sidebarAbierto, menuBtnRef, onRep
               ManttoAI
             </span>
             <span className="hidden text-sm text-neutral-400 sm:inline">
-              Mantenimiento Predictivo
+              Monitoreo IoT por Rubro
             </span>
           </div>
         </div>

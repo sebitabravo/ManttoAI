@@ -1,4 +1,4 @@
-# 🚀 ManttoAI - Plataforma de Mantenimiento Predictivo IoT
+# 🚀 ManttoAI — Plataforma de Monitoreo IoT por Rubro
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg?logo=fastapi&logoColor=white)
@@ -6,7 +6,7 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg?logo=docker&logoColor=white)
 ![Machine Learning](https://img.shields.io/badge/ML-Scikit_Learn-F7931E.svg)
 
-**ManttoAI** es una plataforma open-source de mantenimiento predictivo. Captura telemetría en tiempo real desde dispositivos IoT (ESP32) vía MQTT, evalúa umbrales operacionales y ejecuta un modelo de Machine Learning (Random Forest) para predecir fallas en los equipos antes de que ocurran.
+**ManttoAI** es una plataforma open-source de monitoreo IoT por rubro (industrial, agrícola, comercial). Captura telemetría en tiempo real desde dispositivos IoT (ESP32) vía MQTT, evalúa umbrales operacionales y ejecuta un modelo de Machine Learning (Random Forest) para predecir fallas en los equipos antes de que ocurran.
 
 ---
 
@@ -85,9 +85,9 @@ make simulate
 
 ## 🎓 Contexto Académico (PMBOK)
 
-*Este proyecto se originó como Proyecto de Título (Gestión de Proyectos Informáticos) en INACAP.*
+*Este proyecto se originó como Proyecto de Título (Gestión de Proyectos Informáticos) en INACAP. Incluye el plan de negocios de ManttoAI como empresa real (Evaluación 3 — Gestión de Costos).*
 
-Si sos evaluador académico o buscás los artefactos formales de gestión del proyecto bajo PMBOK (Acta de Constitución, EDT, RACI, Matriz de Riesgos, etc.), consultá el índice dedicado:
+Si sos evaluador académico o buscás los artefactos formales de gestión del proyecto bajo PMBOK (Acta de Constitución, EDT, RACI, Matriz de Riesgos, Gestión de Costos, etc.), consultá el índice dedicado:
 
 👉 **[Ver Documentación PMBOK / Evaluación Académica](docs/gestion-proyecto/INDEX.md)**
 

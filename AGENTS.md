@@ -1,15 +1,17 @@
-# ManttoAI Predictive Maintenance
+# ManttoAI — Plataforma de Monitoreo IoT por Rubro
 
 > Source of truth for AI/project instructions. `CLAUDE.md` should point to this file via symlink.
 
 ## Project summary
-Academic capstone prototype for predictive maintenance. ESP32 devices send telemetry through MQTT to a FastAPI backend, which stores readings, evaluates thresholds, runs a lightweight ML model, and exposes data to a React dashboard with alerts and technical traceability.
+**ManttoAI** es una plataforma de monitoreo IoT organizada por rubro económico (industrial, agrícola, comercial). Captura telemetría en tiempo real desde dispositivos ESP32 vía MQTT, evalúa umbrales, ejecuta un modelo ML (Random Forest), y expone datos en un dashboard React con alertas.
 
-This is **not** a production industrial system. It is a low-cost student prototype for INACAP, aligned with PMBOK and validated in a controlled environment.
+El repositorio contiene el **prototipo académico** funcional desarrollado para INACAP bajo metodología PMBOK. Adicionalmente, los documentos de gestión de costos presentan el **plan de negocios** para ManttoAI como empresa real, con capital de $3.000.000 CLP (3 socios), costos operacionales mensuales de $187.100 CLP y proyección a 3 años. El prototipo técnico actual es la base sobre la cual se construye dicho plan.
+
+This is **not** a production industrial system. It is a low-cost student prototype for INACAP, aligned with PMBOK and validated in a controlled environment. The business plan in `docs/costos/` projects the path to a real company.
 
 ## Team
-- Sebastián Bravo: backend, MQTT/IoT integration, CI/CD, deployment
-- Luis Loyola: frontend, database, API integration, scope documentation
+- Sebastián Bravo: backend, MQTT/IoT integration, CI/CD, deployment, Director de Proyecto
+- Luis Loyola: frontend, database, API integration, scope documentation, CEO/Comercial (plan de negocios)
 - Ángel Rubilar: architecture, ESP32 hardware, ML model
 
 ## Main goals
@@ -38,6 +40,7 @@ This is **not** a production industrial system. It is a low-cost student prototy
 - Testing: pytest for backend; frontend testing can be manual unless the repo already includes automation
 
 ## Product scope
+- **Rubros objetivo:** industrial, agrícola, comercial (monitoreo sectorizado por tipo de equipo y entorno)
 - Telemetry: temperature, humidity, vibration (x/y/z), and optionally runtime hours if the implementation needs it
 - Core modules: auth, equipment, readings, alerts, predictions, maintenance history, thresholds
 - First notification channel: email alerts are enough for MVP
@@ -96,11 +99,26 @@ This is **not** a production industrial system. It is a low-cost student prototy
 - MQTT test publish: `mosquitto_pub -h localhost -t "manttoai/equipo/1/lecturas" -m '{"temperatura":45.2,"humedad":60,"vib_x":0.3,"vib_y":0.1,"vib_z":9.8}'`
 - MQTT test subscribe: `mosquitto_sub -h localhost -t "manttoai/#" -v`
 
+## Business plan context (Evaluación 3 — Gestión de Costos)
+- **Producto:** ManttoAI — Plataforma de Monitoreo IoT por Rubro
+- **Rubros:** industrial, agrícola, comercial (2 kits ESP32 por rubro)
+- **Capital inicial:** $3.000.000 CLP (3 socios fundadores, $1.000.000 c/u)
+- **Costos operacionales:** $187.100 CLP/mes (infraestructura DO, contador, abogado, domicilio virtual)
+- **Infraestructura proyectada:** Digital Ocean (Droplet 2GB + PostgreSQL gestionada + Spaces 250GB, São Paulo)
+- **Proveedores:** contadoresenlinea.cl, OficinVirtual.cl, NIC Chile
+- **Autonomía financiera:** ~16 meses sin ingresos
+- **Proyección:** Año 1 Validación → Año 2 Crecimiento → Año 3 Consolidación
+- **Control:** EVM mensual con CPI ≥ 0,95; Luis Loyola como CEO/Comercial a cargo
+- **Precio suscripción:** $88.000 CLP/mes por rubro
+- Ver `docs/costos/12-plan-gestion-costos.md` para el detalle completo.
+
+> El stack técnico del prototipo (MySQL 8, single VPS Docker Compose) difiere del stack proyectado en el plan de negocios (PostgreSQL gestionada, Digital Ocean). El plan de negocios representa la evolución esperada; el prototipo actual es la base funcional.
+
 ## Academic context
 - Institution: INACAP
 - Course: Gestión de Proyectos Informáticos
-- Methodology: PMBOK
-- Deliverables: functional prototype, public repository, demo video, formal report, final presentation
+- Methodology: PMBOK 6ta Edición
+- Deliverables: functional prototype, public repository, demo video, formal report, final presentation, Evaluación 3 (Gestión de Costos)
 - This project must remain realistic for a student team and a low budget
 
 ## Before closing a task

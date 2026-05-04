@@ -47,7 +47,7 @@
 - [ ] Backend (FastAPI)
 - [ ] Frontend (React)
 - [ ] IoT (ESP32 / MQTT)
-- [ ] ML (modelo predictivo)
+- [ ] ML (modelo de predicción)
 - [ ] Infra (Docker, Nginx, CI/CD)
 
 | Módulo | Archivos principales | Motivo del cambio |

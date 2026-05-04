@@ -67,7 +67,7 @@ export default function LoginPage() {
             ManttoAI
           </h1>
           <p className="mt-2 text-base text-neutral-400">
-            Mantenimiento Predictivo
+            Monitoreo IoT por Rubro
           </p>
         </div>
 
@@ -146,7 +146,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="mt-8 text-center text-xs text-neutral-400">
-          Sistema de mantenimiento predictivo basado en IoT y Machine Learning
+          Plataforma de monitoreo IoT por rubro: industrial, agrícola y comercial
         </p>
       </section>
     </main>

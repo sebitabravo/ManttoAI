@@ -1,4 +1,4 @@
-# Manual de Usuario — ManttoAI Predictivo
+# Manual de Usuario — ManttoAI
 
 Manual operativo paso-a-paso para usar el MVP web durante demo académica y operación cotidiana.
 

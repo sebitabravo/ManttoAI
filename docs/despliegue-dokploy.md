@@ -55,7 +55,7 @@ MQTT_USERNAME=manttoai_mqtt
 MQTT_PASSWORD=__GENERA_UNA_SEGURA__
 
 # Backend
-APP_NAME=ManttoAI Predictive Maintenance API
+APP_NAME=ManttoAI — Monitoreo IoT por Rubro API
 APP_ENV=production
 API_PREFIX=
 DATABASE_URL=mysql+pymysql://root:__USA_MISMO_MYSQL_ROOT_PASSWORD__@mysql:3306/manttoai_db

@@ -1,7 +1,7 @@
 # 06. Enunciado del Alcance
 
 ## Descripción del Producto
-ManttoAI Predictivo es una plataforma web para la monitorización de telemetría IoT. Evalúa datos de temperatura, humedad y vibración capturados vía MQTT para predecir fallas mediante Machine Learning.
+ManttoAI — Plataforma de Monitoreo IoT por Rubro: plataforma web para la monitorización de telemetría IoT organizada por rubro económico (industrial, agrícola, comercial). Evalúa datos de temperatura, humedad y vibración capturados vía MQTT para predecir fallas mediante Machine Learning.
 
 ## Entregables Incluidos
 1. **E1 Módulo IoT:** Firmware ESP32 y simulador backend 24/7.

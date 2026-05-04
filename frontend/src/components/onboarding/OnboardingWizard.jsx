@@ -237,7 +237,7 @@ export default function OnboardingWizard() {
                 Bienvenido a ManttoAI
               </h2>
               <p className="text-neutral-600">
-                Esta plataforma de mantenimiento predictivo te permite monitorear equipos en tiempo real,
+                Esta plataforma de monitoreo IoT te permite supervisar equipos en tiempo real por rubro,
                 recibir alertas automáticas y predecir fallas antes de que ocurran.
               </p>
             </div>

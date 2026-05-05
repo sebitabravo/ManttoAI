@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { RotateCcw, PlayCircle, User, LogOut } from "lucide-react";
 
 import useAuth from "../../hooks/useAuth";
-import Button from "../ui/Button";
 import { AVATAR_MAP } from "../../utils/constants";
 import { resetOnboarding } from "../../api/onboarding";
 import { clearOnboardingDone } from "../../utils/onboardingStorage";
@@ -118,10 +118,7 @@ export default function UserMenu({ onReplayTour }) {
                 onClick={handleResetWizard}
                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-neutral-600 transition-colors duration-200 hover:bg-neutral-100 disabled:opacity-50"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polyline points="1 4 1 10 7 10" />
-                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                </svg>
+                <RotateCcw size={14} aria-hidden="true" />
                 Repetir asistente
               </button>
               <button
@@ -130,10 +127,7 @@ export default function UserMenu({ onReplayTour }) {
                 onClick={handleReplayTour}
                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-neutral-600 transition-colors duration-200 hover:bg-neutral-100"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" />
-                  <polygon points="10 8 16 12 10 16 10 8" />
-                </svg>
+                <PlayCircle size={14} aria-hidden="true" />
                 Ver tour del producto
               </button>
             </div>
@@ -147,10 +141,7 @@ export default function UserMenu({ onReplayTour }) {
               onClick={() => { setOpen(false); navigate("/perfil"); }}
               className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-neutral-600 transition-colors duration-200 hover:bg-neutral-100"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+              <User size={14} aria-hidden="true" />
               Mi Perfil
             </button>
           </div>
@@ -163,11 +154,7 @@ export default function UserMenu({ onReplayTour }) {
               onClick={handleLogout}
               className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-danger-600 transition-colors duration-200 hover:bg-danger-50"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
+              <LogOut size={14} aria-hidden="true" />
               Cerrar sesión
             </button>
           </div>

@@ -243,6 +243,11 @@ def apply_runtime_schema_fixes() -> None:
             "avatar VARCHAR(50) NULL DEFAULT NULL",
         )
         alerta_index_changed = _ensure_alerta_unique_index()
+        api_key_prefix_changed = _alter_column_type_if_needed(
+            "api_keys",
+            "key_prefix",
+            "VARCHAR(20)",
+        )
 
         if any(
             [

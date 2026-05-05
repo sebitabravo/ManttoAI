@@ -266,5 +266,4 @@ def stop_simulator() -> None:
             _simulator_scheduler.shutdown(wait=False)
         finally:
             _simulator_scheduler = None
-
-    logger.info("Simulador IoT detenido")
+        logger.info("Simulador IoT detenido")

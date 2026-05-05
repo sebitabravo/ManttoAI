@@ -331,128 +331,126 @@ class TestSimulatorService:
         assert is_simulator_running() is False
 
 
-@patch("app.services.simulator_service.get_settings")
-@patch("app.services.simulator_service.logger")
-def test_start_simulator_disabled_by_config(mock_logger, mock_get_settings):
-    """Verifica que el simulador no inicia si está deshabilitado por configuración."""
-    mock_get_settings.return_value = Settings(simulator_enabled=False)
-    assert start_simulator() is False
-    mock_logger.info.assert_called_with("Simulador IoT deshabilitado por configuración")
+    @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.simulator_service.logger")
+    def test_start_simulator_disabled_by_config(self, mock_logger, mock_get_settings):
+        """Verifica que el simulador no inicia si está deshabilitado por configuración."""
+        mock_get_settings.return_value = Settings(simulator_enabled=False)
+        assert start_simulator() is False
+        mock_logger.info.assert_called_with("Simulador IoT deshabilitado por configuración")
 
+    @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.simulator_service.logger")
+    def test_start_simulator_mqtt_disabled(self, mock_logger, mock_get_settings):
+        """Verifica que el simulador no inicia si MQTT está deshabilitado."""
+        mock_get_settings.return_value = Settings(simulator_enabled=True, mqtt_enabled=False)
+        assert start_simulator() is False
+        mock_logger.info.assert_called_with("Simulador IoT requiere MQTT habilitado")
 
-@patch("app.services.simulator_service.get_settings")
-@patch("app.services.simulator_service.logger")
-def test_start_simulator_mqtt_disabled(mock_logger, mock_get_settings):
-    """Verifica que el simulador no inicia si MQTT está deshabilitado."""
-    mock_get_settings.return_value = Settings(simulator_enabled=True, mqtt_enabled=False)
-    assert start_simulator() is False
-    mock_logger.info.assert_called_with("Simulador IoT requiere MQTT habilitado")
+    @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.simulator_service.logger")
+    def test_start_simulator_invalid_interval(self, mock_logger, mock_get_settings):
+        """Verifica que el simulador no inicia con un intervalo inválido."""
+        mock_get_settings.return_value = Settings(
+            simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=0
+        )
+        assert start_simulator() is False
+        mock_logger.warning.assert_called_with("Intervalo inválido para simulador: %s", 0)
 
+    @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.simulator_service.logger")
+    @patch("app.services.simulator_service.BackgroundScheduler", new=None)
+    def test_start_simulator_apscheduler_unavailable(self, mock_logger, mock_get_settings):
+        """Verifica que el simulador no inicia si APScheduler no está disponible."""
+        mock_get_settings.return_value = Settings(
+            simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
+        )
+        assert start_simulator() is False
+        mock_logger.warning.assert_called_with("APScheduler no disponible para simulador")
 
-@patch("app.services.simulator_service.get_settings")
-@patch("app.services.simulator_service.logger")
-def test_start_simulator_invalid_interval(mock_logger, mock_get_settings):
-    """Verifica que el simulador no inicia con un intervalo inválido."""
-    mock_get_settings.return_value = Settings(
-        simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=0
-    )
-    assert start_simulator() is False
-    mock_logger.warning.assert_called_with("Intervalo inválido para simulador: %s", 0)
+    @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.simulator_service.logger")
+    def test_start_simulator_invalid_session_factory(self, mock_logger, mock_get_settings):
+        """Verifica que el simulador no inicia con una SessionFactory inválida."""
+        mock_get_settings.return_value = Settings(
+            simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
+        )
+        # Simula una SessionFactory que no es callable
+        assert start_simulator(session_factory="not_callable") is False
+        mock_logger.error.assert_called_with("SessionFactory inválido para simulador")
 
+    @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.simulator_service.BackgroundScheduler")
+    @patch("app.services.simulator_service.logger")
+    def test_start_simulator_success(
+        self,
+        mock_logger,
+        mock_background_scheduler,
+        mock_get_settings
+    ):
+        """Verifica que el simulador inicia correctamente."""
+        settings = Settings(
+            simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
+        )
+        mock_get_settings.return_value = settings
 
-@patch("app.services.simulator_service.get_settings")
-@patch("app.services.simulator_service.logger")
-@patch("app.services.simulator_service.BackgroundScheduler", new=None)
-def test_start_simulator_apscheduler_unavailable(mock_logger, mock_get_settings):
-    """Verifica que el simulador no inicia si APScheduler no está disponible."""
-    mock_get_settings.return_value = Settings(
-        simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
-    )
-    assert start_simulator() is False
-    mock_logger.warning.assert_called_with("APScheduler no disponible para simulador")
+        mock_scheduler_instance = MagicMock()
+        mock_background_scheduler.return_value = mock_scheduler_instance
 
+        mock_session_factory = MagicMock(spec=Callable[[], Session])
 
-@patch("app.services.simulator_service.get_settings")
-@patch("app.services.simulator_service.logger")
-def test_start_simulator_invalid_session_factory(mock_logger, mock_get_settings):
-    """Verifica que el simulador no inicia con una SessionFactory inválida."""
-    mock_get_settings.return_value = Settings(
-        simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
-    )
-    # Simula una SessionFactory que no es callable
-    assert start_simulator(session_factory="not_callable") is False
-    mock_logger.error.assert_called_with("SessionFactory inválido para simulador")
+        assert start_simulator(session_factory=mock_session_factory) is True
+        mock_background_scheduler.assert_called_once_with(timezone="UTC")
+        mock_scheduler_instance.add_job.assert_called_once()
+        mock_scheduler_instance.start.assert_called_once()
+        mock_logger.info.assert_called_with(
+            "Simulador IoT iniciado job_id=%s (intervalo=%s segundos)",
+            _SIMULATOR_JOB_ID,
+            settings.simulator_interval_seconds,
+        )
 
+        # Verificar que el simulador no se inicia dos veces
+        assert start_simulator(session_factory=mock_session_factory) is True
 
-@patch("app.services.simulator_service.get_settings")
-@patch("app.services.simulator_service.BackgroundScheduler")
-@patch("app.services.simulator_service.logger")
-def test_start_simulator_success(
-    mock_logger, mock_background_scheduler, mock_get_settings
-):
-    """Verifica que el simulador inicia correctamente."""
-    settings = Settings(
-        simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
-    )
-    mock_get_settings.return_value = settings
+    @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.simulator_service.BackgroundScheduler")
+    @patch("app.services.simulator_service.logger")
+    def test_start_simulator_exception_during_init(
+        self,
+        mock_logger,
+        mock_background_scheduler,
+        mock_get_settings,
+    ):
+        """Verifica el manejo de excepciones durante la inicialización del simulador."""
+        mock_get_settings.return_value = Settings(
+            simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
+        )
+        mock_background_scheduler.side_effect = Exception("Scheduler init failed")
 
-    mock_scheduler_instance = MagicMock()
-    mock_background_scheduler.return_value = mock_scheduler_instance
+        mock_session_factory = MagicMock(spec=Callable[[], Session])
 
-    mock_session_factory = MagicMock(spec=Callable[[], Session])
+        assert start_simulator(session_factory=mock_session_factory) is False
+        mock_logger.exception.assert_called_with("No se pudo iniciar el simulador")
 
-    assert start_simulator(session_factory=mock_session_factory) is True
-    mock_background_scheduler.assert_called_once_with(timezone="UTC")
-    mock_scheduler_instance.add_job.assert_called_once()
-    mock_scheduler_instance.start.assert_called_once()
-    mock_logger.info.assert_called_with(
-        "Simulador IoT iniciado job_id=%s (intervalo=%s segundos)",
-        _SIMULATOR_JOB_ID,
-        settings.simulator_interval_seconds,
-    )
+    @patch("app.services.simulator_service.logger")
+    def test_stop_simulator_not_running(self, mock_logger):
+        """Verifica que detener el simulador cuando no está corriendo no causa error."""
+        # Asegurarse de que _simulator_scheduler es None
+        global _simulator_scheduler
+        _simulator_scheduler = None
 
-    # Verificar que el simulador no se inicia dos veces
-    assert start_simulator(session_factory=mock_session_factory) is True
+        stop_simulator()
+        mock_logger.info.assert_not_called()  # No debería loggear "detenido"
 
+    @patch("app.services.simulator_service._simulator_scheduler")
+    @patch("app.services.simulator_service.logger")
+    def test_stop_simulator_success(self, mock_logger, mock_scheduler):
+        """Verifica que el simulador se detiene correctamente."""
+        # Simular que el simulador está corriendo
+        global _simulator_scheduler
+        _simulator_scheduler = mock_scheduler
 
-@patch("app.services.simulator_service.get_settings")
-@patch("app.services.simulator_service.BackgroundScheduler")
-@patch("app.services.simulator_service.logger")
-def test_start_simulator_exception_during_init(
-    mock_logger, mock_background_scheduler, mock_get_settings
-):
-    """Verifica el manejo de excepciones durante la inicialización del simulador."""
-    mock_get_settings.return_value = Settings(
-        simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
-    )
-    mock_background_scheduler.side_effect = Exception("Scheduler init failed")
-
-    mock_session_factory = MagicMock(spec=Callable[[], Session])
-
-    assert start_simulator(session_factory=mock_session_factory) is False
-    mock_logger.exception.assert_called_with("No se pudo iniciar el simulador")
-
-
-@patch("app.services.simulator_service.logger")
-def test_stop_simulator_not_running(mock_logger):
-    """Verifica que detener el simulador cuando no está corriendo no causa error."""
-    # Asegurarse de que _simulator_scheduler es None
-    global _simulator_scheduler
-    _simulator_scheduler = None
-
-    stop_simulator()
-    mock_logger.info.assert_not_called()  # No debería loggear "detenido"
-
-
-@patch("app.services.simulator_service._simulator_scheduler")
-@patch("app.services.simulator_service.logger")
-def test_stop_simulator_success(mock_logger, mock_scheduler):
-    """Verifica que el simulador se detiene correctamente."""
-    # Simular que el simulador está corriendo
-    global _simulator_scheduler
-    _simulator_scheduler = mock_scheduler
-
-    stop_simulator()
-    mock_scheduler.shutdown.assert_called_once_with(wait=False)
-    mock_logger.info.assert_called_with("Simulador IoT detenido")
-    assert _simulator_scheduler is None
+        stop_simulator()
+        mock_scheduler.shutdown.assert_called_once_with(wait=False)
+        mock_logger.info.assert_called_with("Simulador IoT detenido")
+        assert _simulator_scheduler is None

@@ -1,8 +1,14 @@
 """Tests de autenticación."""
 
+from types import SimpleNamespace
+
+import pytest
+from fastapi import HTTPException
 from sqlalchemy import select
 
 from app.models.usuario import Usuario
+from app.routers.auth import update_profile
+from app.schemas.usuario import ProfileUpdate
 from app.services.auth_service import create_access_token, verify_password
 
 
@@ -260,3 +266,61 @@ def test_protected_endpoint_rejects_invalid_token(unauthenticated_client):
 
     assert response.status_code == 401
     assert response.json()["detail"] == "No autenticado"
+
+
+def test_update_profile_updates_only_allowed_fields(client):
+    """Valida que perfil solo actualice nombre/avatar y preserve email."""
+
+    response = client.put(
+        "/auth/profile",
+        json={
+            "nombre": "Admin Editado",
+            "avatar": "avatar-03",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["nombre"] == "Admin Editado"
+    assert data["avatar"] == "avatar-03"
+    assert data["email"] == "admin@manttoai.local"
+
+
+def test_update_profile_returns_500_when_commit_fails() -> None:
+    """Valida manejo de error cuando falla commit durante update_profile."""
+
+    class FakeDB:
+        rollback_called = False
+
+        def commit(self):
+            raise RuntimeError("commit failed")
+
+        def rollback(self):
+            self.rollback_called = True
+
+        def refresh(self, _usuario):
+            return None
+
+    fake_db = FakeDB()
+    current_user = SimpleNamespace(
+        id=1,
+        nombre="Admin",
+        email="admin@manttoai.local",
+        rol="admin",
+        avatar=None,
+        telefono=None,
+        created_at=None,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        update_profile(
+            payload=ProfileUpdate(nombre="Nombre que falla"),
+            request=SimpleNamespace(),
+            db=fake_db,
+            current_user=current_user,
+        )
+
+    error = exc_info.value
+    assert error.status_code == 500
+    assert error.detail == "No se pudo actualizar el perfil"
+    assert fake_db.rollback_called is True

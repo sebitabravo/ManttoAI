@@ -22,9 +22,11 @@ Los marcados con 👑 requieren rol `admin`.
 | Método | Path | Descripción | Auth |
 |--------|------|-------------|------|
 | POST | `/api/v1/auth/register` | Registra un usuario persistido | No |
-| POST | `/api/v1/auth/login` | Retorna token JWT para credenciales válidas | No |
+| POST | `/api/v1/auth/login` | Retorna token JWT + cookies httpOnly + CSRF | No |
 | GET | `/api/v1/auth/me` | Retorna el usuario autenticado | 🔒 |
-| POST | `/api/v1/auth/logout` | Limpia cookie de autenticación | No |
+| POST | `/api/v1/auth/logout` | Limpia cookies y revoca JWT en blacklist | No |
+| POST | `/api/v1/auth/change-password` | Cambia la contraseña del usuario autenticado | 🔒 |
+| PUT | `/api/v1/auth/profile` | Actualiza nombre y avatar del usuario | 🔒 |
 
 ---
 
@@ -33,9 +35,11 @@ Los marcados con 👑 requieren rol `admin`.
 | Método | Path | Descripción | Auth |
 |--------|------|-------------|------|
 | GET | `/api/v1/equipos` | Lista equipos disponibles | 🔒 |
+| GET | `/api/v1/equipos/provisioning-token` | Genera JWT para provisionamiento ESP32 | 🔒 admin/técnico |
 | GET | `/api/v1/equipos/{equipo_id}` | Obtiene un equipo por ID | 🔒 |
 | POST | `/api/v1/equipos` | Crea un equipo | 🔒 admin/técnico |
 | POST | `/api/v1/equipos/full-setup` | Crea equipo + umbrales en transacción atómica | 🔒 admin/técnico |
+| POST | `/api/v1/equipos/auto-register` | Auto-registro de ESP32 por MAC con JWT provisioning | JWT provisioning |
 | PUT | `/api/v1/equipos/{equipo_id}` | Actualiza un equipo | 🔒 admin/técnico |
 | DELETE | `/api/v1/equipos/{equipo_id}` | Elimina un equipo | 👑 |
 
@@ -45,9 +49,18 @@ Los marcados con 👑 requieren rol `admin`.
 
 | Método | Path | Descripción | Auth |
 |--------|------|-------------|------|
-| GET | `/api/v1/lecturas` | Historial de lecturas con límite por defecto | 🔒 |
+| GET | `/api/v1/lecturas` | Historial de lecturas con filtros y paginación | 🔒 |
 | GET | `/api/v1/lecturas/latest/{equipo_id}` | Última lectura de un equipo | 🔒 |
-| POST | `/api/v1/lecturas` | Crea una lectura persistida | 🔒 admin/técnico |
+| POST | `/api/v1/lecturas` | Crea una lectura persistida (evalúa umbrales + alertas) | 🔒 admin/técnico |
+
+### Parámetros GET `/api/v1/lecturas`
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `equipo_id` | int (opcional) | — | Filtra por equipo |
+| `page` | int | 1 | Número de página |
+| `per_page` | int | 50 | Resultados por página (máx 500) |
+| `limit` | int | — | Límite legacy (máx 5000). Si se pasa, ignora paginación |
 
 ---
 
@@ -66,7 +79,7 @@ Los marcados con 👑 requieren rol `admin`.
 | Método | Path | Descripción | Auth |
 |--------|------|-------------|------|
 | GET | `/api/v1/predicciones/{equipo_id}` | Última predicción de un equipo | 🔒 |
-| POST | `/api/v1/predicciones/ejecutar/{equipo_id}` | Ejecuta predicción y la persiste | 🔒 |
+| POST | `/api/v1/predicciones/ejecutar/{equipo_id}` | Ejecuta predicción y la persiste | 🔒 admin/técnico |
 
 ---
 
@@ -103,9 +116,16 @@ Ejemplo:
     {
       "id": 1,
       "nombre": "Compresor principal",
+      "ubicacion": "Sala de máquinas",
+      "tipo": "compresor",
+      "rubro": "industrial",
+      "estado": "operativo",
       "ultima_temperatura": 51.2,
+      "ultima_humedad": 60.0,
       "ultima_probabilidad": 0.68,
-      "alertas_activas": 1
+      "ultima_clasificacion": "alerta",
+      "alertas_activas": 1,
+      "ultima_lectura_timestamp": "2026-04-20T14:30:00Z"
     }
   ]
 }
@@ -159,11 +179,13 @@ Ejemplo:
 
 | Método | Path | Descripción | Auth |
 |--------|------|-------------|------|
-| GET | `/api/v1/usuarios` | Lista todos los usuarios | 👑 |
+| GET | `/api/v1/usuarios` | Lista usuarios con paginación y filtros (rol, is_active) | 👑 |
 | GET | `/api/v1/usuarios/{usuario_id}` | Obtiene un usuario por ID | 👑 |
 | POST | `/api/v1/usuarios` | Crea un nuevo usuario | 👑 |
 | PUT | `/api/v1/usuarios/{usuario_id}` | Actualiza un usuario | 👑 |
-| DELETE | `/api/v1/usuarios/{usuario_id}` | Elimina un usuario | 👑 |
+| DELETE | `/api/v1/usuarios/{usuario_id}` | Elimina un usuario (no puede eliminarse a sí mismo) | 👑 |
+| GET | `/api/v1/usuarios/{usuario_id}/exportar-datos` | RGPD Art. 20 — Portabilidad de datos | 👑 |
+| DELETE | `/api/v1/usuarios/{usuario_id}/datos-personales` | RGPD Art. 17 — Derecho al olvido (anonimiza) | 👑 |
 
 ---
 
@@ -186,6 +208,27 @@ Ejemplo:
 
 ---
 
+## Chat (`/api/v1/chat`)
+
+| Método | Path | Descripción | Auth |
+|--------|------|-------------|------|
+| POST | `/api/v1/chat` | Envía mensaje al asistente híbrido (Reglas + Ollama) | 🔒 |
+| GET | `/api/v1/chat/historial` | Historial de interacciones (paginado) | 👑 |
+| GET | `/api/v1/chat/dataset-export` | Exporta historial en JSONL para fine-tuning | 👑 |
+
+---
+
+## Onboarding (`/api/v1/onboarding`)
+
+| Método | Path | Descripción | Auth |
+|--------|------|-------------|------|
+| GET | `/api/v1/onboarding/status` | Estado actual del wizard del usuario | 🔒 admin/técnico |
+| PATCH | `/api/v1/onboarding/step` | Avanza paso del wizard (valida secuencia) | 🔒 admin/técnico |
+| POST | `/api/v1/onboarding/complete` | Marca wizard como completado | 🔒 admin/técnico |
+| POST | `/api/v1/onboarding/reset` | Resetea wizard para repetir (solo admin) | 👑 |
+
+---
+
 ## Audit Logs (`/api/v1/audit-logs`) — solo admin
 
 | Método | Path | Descripción | Auth |
@@ -199,7 +242,7 @@ Ejemplo:
 
 | Método | Path | Descripción | Auth |
 |--------|------|-------------|------|
-| GET | `/api/v1/metrics/summary` | Resumen de métricas del sistema | 🔒 |
+| GET | `/api/v1/metrics/summary` | Resumen de métricas del sistema (DB + API) | 🔒 |
 | GET | `/api/v1/metrics/health-detailed` | Health check detallado con múltiples componentes | 🔒 |
 | POST | `/api/v1/metrics/reset` | Resetea métricas acumuladas | 👑 |
 
@@ -219,7 +262,9 @@ Ejemplo:
 
 ### Topic esperado
 
-`manttoai/equipo/{equipo_id}/lecturas`
+`manttoai/telemetria/{mac_address}`
+
+El backend se suscribe a `manttoai/telemetria/#` y resuelve la dirección MAC al equipo correspondiente en la base de datos.
 
 ### Payload JSON esperado
 
@@ -235,5 +280,6 @@ Ejemplo:
 
 Notas:
 
-- `equipo_id` se obtiene desde el topic.
+- `mac_address` se extrae desde el topic (no del payload).
 - `timestamp` es opcional; si no se envía, el backend lo genera.
+- El firmware ESP32 publica a `manttoai/telemetria/%s` donde `%s` es la MAC del dispositivo.

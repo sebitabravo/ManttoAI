@@ -35,7 +35,7 @@ This is **not** a production industrial system. It is a low-cost student prototy
 - IoT: ESP32 DevKit v1, DHT22, MPU-6050, MQTT over Wi-Fi, Mosquitto
 - Backend: Python 3.11+, FastAPI, SQLAlchemy, MySQL 8, Pydantic v2, JWT auth
 - ML: pandas, numpy, scikit-learn, joblib; prefer Random Forest for MVP
-- Frontend: React 18 + Vite + Tailwind CSS + Axios + React Router + Chart.js
+- Frontend: React 18 + Vite + Tailwind CSS + Axios + React Router (gráficos SVG nativos, sin librería de charts)
 - Infra: Ubuntu 22.04 VPS, Docker Compose, Nginx, Let's Encrypt
 - Testing: pytest for backend; frontend testing can be manual unless the repo already includes automation
 
@@ -54,9 +54,9 @@ This is **not** a production industrial system. It is a low-cost student prototy
 - Prefer explainable, reproducible results over fancy models
 
 ## Expected data flow
-1. ESP32 publishes to `manttoai/equipo/{id}/lecturas`
+1. ESP32 publishes to `manttoai/telemetria/{mac_address}` (MAC-based routing)
 2. Mosquitto receives the message
-3. Backend subscriber stores the reading in MySQL
+3. Backend subscriber resolves MAC → equipo, stores the reading in MySQL
 4. Backend evaluates thresholds and creates alerts
 5. Backend runs prediction periodically or after enough readings
 6. Frontend displays charts, history, and active alerts
@@ -96,7 +96,7 @@ This is **not** a production industrial system. It is a low-cost student prototy
 - Frontend dev: `npm run dev`
 - Full stack: `docker compose up --build -d`
 - Backend tests: `pytest tests/ -v --cov=app`
-- MQTT test publish: `mosquitto_pub -h localhost -t "manttoai/equipo/1/lecturas" -m '{"temperatura":45.2,"humedad":60,"vib_x":0.3,"vib_y":0.1,"vib_z":9.8}'`
+- MQTT test publish: `mosquitto_pub -h localhost -t "manttoai/telemetria/AA:BB:CC:DD:EE:FF" -m '{"temperatura":45.2,"humedad":60,"vib_x":0.3,"vib_y":0.1,"vib_z":9.8}'`
 - MQTT test subscribe: `mosquitto_sub -h localhost -t "manttoai/#" -v`
 
 ## Business plan context (Evaluación 3 — Gestión de Costos)

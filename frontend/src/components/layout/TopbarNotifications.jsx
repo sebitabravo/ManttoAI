@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { Bell } from "lucide-react";
 
 import { getAlertas, marcarLeida } from "../../api/alertas";
 import usePolling from "../../hooks/usePolling";
@@ -111,10 +112,7 @@ export default function TopbarNotifications() {
         aria-controls="topbar-notificaciones-panel"
         className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition-colors duration-200 hover:bg-neutral-100 hover:text-neutral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-          <path d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
-          <path d="M9 17a3 3 0 0 0 6 0" />
-        </svg>
+        <Bell size={20} strokeWidth={1.5} aria-hidden="true" />
 
         {totalNoLeidas > 0 && (
           <span className="absolute -right-0.5 -top-0.5 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-semibold text-white">

@@ -419,7 +419,7 @@ class TestSimulatorService:
         assert start_simulator(session_factory=mock_session_factory) is True
 
     @patch("app.services.simulator_service.get_settings")
-    @patch("app.services.simulator_service.BackgroundScheduler")
+    @patch("app.services.simulator_service.BackgroundScheduler", side_effect=Exception("Scheduler init failed")) # Move side_effect here
     @patch("app.services.simulator_service.logger")
     def test_start_simulator_exception_during_init(
         self,
@@ -431,7 +431,6 @@ class TestSimulatorService:
         mock_get_settings.return_value = Settings(
             simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
         )
-        mock_background_scheduler.side_effect = Exception("Scheduler init failed")
 
         mock_session_factory = MagicMock(spec=Callable[[], Session])
 

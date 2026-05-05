@@ -26,7 +26,6 @@ except ImportError:
     mqtt_client_lib = MagicMock() # Mock if not available
 
 
-
 @pytest.fixture(autouse=True)
 def reset_simulator_globals():
     """Resetea el estado global del simulador antes de cada test."""

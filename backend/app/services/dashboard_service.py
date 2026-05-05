@@ -9,7 +9,6 @@ from app.models.lectura import Lectura
 from app.models.prediccion import Prediccion
 from app.services import prediccion_service
 
-
 DashboardEquipoItem = dict[str, int | str | float | None]
 DashboardSummaryPayload = dict[str, int | float | str | list[DashboardEquipoItem]]
 

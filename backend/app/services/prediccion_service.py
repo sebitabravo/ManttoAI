@@ -22,7 +22,6 @@ from app.services.alerta_service import (
 from app.services.equipo_service import get_equipo_or_404
 from app.services.lectura_service import get_latest_lectura
 
-
 logger = logging.getLogger(__name__)
 _MODEL_BOOTSTRAP_LOCK = Lock()
 

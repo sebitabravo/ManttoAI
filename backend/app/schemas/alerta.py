@@ -5,7 +5,6 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-
 NivelAlerta = Literal["bajo", "medio", "alto", "critico"]
 
 

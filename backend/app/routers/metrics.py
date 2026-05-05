@@ -55,7 +55,11 @@ def _get_redis():
         )
         # Verificar conexion
         _redis_client.ping()
-        logger.info("Métricas conectadas a Redis %s:%s", settings.redis_host, settings.redis_port)
+        logger.info(
+            "Métricas conectadas a Redis %s:%s",
+            settings.redis_host,
+            settings.redis_port,
+        )
         return _redis_client
     except Exception:
         # Fallback a memoria si Redis no está disponible
@@ -99,7 +103,15 @@ def _record_metrics(endpoint: str, duration: float) -> None:
             pipe.hincrby(_COUNT_KEY, endpoint, 1)
             # Almacenar duración como JSON en lista acotada
             duration_key = f"{_DURATION_KEY}:{endpoint}"
-            pipe.lpush(duration_key, json.dumps({"d": round(duration, 6), "t": datetime.now(timezone.utc).isoformat()}))
+            pipe.lpush(
+                duration_key,
+                json.dumps(
+                    {
+                        "d": round(duration, 6),
+                        "t": datetime.now(timezone.utc).isoformat(),
+                    }
+                ),
+            )
             pipe.ltrim(duration_key, 0, _MAX_DURATION_SAMPLES - 1)
             pipe.execute()
             return
@@ -232,11 +244,17 @@ async def get_detailed_health(
     if r is not None:
         try:
             r.ping()
-            components["redis"] = {"status": "healthy", "message": "Redis connection OK"}
+            components["redis"] = {
+                "status": "healthy",
+                "message": "Redis connection OK",
+            }
         except Exception as exc:
             components["redis"] = {"status": "unhealthy", "message": str(exc)}
     else:
-        components["redis"] = {"status": "degraded", "message": "Redis unavailable, using in-memory fallback"}
+        components["redis"] = {
+            "status": "degraded",
+            "message": "Redis unavailable, using in-memory fallback",
+        }
 
     endpoints_tracked = list(_get_all_counts().keys())
     components["metrics"] = {

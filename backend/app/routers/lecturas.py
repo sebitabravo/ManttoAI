@@ -42,7 +42,9 @@ def get_lecturas(
 
     # Paginación normal
     actual_page = page or 1
-    return list_lecturas(db, equipo_id, limit=per_page, offset=(actual_page - 1) * per_page)
+    return list_lecturas(
+        db, equipo_id, limit=per_page, offset=(actual_page - 1) * per_page
+    )
 
 
 @router.get(

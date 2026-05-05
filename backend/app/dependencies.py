@@ -98,6 +98,7 @@ def get_current_user(
         _redis_lib_imported = False
         try:
             import redis as _redis_lib
+
             _redis_lib_imported = True
             _redis_client = _redis_lib.Redis(
                 host=settings.redis_host,
@@ -107,10 +108,12 @@ def get_current_user(
             )
         except ImportError:
             logger.warning("Redis no disponible para verificar tokens revocados.")
-            pass # Degradación elegante si Redis no está disponible
-        except Exception as e: # Catch any other error during Redis connection
-            logger.error(f"Error conectando a Redis para verificar tokens revocados: {e}")
-            pass # Degradación elegante
+            pass  # Degradación elegante si Redis no está disponible
+        except Exception as e:  # Catch any other error during Redis connection
+            logger.error(
+                f"Error conectando a Redis para verificar tokens revocados: {e}"
+            )
+            pass  # Degradación elegante
 
         if _redis_client:
             try:
@@ -118,7 +121,7 @@ def get_current_user(
                     raise credentials_exception
             except Exception as e:
                 logger.error(f"Error al verificar blacklist de Redis: {e}")
-                pass # Degradación elegante si hay un error de comunicación con Redis
+                pass  # Degradación elegante si hay un error de comunicación con Redis
 
     usuario = db.scalars(select(Usuario).where(Usuario.email == subject)).first()
     if usuario is None or not usuario.is_active:

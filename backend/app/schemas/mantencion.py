@@ -5,7 +5,6 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-
 TipoMantencion = Literal["preventiva", "correctiva", "predictiva", "emergencia"]
 EstadoMantencion = Literal[
     "programada",

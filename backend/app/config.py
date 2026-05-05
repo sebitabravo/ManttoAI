@@ -6,7 +6,6 @@ from pathlib import Path
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 

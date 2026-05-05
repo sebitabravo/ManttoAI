@@ -93,7 +93,9 @@ def logout(request: Request, response: Response) -> Response:
     if token:
         try:
             payload = jwt.decode(
-                token, settings.secret_key, algorithms=["HS256"],
+                token,
+                settings.secret_key,
+                algorithms=["HS256"],
                 options={"verify_exp": False},
             )
             jti = payload.get("jti", "")

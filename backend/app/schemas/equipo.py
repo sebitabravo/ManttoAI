@@ -5,7 +5,6 @@ import re
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
-
 EstadoEquipo = Literal[
     "operativo",
     "monitoreo",

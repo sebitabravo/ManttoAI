@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from app.services import simulator_service
 from app.services.simulator_service import (
     _get_equipment_profile,
     _build_reading,
@@ -13,8 +14,6 @@ from app.services.simulator_service import (
     is_simulator_running,
     start_simulator,
     stop_simulator,
-    _simulator_scheduler,
-    _simulator_lock,
     _SIMULATOR_JOB_ID,
 )
 from app.config import Settings, get_settings
@@ -31,11 +30,10 @@ except ImportError:
 @pytest.fixture(autouse=True)
 def reset_simulator_globals():
     """Resetea el estado global del simulador antes de cada test."""
-    with _simulator_lock:
-        global _simulator_scheduler
-        if _simulator_scheduler:
-            _simulator_scheduler.shutdown(wait=False)
-        _simulator_scheduler = None
+    with simulator_service._simulator_lock:
+        if simulator_service._simulator_scheduler:
+            simulator_service._simulator_scheduler.shutdown(wait=False)
+        simulator_service._simulator_scheduler = None
     yield
 
 
@@ -425,7 +423,7 @@ class TestSimulatorService:
         assert start_simulator(session_factory=mock_session_factory) is True
 
     @patch("app.services.simulator_service.get_settings")
-    @patch("app.services.simulator_service.BackgroundScheduler", side_effect=Exception("Scheduler init failed")) # Move side_effect here
+    @patch("app.services.simulator_service.BackgroundScheduler")
     @patch("app.services.simulator_service.logger")
     def test_start_simulator_exception_during_init(
         self,
@@ -438,30 +436,33 @@ class TestSimulatorService:
             simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
         )
 
+        mock_scheduler_instance = MagicMock()
+        mock_background_scheduler.return_value = mock_scheduler_instance
+        mock_scheduler_instance.start.side_effect = Exception("Scheduler start failed") # Simulate exception during start
+
         mock_session_factory = MagicMock(spec=Callable[[], Session])
 
-        assert start_simulator(session_factory="not_callable") is False # Original assertion was incorrect
+        assert start_simulator(session_factory=mock_session_factory) is False
         mock_logger.exception.assert_called_with("No se pudo iniciar el simulador")
+        mock_scheduler_instance.shutdown.assert_called_once_with(wait=False) # Ensure shutdown is called
 
     @patch("app.services.simulator_service.logger")
     def test_stop_simulator_not_running(self, mock_logger):
         """Verifica que detener el simulador cuando no está corriendo no causa error."""
-        # Asegurarse de que _simulator_scheduler es None
-        global _simulator_scheduler
-        _simulator_scheduler = None
+        # Asegurarse de que _simulator_scheduler real del módulo es None
+        simulator_service._simulator_scheduler = None
 
         stop_simulator()
         mock_logger.info.assert_not_called()  # No debería loggear "detenido"
 
-    @patch("app.services.simulator_service._simulator_scheduler")
     @patch("app.services.simulator_service.logger")
-    def test_stop_simulator_success(self, mock_logger, mock_scheduler):
+    def test_stop_simulator_success(self, mock_logger):
         """Verifica que el simulador se detiene correctamente."""
         # Simular que el simulador está corriendo
-        global _simulator_scheduler
-        _simulator_scheduler = mock_scheduler
+        mock_scheduler = MagicMock()
+        simulator_service._simulator_scheduler = mock_scheduler
 
         stop_simulator()
         mock_scheduler.shutdown.assert_called_once_with(wait=False)
         mock_logger.info.assert_called_with("Simulador IoT detenido")
-        assert _simulator_scheduler is None
+        assert simulator_service._simulator_scheduler is None

@@ -99,23 +99,21 @@ class TestSimulatorService:
         assert resolved is mock_session_local
 
     @patch("app.services.simulator_service.get_settings")
-    @patch("app.services.simulator_service.mqtt")
-    @patch("app.services.simulator_service.list_equipos")
-    @patch("app.services.simulator_service.SessionLocal")
+    @patch("app.services.equipo_service.list_equipos") # Patch where it's imported
+    @patch("app.database.SessionLocal") # Patch where it's imported
     def test_run_simulator_cycle_mqtt_unavailable(
-        self, mock_session_local, mock_list_equipos, mock_mqtt, mock_get_settings
+        self, mock_session_local, mock_list_equipos, mock_get_settings
     ):
         """Verifica el comportamiento cuando paho-mqtt no está disponible."""
-        mock_mqtt.__enter__.return_value = None  # Simula que mqtt es None
         mock_get_settings.return_value = Settings(
             mqtt_broker_host="localhost",
             mqtt_broker_port=1883,
             mqtt_telemetry_topic="manttoai/equipo",
         )
-        mock_mqtt.return_value = None  # Asegura que la importación falla
-
-        result = run_simulator_cycle()
-        assert result == {"status": "skipped", "reason": "mqtt_unavailable"}
+        # Asegura que mqtt es None para simular no disponible
+        with patch("app.services.simulator_service.mqtt", None):
+            result = run_simulator_cycle()
+            assert result == {"status": "skipped", "reason": "mqtt_unavailable"}
 
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.mqtt.Client")

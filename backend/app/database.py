@@ -145,6 +145,32 @@ def _dedupe_alertas_by_logical_key() -> int:
         return 0
 
 
+def _alter_column_type_if_needed(
+    table_name: str, column_name: str, new_type: str
+) -> bool:
+    """Modifica el tipo de una columna si no coincide con el esperado."""
+
+    inspector = inspect(engine)
+    columns = inspector.get_columns(table_name)
+    for col in columns:
+        if str(col["name"]) == column_name:
+            current_type = str(col["type"]).upper()
+            expected = new_type.upper()
+            if current_type == expected:
+                return False
+            dialect = engine.dialect.name
+            if dialect == "mysql":
+                with engine.begin() as connection:
+                    connection.execute(
+                        text(
+                            f"ALTER TABLE {table_name} "
+                            f"MODIFY COLUMN {column_name} {new_type}"
+                        )
+                    )
+                return True
+    return False
+
+
 def _ensure_alerta_unique_index() -> bool:
     """Elimina índice único legacy de alertas si todavía existe."""
 

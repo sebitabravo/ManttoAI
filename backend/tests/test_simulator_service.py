@@ -92,7 +92,7 @@ class TestSimulatorService:
         resolved = _resolve_session_factory(mock_factory)
         assert resolved is mock_factory
 
-    @patch("app.services.simulator_service.SessionLocal")
+    @patch("app.database.SessionLocal")
     def test_resolve_session_factory_fallback(self, mock_session_local):
         """Verifica que usa SessionLocal si no se provee session_factory."""
         resolved = _resolve_session_factory(None)

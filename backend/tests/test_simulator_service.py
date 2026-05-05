@@ -240,7 +240,7 @@ class TestSimulatorService:
         assert result["equipos"] == 2
         assert result["publicados"] == 2
         mock_mqtt_client.assert_called_once_with(
-            mqtt.CallbackAPIVersion.VERSION2
+            mqtt_client_lib.CallbackAPIVersion.VERSION2
         )
         mock_mqtt_instance.username_pw_set.assert_called_once_with("user", "pass")
         mock_mqtt_instance.connect.assert_called_once_with("localhost", 1883)

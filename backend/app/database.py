@@ -289,6 +289,7 @@ def apply_runtime_schema_fixes() -> None:
                 usuario_telefono_changed,
                 usuario_avatar_changed,
                 alerta_index_changed,
+                api_key_prefix_changed,
             ]
         ):
             logger.info(
@@ -299,7 +300,8 @@ def apply_runtime_schema_fixes() -> None:
                 "mantenciones.fecha_ejecucion=%s, usuarios.is_active=%s, "
                 "usuarios.password_changed_at=%s, usuarios.onboarding_step=%s, "
                 "usuarios.onboarding_completed=%s, usuarios.telefono=%s, usuarios.avatar=%s, "
-                "alerta_unique_index_removed=%s)",
+                "alerta_unique_index_removed=%s, "
+                "api_keys.key_prefix_ampliado=%s)",
                 equipo_changed,
                 equipo_org_changed,
                 equipo_rubro_changed,
@@ -312,6 +314,7 @@ def apply_runtime_schema_fixes() -> None:
                 usuario_telefono_changed,
                 usuario_avatar_changed,
                 alerta_index_changed,
+                api_key_prefix_changed,
             )
     except (RuntimeError, SQLAlchemyError, DBAPIError):
         logger.exception("Falló la aplicación de parches de compatibilidad de esquema")

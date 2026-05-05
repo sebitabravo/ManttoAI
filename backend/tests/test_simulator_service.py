@@ -117,7 +117,7 @@ class TestSimulatorService:
 
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.mqtt.Client")
-    @patch("app.services.simulator_service.list_equipos")
+    @patch("app.services.equipo_service.list_equipos") # Patch where it's imported
     def test_run_simulator_cycle_no_active_equipment(
         self, mock_list_equipos, mock_mqtt_client, mock_get_settings
     ):
@@ -139,9 +139,6 @@ class TestSimulatorService:
         mock_session.close.assert_called_once()
         mock_mqtt_client.assert_not_called()
 
-    @patch("app.services.simulator_service.get_settings")
-    @patch("app.services.simulator_service.mqtt.Client")
-    @patch("app.services.simulator_service.list_equipos")
     class MockEquipo:
         def __init__(self, id, mac_address, tipo, estado):
             self.id = id
@@ -149,6 +146,9 @@ class TestSimulatorService:
             self.tipo = tipo
             self.estado = estado
 
+    @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.simulator_service.mqtt.Client")
+    @patch("app.services.equipo_service.list_equipos") # Patch where it's imported
     def test_run_simulator_cycle_mqtt_connect_error(
         self, mock_list_equipos, mock_mqtt_client, mock_get_settings
     ):
@@ -176,7 +176,7 @@ class TestSimulatorService:
 
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.mqtt.Client")
-    @patch("app.services.simulator_service.list_equipos")
+    @patch("app.services.equipo_service.list_equipos") # Patch where it's imported
     @patch("app.services.simulator_service.random.Random")
     def test_run_simulator_cycle_success(
         self,
@@ -240,7 +240,7 @@ class TestSimulatorService:
 
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.mqtt.Client")
-    @patch("app.services.simulator_service.list_equipos")
+    @patch("app.services.equipo_service.list_equipos") # Patch where it's imported
     @patch("app.services.simulator_service.random.Random")
     def test_run_simulator_cycle_partial_publish_failure(
         self,

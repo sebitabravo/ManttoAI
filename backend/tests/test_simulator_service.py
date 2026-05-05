@@ -178,10 +178,12 @@ class TestSimulatorService:
 
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.mqtt.Client")
-    @patch("app.services.equipo_service.list_equipos") # Patch where it's imported
+    @patch("app.services.equipo_service.list_equipos")
     @patch("app.services.simulator_service.random.Random")
+    @patch("app.database.SessionLocal") # Add this patch
     def test_run_simulator_cycle_success(
         self,
+        mock_session_local, # Added
         mock_random,
         mock_list_equipos,
         mock_mqtt_client,

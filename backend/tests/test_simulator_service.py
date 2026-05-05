@@ -21,6 +21,12 @@ from app.config import Settings, get_settings
 from sqlalchemy.orm import Session
 from collections.abc import Callable
 
+try:
+    import paho.mqtt.client as mqtt_client_lib
+except ImportError:
+    mqtt_client_lib = MagicMock() # Mock if not available
+
+
 
 @pytest.fixture(autouse=True)
 def reset_simulator_globals():

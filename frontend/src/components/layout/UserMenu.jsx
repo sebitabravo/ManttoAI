@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import useAuth from "../../hooks/useAuth";
 import Button from "../ui/Button";
-import { AVATAR_MAP } from "../../utils/avatares";
+import { AVATAR_MAP } from "../../utils/constants";
 import { resetOnboarding } from "../../api/onboarding";
 import { clearOnboardingDone } from "../../utils/onboardingStorage";
 

@@ -4,7 +4,7 @@ import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import { updateProfile } from "../api/user";
 import { getApiErrorMessage } from "../utils/errorHandling";
-import { AVATARES } from "../utils/avatares";
+import { AVATARES } from "../utils/constants";
 
 export default function ProfilePage() {
   const { user, login } = useAuth();

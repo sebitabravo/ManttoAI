@@ -258,7 +258,8 @@ test.describe("Flujos críticos de usuario", () => {
 
     await page.getByRole("button", { name: "Marcar como leída" }).click();
     await expect(
-      page.getByText("No quedan alertas pendientes por marcar como leídas.")
-    ).toBeVisible();
+      page.getByRole("button", { name: "Marcar como leída" })
+    ).toHaveCount(0);
+    expect(alertaLeida).toBeTruthy();
   });
 });

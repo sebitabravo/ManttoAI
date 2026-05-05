@@ -14,7 +14,19 @@ from app.database import Base
 from app.dependencies import get_db
 from app import main
 from app.models.usuario import Usuario
+from app.middleware.rate_limit import limiter
 from app.services.auth_service import create_access_token, hash_password
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """Resetea el rate limiter en memoria antes de cada test."""
+
+    storage = getattr(limiter, "_storage", None)
+    if storage is not None and hasattr(storage, "reset"):
+        storage.reset()
+    elif storage is not None and hasattr(storage, "clear"):
+        storage.clear()
+
 
 TEST_USER_EMAIL = "admin@manttoai.local"
 TEST_USER_PASSWORD = "Admin123!"

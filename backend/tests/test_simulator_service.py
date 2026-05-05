@@ -149,9 +149,10 @@ class TestSimulatorService:
 
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.mqtt.Client")
-    @patch("app.services.equipo_service.list_equipos") # Patch where it's imported
+    @patch("app.services.equipo_service.list_equipos")
+    @patch("app.database.SessionLocal")
     def test_run_simulator_cycle_mqtt_connect_error(
-        self, mock_list_equipos, mock_mqtt_client, mock_get_settings
+        self, mock_session_local, mock_list_equipos, mock_mqtt_client, mock_get_settings
     ):
         """Verifica el manejo de errores de conexión MQTT."""
         mock_get_settings.return_value = Settings(

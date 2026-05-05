@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Settings, RotateCcw, Play } from "lucide-react";
 
 import useAuth from "../../hooks/useAuth";
 import { resetOnboarding } from "../../api/onboarding";
@@ -62,11 +63,7 @@ export default function QuickConfig({ onReplayTour }) {
         aria-expanded={abierto}
         aria-haspopup="true"
       >
-        {/* Ícono de engranaje */}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-        </svg>
+        <Settings size={18} aria-hidden="true" />
       </button>
 
       {/* Dropdown */}
@@ -83,11 +80,7 @@ export default function QuickConfig({ onReplayTour }) {
             onClick={handleResetWizard}
             className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-neutral-700 transition-colors duration-100 hover:bg-neutral-200 focus:outline-none focus-visible:bg-neutral-200 disabled:opacity-50"
           >
-            {/* Ícono de replay */}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="1 4 1 10 7 10" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-            </svg>
+            <RotateCcw size={16} aria-hidden="true" />
             Repetir asistente
           </button>
           <button
@@ -96,11 +89,7 @@ export default function QuickConfig({ onReplayTour }) {
             onClick={handleReplayTour}
             className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-neutral-700 transition-colors duration-100 hover:bg-neutral-200 focus:outline-none focus-visible:bg-neutral-200"
           >
-            {/* Ícono de tour/play */}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" />
-              <polygon points="10 8 16 12 10 16 10 8" />
-            </svg>
+            <Play size={16} aria-hidden="true" />
             Ver tour del producto
           </button>
         </div>

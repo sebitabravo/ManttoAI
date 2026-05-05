@@ -7,8 +7,8 @@ from fastapi import APIRouter
 
 router = APIRouter(prefix="/legal", tags=["legal"])
 
-# Directorio base de archivos legales
-LEGAL_DIR = Path(__file__).parent.parent / "static" / "legal"
+# Directorio base de archivos legales (backend/static/legal)
+LEGAL_DIR = Path(__file__).resolve().parents[2] / "static" / "legal"
 
 
 @router.get("/terms-of-service")

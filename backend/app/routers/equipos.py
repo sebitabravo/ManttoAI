@@ -150,14 +150,12 @@ def create_equipo_with_umbrales(
 ) -> EquipoFullSetupResponse:
     """Crea equipo con umbrales en una sola transacción atómica.
 
-    El context manager db.begin() hace commit automáticamente al salir,
-    o rollback si hay cualquier excepción.
+    Se realiza commit al final si todo sale bien y rollback ante cualquier error.
     """
     from app.models.equipo import Equipo
     from app.models.umbral import Umbral
 
-    # Transacción atómica: commit automático al salir, rollback si falla
-    with db.begin():
+    try:
         # 1. Crear equipo
         equipo = Equipo(
             nombre=payload.nombre,
@@ -189,8 +187,11 @@ def create_equipo_with_umbrales(
         )
         db.add(umbral_vib)
         db.flush()
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
-    # db.begin() hace commit automático al salir del bloque
     return EquipoFullSetupResponse(
         equipo=equipo,
         umbral_temperatura_id=umbral_temp.id,

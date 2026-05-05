@@ -30,10 +30,11 @@ export default function Button({
   `;
 
   // Tamaños adaptados para dashboard B2B (más compactos)
+  // min-h-[44px] asegura touch target WCAG 2.2 Level AA
   const sizeClasses = {
-    sm: "px-3 py-1.5 text-xs rounded-md",
-    default: "px-4 py-2 text-sm rounded-md",
-    lg: "px-6 py-2.5 text-base rounded-md",
+    sm: "px-3 py-1.5 text-xs rounded-md min-h-[36px]",
+    default: "px-4 py-2 text-sm rounded-md min-h-[44px]",
+    lg: "px-6 py-2.5 text-base rounded-md min-h-[44px]",
   };
 
   // Variantes de estilo Apple

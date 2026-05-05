@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 
 import { formatDate, formatAxisTime } from "../../utils/formatDate";
 import { formatMetric } from "../../utils/metrics";
@@ -405,26 +405,34 @@ export default function GraficoLineaBase({
     };
   }
 
-  function handlePointerMove(event) {
-    if (!event?.currentTarget) {
-      return;
-    }
+  // Throttle via requestAnimationFrame para evitar setState en cada pixel
+  const rafRef = useRef(null);
 
-    const bounds = event.currentTarget.getBoundingClientRect();
-    if (!Number.isFinite(bounds.width) || bounds.width <= 0) {
-      return;
-    }
+  const handlePointerMove = useCallback(
+    (event) => {
+      if (rafRef.current) return;
 
-    const rawX = ((event.clientX - bounds.left) / bounds.width) * CHART_WIDTH;
-    const chartX = clamp(rawX, CHART_PADDING.left, CHART_WIDTH - CHART_PADDING.right);
-    const nextIndex = resolveClosestPointIndex(points, chartX);
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
 
-    if (nextIndex !== null) {
-      setActiveIndex((previousIndex) =>
-        previousIndex === nextIndex ? previousIndex : nextIndex
-      );
-    }
-  }
+        if (!event?.currentTarget) return;
+
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (!Number.isFinite(bounds.width) || bounds.width <= 0) return;
+
+        const rawX = ((event.clientX - bounds.left) / bounds.width) * CHART_WIDTH;
+        const chartX = clamp(rawX, CHART_PADDING.left, CHART_WIDTH - CHART_PADDING.right);
+        const nextIndex = resolveClosestPointIndex(points, chartX);
+
+        if (nextIndex !== null) {
+          setActiveIndex((previousIndex) =>
+            previousIndex === nextIndex ? previousIndex : nextIndex
+          );
+        }
+      });
+    },
+    [points]
+  );
 
   function handleKeyDown(event) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
@@ -657,9 +665,14 @@ export default function GraficoLineaBase({
           </g>
         ) : null}
 
-        {/* Tooltip */}
+        {/* Tooltip accesible con role y aria */}
         {activeTooltip ? (
-          <g transform={`translate(${activeTooltip.x}, ${activeTooltip.y})`} pointerEvents="none">
+          <g
+            role="tooltip"
+            aria-label={`${activeTooltip.dateLabel}: ${activeTooltip.valueLabel}, Estado: ${activeTooltip.zoneLabel}`}
+            transform={`translate(${activeTooltip.x}, ${activeTooltip.y})`}
+            pointerEvents="none"
+          >
             <rect width="190" height="58" rx="8" fill="#fafafa" stroke="#d4d4d8" strokeWidth="1" />
             <text x="10" y="17" fill="#525252" fontSize="11" className="tabular-nums">
               {activeTooltip.dateLabel}

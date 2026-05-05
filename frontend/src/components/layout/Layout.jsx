@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 
 import Header from "./Header";
 import OnboardingTour from "../onboarding/OnboardingTour";
 import { isOnboardingDone } from "../../utils/onboardingStorage";
 import Sidebar from "./Sidebar";
-import ChatBot from "../chat/ChatBot";
+
+// ChatBot se carga bajo demanda para reducir el bundle inicial
+const ChatBot = lazy(() => import("../chat/ChatBot"));
 
 /**
  * Layout principal de la aplicación — Estilo Apple.
@@ -93,8 +95,10 @@ export default function Layout() {
         <OnboardingTour onComplete={() => setMostrarOnboarding(false)} />
       )}
 
-      {/* Asistente de IA */}
-      <ChatBot />
+      {/* Asistente de IA — cargado bajo demanda */}
+      <Suspense fallback={null}>
+        <ChatBot />
+      </Suspense>
     </div>
   );
 }

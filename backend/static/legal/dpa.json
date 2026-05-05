@@ -39,15 +39,15 @@
     },
     {
       "title": "4. Propósito del Procesamiento",
-      "content": "El Procesador procesará los Datos Personales únicamente para:",
-        {
-          "propósitos": [
-            "Proporcionar el servicio de mantenimiento predictivo",
-            "Generar alertas y predicciones de fallas",
-            "Mejorar la precisión del modelo de ML con datos anonimizados",
-            "Soporte técnico y resolución de problemas"
-          ]
-        }
+      "content": {
+        "descripcion": "El Procesador procesará los Datos Personales únicamente para:",
+        "propósitos": [
+          "Proporcionar el servicio de mantenimiento predictivo",
+          "Generar alertas y predicciones de fallas",
+          "Mejorar la precisión del modelo de ML con datos anonimizados",
+          "Soporte técnico y resolución de problemas"
+        ]
+      }
     },
     {
       "title": "5. Obligaciones del Procesador",
@@ -62,50 +62,50 @@
     },
     {
       "title": "6. Medidas de Seguridad",
-      "content": "El Procesador implementa las siguientes medidas:",
-        {
-          "medidas": [
-            "Encriptación TLS 1.3 para todas las comunicaciones",
-            "Encriptación AES-256 para datos en reposo",
-            "Control de acceso basado en roles (RBAC)",
-            "Autenticación de dos factores para acceso administrativo",
-            "Backups diarios con retención de 7 días",
-            "Audit trail inmutable de todas las operaciones",
-            "Evaluaciones de seguridad periódicas"
-          ]
-        }
+      "content": {
+        "descripcion": "El Procesador implementa las siguientes medidas:",
+        "medidas": [
+          "Encriptación TLS 1.3 para todas las comunicaciones",
+          "Encriptación AES-256 para datos en reposo",
+          "Control de acceso basado en roles (RBAC)",
+          "Autenticación de dos factores para acceso administrativo",
+          "Backups diarios con retención de 7 días",
+          "Audit trail inmutable de todas las operaciones",
+          "Evaluaciones de seguridad periódicas"
+        ]
+      }
     },
     {
       "title": "7. Derechos de los Titulares de Datos",
-      "content": "El Procesador cooperará con el Controlador para facilitar:",
-        {
-          "derechos": [
-            "Acceso a los Datos Personales",
-            "Rectificación de datos inexactos",
-            "Supresión de datos (derecho al olvido)",
-            "Limitación del procesamiento",
-            "Portabilidad de datos",
-            "Oposición al procesamiento"
-          ]
-        }
+      "content": {
+        "descripcion": "El Procesador cooperará con el Controlador para facilitar:",
+        "derechos": [
+          "Acceso a los Datos Personales",
+          "Rectificación de datos inexactos",
+          "Supresión de datos (derecho al olvido)",
+          "Limitación del procesamiento",
+          "Portabilidad de datos",
+          "Oposición al procesamiento"
+        ]
+      }
     },
     {
       "title": "8. Subprocesadores",
-      "content": "El Procesador no utilizará subprocesadores sin autorización previa del Controlador. Subprocesadores actuales:",
-        {
-          "autorizados": [
-            {
-              "nombre": "AWS/Google Cloud/Azure (según proveedor de hosting)",
-              "servicio": "Infraestructura de servidores",
-              "ubicación": "Chile"
-            },
-            {
-              "nombre": "Proveedor de Email (ej: SendGrid/Mailgun)",
-              "servicio": "Envío de notificaciones",
-              "ubicación": "Chile"
-            }
-          ]
-        }
+      "content": {
+        "descripcion": "El Procesador no utilizará subprocesadores sin autorización previa del Controlador. Subprocesadores actuales:",
+        "autorizados": [
+          {
+            "nombre": "AWS/Google Cloud/Azure (según proveedor de hosting)",
+            "servicio": "Infraestructura de servidores",
+            "ubicación": "Chile"
+          },
+          {
+            "nombre": "Proveedor de Email (ej: SendGrid/Mailgun)",
+            "servicio": "Envío de notificaciones",
+            "ubicación": "Chile"
+          }
+        ]
+      }
     },
     {
       "title": "9. Auditoría y Cumplimiento",
@@ -117,22 +117,22 @@
     },
     {
       "title": "10. Retorno o Eliminación de Datos",
-      "content": "Al término del contrato, el Procesador:",
-        {
-          "acciones": [
-            "Eliminará todos los Datos Personales de sus sistemas",
-            "Confirmará por escrito la eliminación",
-            "Mantendrá copias de seguridad solo durante el período de retención legal"
-          ]
-        }
+      "content": {
+        "descripcion": "Al término del contrato, el Procesador:",
+        "acciones": [
+          "Eliminará todos los Datos Personales de sus sistemas",
+          "Confirmará por escrito la eliminación",
+          "Mantendrá copias de seguridad solo durante el período de retención legal"
+        ]
+      }
     },
     {
       "title": "11. Notificación de Brechas",
-      "content": "El Procesador notificará al Controlador cualquier brecha de seguridad:",
-        {
-          "plazo": "Dentro de las 72 horas de tener conocimiento",
-          "contenido": "Descripción de la brecha, categorías de datos afectados, medidas tomadas, consecuencias probables"
-        }
+      "content": {
+        "descripcion": "El Procesador notificará al Controlador cualquier brecha de seguridad:",
+        "plazo": "Dentro de las 72 horas de tener conocimiento",
+        "contenido": "Descripción de la brecha, categorías de datos afectados, medidas tomadas, consecuencias probables"
+      }
     },
     {
       "title": "12. Duración y Terminación",

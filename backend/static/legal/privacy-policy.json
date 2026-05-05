@@ -41,29 +41,29 @@
     },
     {
       "title": "4. Compartición de Datos",
-      "content": "No vendemos, alquilamos ni compartimos datos personales con terceros, excepto:",
-        {
-          "excepciones": [
-            "Con proveedores de servicios necesarios para operar el servicio (ej: hosting de base de datos)",
-            "Cuando sea requerido por ley o autoridad competente",
-            "Para proteger nuestros derechos, propiedad o seguridad",
-            "Con consentimiento explícito del usuario"
-          ]
-        }
+      "content": {
+        "descripcion": "No vendemos, alquilamos ni compartimos datos personales con terceros, excepto:",
+        "excepciones": [
+          "Con proveedores de servicios necesarios para operar el servicio (ej: hosting de base de datos)",
+          "Cuando sea requerido por ley o autoridad competente",
+          "Para proteger nuestros derechos, propiedad o seguridad",
+          "Con consentimiento explícito del usuario"
+        ]
+      }
     },
     {
       "title": "5. Seguridad de Datos",
-      "content": "Implementamos medidas de seguridad apropiadas incluyendo:",
-        {
-          "medidas": [
-            "Encriptación en tránsito (TLS/HTTPS)",
-            "Hashing de contraseñas con bcrypt",
-            "Control de acceso basado en roles (RBAC)",
-            "API keys para autenticación de dispositivos",
-            "Backups automatizados diarios con retención de 7 días",
-            "Audit trail de todas las acciones críticas"
-          ]
-        }
+      "content": {
+        "descripcion": "Implementamos medidas de seguridad apropiadas incluyendo:",
+        "medidas": [
+          "Encriptación en tránsito (TLS/HTTPS)",
+          "Hashing de contraseñas con bcrypt",
+          "Control de acceso basado en roles (RBAC)",
+          "API keys para autenticación de dispositivos",
+          "Backups automatizados diarios con retención de 7 días",
+          "Audit trail de todas las acciones críticas"
+        ]
+      }
     },
     {
       "title": "6. Retención de Datos",
@@ -76,17 +76,17 @@
     },
     {
       "title": "7. Derechos del Usuario",
-      "content": "El usuario tiene derecho a:",
-        {
-          "derechos": [
-            "Acceder a sus datos personales",
-            "Solicitar corrección de datos inexactos",
-            "Solicitar eliminación de datos (derecho al olvido)",
-            "Oponerse al procesamiento de datos",
-            "Exportar sus datos en formato portátil",
-            "Revocar consentimiento en cualquier momento"
-          ]
-        }
+      "content": {
+        "descripcion": "El usuario tiene derecho a:",
+        "derechos": [
+          "Acceder a sus datos personales",
+          "Solicitar corrección de datos inexactos",
+          "Solicitar eliminación de datos (derecho al olvido)",
+          "Oponerse al procesamiento de datos",
+          "Exportar sus datos en formato portátil",
+          "Revocar consentimiento en cualquier momento"
+        ]
+      }
     },
     {
       "title": "8. Cookies y Tecnologías Similares",

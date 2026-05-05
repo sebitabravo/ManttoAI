@@ -124,11 +124,14 @@ export default function DashboardPage() {
     };
   }, [equipos, equiposFiltrados, resumen, selectedRubro]);
 
+  // ID unico para tabpanel
+  const tabPanelId = "dashboard-tabpanel";
+
   return (
     <div className="space-y-10">
       {/* Header del dashboard */}
       <header className="space-y-2">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-display-md font-semibold text-neutral-600 tracking-tight">
             Centro de control
           </h1>
@@ -145,7 +148,7 @@ export default function DashboardPage() {
             Última actualización: {lastUpdatedLabel}
           </span>
         </p>
-        <div className="flex flex-wrap items-center gap-2 pt-2" role="tablist" aria-label="Filtro por rubro">
+        <div className="flex flex-wrap items-center gap-2 pt-2" role="tablist" aria-label="Filtro por rubro" aria-controls={tabPanelId}>
           {RUBRO_FILTER_OPTIONS.map((option) => {
             const isActive = selectedRubro === option.value;
             return (
@@ -153,10 +156,12 @@ export default function DashboardPage() {
                 key={option.value}
                 type="button"
                 role="tab"
+                id={`tab-rubro-${option.value}`}
                 aria-selected={isActive}
+                aria-controls={tabPanelId}
                 onClick={() => setSelectedRubro(option.value)}
                 className={`
-                  rounded-full px-3 py-1.5 text-xs font-medium tracking-tight transition-colors
+                  rounded-full px-3 py-1.5 text-xs font-medium tracking-tight transition-colors whitespace-nowrap
                   ${isActive ? "bg-primary-500 text-white shadow-sm" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}
                 `.replace(/\s+/g, " ").trim()}
               >
@@ -174,69 +179,74 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Resumen operativo */}
-      <section data-tour="dashboard-resumen" aria-label="Resumen operativo">
-        {isInitialLoading ? (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-            <SkeletonMetric className="lg:col-span-4" />
-            <SkeletonMetric className="lg:col-span-4" />
-            <SkeletonMetric className="lg:col-span-4" />
-            <SkeletonMetric className="lg:col-span-6" />
-            <SkeletonMetric className="lg:col-span-6" />
-          </div>
-        ) : (
-          <ResumenCards resumen={resumenFiltrado} />
-        )}
-      </section>
+      {/* Tabpanel que contiene todo el contenido filtrado */}
+      <div id={tabPanelId} role="tabpanel" aria-labelledby={`tab-rubro-${selectedRubro}`}>
 
-      {/* Error banner */}
-      {error && (
-        <div className="flex items-center justify-between gap-4 rounded-xl bg-warning-50 px-5 py-4">
-          <p className="text-sm text-warning-700">
-            No se pudo conectar con el backend. Se muestran los últimos datos válidos.
-          </p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={refresh} 
-            disabled={loading}
-          >
-            {loading ? "Reintentando..." : "Reintentar"}
-          </Button>
-        </div>
-      )}
-
-      {/* Gráficos de tendencias */}
-      <section data-tour="dashboard-graficos" aria-label="Tendencias de sensores">
-        <h2 className="mb-6 text-xl font-semibold text-neutral-600 tracking-tight">
-          Tendencias
-        </h2>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Resumen operativo */}
+        <section data-tour="dashboard-resumen" aria-label="Resumen operativo">
           {isInitialLoading ? (
-            <>
-              <SkeletonChart />
-              <SkeletonChart />
-            </>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+              <SkeletonMetric className="lg:col-span-4" />
+              <SkeletonMetric className="lg:col-span-4" />
+              <SkeletonMetric className="lg:col-span-4" />
+              <SkeletonMetric className="lg:col-span-6" />
+              <SkeletonMetric className="lg:col-span-6" />
+            </div>
           ) : (
-            <>
-              <GraficoTemperatura lecturas={lecturasFiltradas} />
-              <GraficoVibracion lecturas={lecturasFiltradas} />
-            </>
+            <ResumenCards resumen={resumenFiltrado} />
           )}
-        </div>
-      </section>
+        </section>
 
-      {/* Estado de equipos */}
-      <section aria-label="Estado de equipos">
-        <h2 className="mb-6 text-xl font-semibold text-neutral-600 tracking-tight">
-          Estado de equipos
-        </h2>
-        {isInitialLoading ? (
-          <SkeletonTable rows={5} cols={6} />
-        ) : (
-          <TablaEstadoEquipos equipos={resumenFiltrado.equipos || []} />
+        {/* Error banner */}
+        {error && (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-warning-50 px-5 py-4">
+            <p className="text-sm text-warning-700">
+              No se pudo conectar con el backend. Se muestran los últimos datos válidos.
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refresh} 
+              disabled={loading}
+            >
+              {loading ? "Reintentando..." : "Reintentar"}
+            </Button>
+          </div>
         )}
-      </section>
+
+        {/* Graficos de tendencias */}
+        <section data-tour="dashboard-graficos" aria-label="Tendencias de sensores">
+          <h2 className="mb-6 text-xl font-semibold text-neutral-600 tracking-tight">
+            Tendencias
+          </h2>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {isInitialLoading ? (
+              <>
+                <SkeletonChart />
+                <SkeletonChart />
+              </>
+            ) : (
+              <>
+                <GraficoTemperatura lecturas={lecturasFiltradas} />
+                <GraficoVibracion lecturas={lecturasFiltradas} />
+              </>
+            )}
+          </div>
+        </section>
+
+        {/* Estado de equipos */}
+        <section aria-label="Estado de equipos">
+          <h2 className="mb-6 text-xl font-semibold text-neutral-600 tracking-tight">
+            Estado de equipos
+          </h2>
+          {isInitialLoading ? (
+            <SkeletonTable rows={5} cols={6} />
+          ) : (
+            <TablaEstadoEquipos equipos={resumenFiltrado.equipos || []} />
+          )}
+        </section>
+
+      </div>
     </div>
   );
 }

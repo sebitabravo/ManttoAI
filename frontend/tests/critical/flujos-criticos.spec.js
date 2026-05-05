@@ -206,9 +206,11 @@ test.describe("Flujos críticos de usuario", () => {
     await mockOnboardingCompletado(page);
 
     let alertaLeida = false;
-    await page.route(/\/api(?:\/v1)?\/alertas(?:\/\d+\/leer)?(?:\?.*)?$/, async (route) => {
-      const { method, url } = route.request();
-      if (method === "PATCH" && /\/alertas\/\d+\/leer$/.test(url)) {
+    await page.route(/\/api(?:\/v1)?\/alertas(?:\/\d+\/leer\/?)?(?:\?.*)?$/, async (route) => {
+      const request = route.request();
+      const method = request.method();
+      const pathname = new URL(request.url()).pathname;
+      if (method === "PATCH" && /\/alertas\/\d+\/leer\/?$/.test(pathname)) {
         alertaLeida = true;
         await route.fulfill({
           status: 200,
@@ -256,7 +258,15 @@ test.describe("Flujos críticos de usuario", () => {
     await expect(page.getByRole("heading", { name: "Alertas" })).toBeVisible();
     await expect(page.getByText("Temperatura fuera de rango")).toBeVisible();
 
+    const patchResponsePromise = page.waitForResponse((response) => {
+      if (response.request().method() !== "PATCH") {
+        return false;
+      }
+      const pathname = new URL(response.url()).pathname;
+      return /\/alertas\/\d+\/leer\/?$/.test(pathname);
+    });
     await page.getByRole("button", { name: "Marcar como leída" }).click();
+    await patchResponsePromise;
     await expect(
       page.getByRole("button", { name: "Marcar como leída" })
     ).toHaveCount(0);

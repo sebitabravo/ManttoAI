@@ -13,13 +13,13 @@ services:
       - "8000:8000"
     environment:
       APP_ENV: ${APP_ENV:-production}
-      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-manttoai_root}@mysql:3306/${MYSQL_DATABASE:-manttoai_db}}
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-}@mysql:3306/${MYSQL_DATABASE:-manttoai_db}}
       DATABASE_AUTO_INIT: ${DATABASE_AUTO_INIT:-true}
-      SECRET_KEY: ${SECRET_KEY:-manttoai-dev-secret}
+      SECRET_KEY: ${SECRET_KEY:-}
       MQTT_BROKER_HOST: ${MQTT_BROKER_HOST:-mosquitto}
       MQTT_BROKER_PORT: ${MQTT_BROKER_PORT:-1883}
-      MQTT_USERNAME: ${MQTT_USERNAME:-manttoai_mqtt}
-      MQTT_PASSWORD: ${MQTT_PASSWORD:-manttoai_mqtt_dev}
+      MQTT_USERNAME: ${MQTT_USERNAME:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
       MQTT_BASE_TOPIC: ${MQTT_BASE_TOPIC:-manttoai/equipo}
       SMTP_HOST: ${SMTP_HOST:-mailpit}
       SMTP_PORT: ${SMTP_PORT:-1025}
@@ -81,7 +81,7 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-manttoai_root}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-manttoai_db}
     volumes:
       - mysql_data:/var/lib/mysql
@@ -97,10 +97,10 @@ services:
     ports:
       - "1883:1883"
     environment:
-      MQTT_USERNAME: ${MQTT_USERNAME:-manttoai_mqtt}
-      MQTT_PASSWORD: ${MQTT_PASSWORD:-manttoai_mqtt_dev}
+      MQTT_USERNAME: ${MQTT_USERNAME:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
     healthcheck:
-      test: ["CMD-SHELL", "mosquitto_pub -h 127.0.0.1 -p 1883 -u ${MQTT_USERNAME:-manttoai_mqtt} -P ${MQTT_PASSWORD:-manttoai_mqtt_dev} -t manttoai/healthcheck -n || exit 1"]
+      test: ["CMD-SHELL", "mosquitto_pub -h 127.0.0.1 -p 1883 -u $${MQTT_USERNAME} -P $${MQTT_PASSWORD} -t manttoai/healthcheck -n || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -115,7 +115,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-manttoai_redis_dev}
+    command: redis-server --appendonly yes --requirepass $${REDIS_PASSWORD}
     ports:
       - "127.0.0.1:6379:6379"
     volumes:

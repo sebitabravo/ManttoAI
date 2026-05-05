@@ -300,39 +300,35 @@ class TestSimulatorService:
         mock_session.close.assert_called_once()
 
 
-@patch("app.services.simulator_service._simulator_scheduler")
-def test_is_simulator_running_true_from_running(mock_scheduler):
-    """Verifica que is_simulator_running retorna True si el scheduler está corriendo (atributo 'running')."""
-    mock_scheduler.running = True
-    assert is_simulator_running() is True
+    @patch("app.services.simulator_service._simulator_scheduler")
+    def test_is_simulator_running_true_from_running(self, mock_scheduler):
+        """Verifica que is_simulator_running retorna True si el scheduler está corriendo (atributo 'running')."""
+        mock_scheduler.running = True
+        assert is_simulator_running() is True
 
+    @patch("app.services.simulator_service._simulator_scheduler")
+    def test_is_simulator_running_true_from_started(self, mock_scheduler):
+        """Verifica que is_simulator_running retorna True si el scheduler ha sido iniciado (atributo 'started')."""
+        del mock_scheduler.running  # Remove 'running' attribute
+        mock_scheduler.started = True
+        assert is_simulator_running() is True
 
-@patch("app.services.simulator_service._simulator_scheduler")
-def test_is_simulator_running_true_from_started(mock_scheduler):
-    """Verifica que is_simulator_running retorna True si el scheduler ha sido iniciado (atributo 'started')."""
-    del mock_scheduler.running  # Remove 'running' attribute
-    mock_scheduler.started = True
-    assert is_simulator_running() is True
+    @patch("app.services.simulator_service._simulator_scheduler")
+    def test_is_simulator_running_false_from_running(self, mock_scheduler):
+        """Verifica que is_simulator_running retorna False si el scheduler no está corriendo (atributo 'running')."""
+        mock_scheduler.running = False
+        assert is_simulator_running() is False
 
+    @patch("app.services.simulator_service._simulator_scheduler")
+    def test_is_simulator_running_false_from_started(self, mock_scheduler):
+        """Verifica que is_simulator_running retorna False si el scheduler no ha sido iniciado (atributo 'started')."""
+        del mock_scheduler.running  # Remove 'running' attribute
+        mock_scheduler.started = False
+        assert is_simulator_running() is False
 
-@patch("app.services.simulator_service._simulator_scheduler")
-def test_is_simulator_running_false_from_running(mock_scheduler):
-    """Verifica que is_simulator_running retorna False si el scheduler no está corriendo (atributo 'running')."""
-    mock_scheduler.running = False
-    assert is_simulator_running() is False
-
-
-@patch("app.services.simulator_service._simulator_scheduler")
-def test_is_simulator_running_false_from_started(mock_scheduler):
-    """Verifica que is_simulator_running retorna False si el scheduler no ha sido iniciado (atributo 'started')."""
-    del mock_scheduler.running  # Remove 'running' attribute
-    mock_scheduler.started = False
-    assert is_simulator_running() is False
-
-
-def test_is_simulator_running_false_no_scheduler(self):
-    """Verifica que is_simulator_running retorna False si no hay scheduler."""
-    assert is_simulator_running() is False
+    def test_is_simulator_running_false_no_scheduler(self):
+        """Verifica que is_simulator_running retorna False si no hay scheduler."""
+        assert is_simulator_running() is False
 
 
 @patch("app.services.simulator_service.get_settings")

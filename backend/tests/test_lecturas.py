@@ -100,8 +100,8 @@ def test_latest_lectura_not_found_returns_404(client):
     assert response.json()["detail"] == "Lectura no encontrada para el equipo"
 
 
-def test_get_lecturas_aplica_limite_por_defecto_de_100(client):
-    """Valida que GET /lecturas sin limit retorne solo 100 registros."""
+def test_get_lecturas_aplica_limite_por_defecto_de_50(client):
+    """Valida que GET /lecturas sin parametros use paginacion (per_page=50)."""
 
     equipo_id = _create_equipo(client, "Equipo límite lecturas")
 
@@ -113,7 +113,30 @@ def test_get_lecturas_aplica_limite_por_defecto_de_100(client):
         create_response = client.post("/lecturas", json=payload)
         assert create_response.status_code == 201
 
+    # Sin parametros: paginacion por defecto (per_page=50)
     response = client.get("/lecturas", params={"equipo_id": equipo_id})
+
+    assert response.status_code == 200
+    lecturas = response.json()
+    assert len(lecturas) == 50
+    assert lecturas[0]["temperatura"] == 104.0
+    assert lecturas[-1]["temperatura"] == 55.0
+
+
+def test_get_lecturas_limit_legacy_retrocompatible(client):
+    """Valida que GET /lecturas con limit explícito use modo legacy."""
+
+    equipo_id = _create_equipo(client, "Equipo legacy limit")
+
+    for indice in range(105):
+        payload = _build_lectura_payload(
+            equipo_id=equipo_id,
+            temperatura=float(indice),
+        )
+        create_response = client.post("/lecturas", json=payload)
+        assert create_response.status_code == 201
+
+    response = client.get("/lecturas", params={"equipo_id": equipo_id, "limit": 100})
 
     assert response.status_code == 200
     lecturas = response.json()

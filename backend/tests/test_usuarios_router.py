@@ -52,7 +52,7 @@ def test_create_usuario_as_admin(db: Session, admin_user: Usuario, admin_token: 
     payload = {
         "nombre": "Nuevo Usuario",
         "email": "nuevo@test.com",
-        "password": "password123",
+        "password": "Test1234",
         "rol": "tecnico",
     }
 
@@ -78,7 +78,7 @@ def test_create_usuario_as_technico(
     payload = {
         "nombre": "Nuevo Usuario",
         "email": "nuevo@test.com",
-        "password": "password123",
+        "password": "Test1234",
         "rol": "visualizador",
     }
 
@@ -99,7 +99,7 @@ def test_create_usuario_duplicate_email(
     payload = {
         "nombre": "Duplicado",
         "email": admin_user.email,  # Email duplicado
-        "password": "password123",
+        "password": "Test1234",
         "rol": "visualizador",
     }
 

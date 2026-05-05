@@ -94,22 +94,31 @@ def get_current_user(
     # Verificar blacklist de tokens revocados (logout / cambio de contraseña)
     jti = payload.get("jti")
     if jti:
+        _redis_client = None
+        _redis_lib_imported = False
         try:
-            import redis as redis_lib
+            import redis as _redis_lib
+            _redis_lib_imported = True
+            _redis_client = _redis_lib.Redis(
+                host=settings.redis_host,
+                port=settings.redis_port,
+                password=settings.redis_password or None,
+                socket_connect_timeout=1,
+            )
         except ImportError:
-            redis_lib = None
-        if redis_lib is not None:
+            logger.warning("Redis no disponible para verificar tokens revocados.")
+            pass # Degradación elegante si Redis no está disponible
+        except Exception as e: # Catch any other error during Redis connection
+            logger.error(f"Error conectando a Redis para verificar tokens revocados: {e}")
+            pass # Degradación elegante
+
+        if _redis_client:
             try:
-                r = redis_lib.Redis(
-                    host=settings.redis_host,
-                    port=settings.redis_port,
-                    password=settings.redis_password or None,
-                    socket_connect_timeout=1,
-                )
-                if r.exists(f"blacklist:{jti}"):
+                if _redis_client.exists(f"blacklist:{jti}"):
                     raise credentials_exception
-            except (redis_lib.RedisError, OSError):
-                pass  # Degradación elegante si Redis no está disponible
+            except Exception as e:
+                logger.error(f"Error al verificar blacklist de Redis: {e}")
+                pass # Degradación elegante si hay un error de comunicación con Redis
 
     usuario = db.scalars(select(Usuario).where(Usuario.email == subject)).first()
     if usuario is None or not usuario.is_active:

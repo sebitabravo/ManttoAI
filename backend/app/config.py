@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     mqtt_broker_port: int = 1883
     mqtt_username: str = ""
     mqtt_password: str = ""
-    mqtt_base_topic: str = "manttoai/equipo"
+    mqtt_base_topic: str = "manttoai/telemetria"
     mqtt_telemetry_topic: str = "manttoai/telemetria"
     mqtt_enabled: bool = True
     smtp_host: str = ""

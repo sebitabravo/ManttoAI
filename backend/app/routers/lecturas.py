@@ -24,12 +24,25 @@ router = APIRouter(prefix="/lecturas", tags=["lecturas"])
 def get_lecturas(
     request: Request,
     equipo_id: int | None = Query(default=None),
-    limit: int = Query(default=100, ge=1, le=5000),
+    limit: int | None = Query(default=None, ge=1, le=5000),
+    page: int | None = Query(default=None, ge=1),
+    per_page: int = Query(default=50, ge=1, le=500),
     db: Session = Depends(get_db),
 ) -> list[LecturaResponse]:
-    """Entrega historial persistido de lecturas con límite por defecto."""
+    """Entrega historial persistido de lecturas con paginación.
 
-    return list_lecturas(db, equipo_id, limit)
+    Si se pasa `limit`, usa el comportamiento legacy (sin paginación).
+    Si se pasa `page`, usa paginación con `per_page`.
+    Si no se pasa ninguno, usa paginación por defecto (page=1, per_page=50).
+    """
+
+    # Retrocompatibilidad: si pasan limit explícito, usar modo legacy
+    if limit is not None:
+        return list_lecturas(db, equipo_id, limit=limit)
+
+    # Paginación normal
+    actual_page = page or 1
+    return list_lecturas(db, equipo_id, limit=per_page, offset=(actual_page - 1) * per_page)
 
 
 @router.get(

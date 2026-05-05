@@ -25,14 +25,17 @@ def list_lecturas(
     db: Session,
     equipo_id: int | None = None,
     limit: int | None = 100,
+    offset: int | None = None,
 ) -> list[Lectura]:
-    """Lista lecturas persistidas con orden descendente y límite opcional."""
+    """Lista lecturas persistidas con orden descendente, límite y offset opcionales."""
 
     query = select(Lectura)
     if equipo_id is not None:
         query = query.where(Lectura.equipo_id == equipo_id)
 
     query = query.order_by(Lectura.timestamp.desc(), Lectura.id.desc())
+    if offset is not None:
+        query = query.offset(offset)
     if limit is not None:
         query = query.limit(limit)
 

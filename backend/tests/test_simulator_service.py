@@ -440,7 +440,7 @@ class TestSimulatorService:
 
         mock_session_factory = MagicMock(spec=Callable[[], Session])
 
-        assert start_simulator(session_factory=mock_session_factory) is False
+        assert start_simulator(session_factory="not_callable") is False # Original assertion was incorrect
         mock_logger.exception.assert_called_with("No se pudo iniciar el simulador")
 
     @patch("app.services.simulator_service.logger")

@@ -13,6 +13,14 @@ services:
         INSTALL_DEV_REQS: "true"
     environment:
       APP_ENV: ${APP_ENV:-development}
+      # Valores por defecto para desarrollo local.
+      # En producción estas variables DEBEN definirse en el entorno.
+      SECRET_KEY: ${SECRET_KEY:-manttoai-dev-secret}
+      MQTT_USERNAME: ${MQTT_USERNAME:-manttoai_mqtt}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-manttoai_mqtt_dev}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-manttoai_root}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-manttoai_redis_dev}
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://root:manttoai_root@mysql:3306/manttoai_db}
     volumes:
       - ./backend:/app
       - ./scripts:/scripts:ro
@@ -40,5 +48,16 @@ services:
       retries: 5
 
   mosquitto:
+    environment:
+      MQTT_USERNAME: ${MQTT_USERNAME:-manttoai_mqtt}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-manttoai_mqtt_dev}
     # El entrypoint genera el passwd desde variables de entorno si no existe.
     # Para usar credenciales pre-generadas, ejecutar: make setup-mqtt-creds
+
+  mysql:
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-manttoai_root}
+
+  redis:
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-manttoai_redis_dev}

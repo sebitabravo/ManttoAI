@@ -122,8 +122,13 @@ app.add_middleware(
     # Orígenes leídos desde CORS_ALLOWED_ORIGINS en .env para soportar producción
     allow_origins=settings.get_cors_origins(),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-API-Key",
+        "X-CSRF-Token",
+    ],
     expose_headers=["Content-Disposition"],
 )
 

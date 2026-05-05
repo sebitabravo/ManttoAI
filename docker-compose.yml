@@ -95,7 +95,7 @@ services:
   mosquitto:
     build: ./mosquitto
     ports:
-      - "1883:1883"
+      - "127.0.0.1:1883:1883"
     environment:
       MQTT_USERNAME: ${MQTT_USERNAME:-}
       MQTT_PASSWORD: ${MQTT_PASSWORD:-}
@@ -109,8 +109,8 @@ services:
   mailpit:
     image: axllent/mailpit:v1.24
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
     restart: unless-stopped
 
   redis:
@@ -127,7 +127,7 @@ services:
   ollama:
     image: ollama/ollama:latest
     ports:
-      - "11434:11434"
+      - "127.0.0.1:11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     deploy:

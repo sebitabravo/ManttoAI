@@ -349,6 +349,35 @@ export default function GraficoLineaBase({
     [maxValue, minValue, values]
   );
 
+  // Throttle via requestAnimationFrame para evitar setState en cada pixel
+  const rafRef = useRef(null);
+
+  const handlePointerMove = useCallback(
+    (event) => {
+      if (rafRef.current) return;
+
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+
+        if (!event?.currentTarget) return;
+
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (!Number.isFinite(bounds.width) || bounds.width <= 0) return;
+
+        const rawX = ((event.clientX - bounds.left) / bounds.width) * CHART_WIDTH;
+        const chartX = clamp(rawX, CHART_PADDING.left, CHART_WIDTH - CHART_PADDING.right);
+        const nextIndex = resolveClosestPointIndex(points, chartX);
+
+        if (nextIndex !== null) {
+          setActiveIndex((previousIndex) =>
+            previousIndex === nextIndex ? previousIndex : nextIndex
+          );
+        }
+      });
+    },
+    [points]
+  );
+
   const isEmpty = normalizedSeries.length === 0;
 
   if (isEmpty) {
@@ -404,35 +433,6 @@ export default function GraficoLineaBase({
       zoneLabel: zone?.label || "Sin rango",
     };
   }
-
-  // Throttle via requestAnimationFrame para evitar setState en cada pixel
-  const rafRef = useRef(null);
-
-  const handlePointerMove = useCallback(
-    (event) => {
-      if (rafRef.current) return;
-
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-
-        if (!event?.currentTarget) return;
-
-        const bounds = event.currentTarget.getBoundingClientRect();
-        if (!Number.isFinite(bounds.width) || bounds.width <= 0) return;
-
-        const rawX = ((event.clientX - bounds.left) / bounds.width) * CHART_WIDTH;
-        const chartX = clamp(rawX, CHART_PADDING.left, CHART_WIDTH - CHART_PADDING.right);
-        const nextIndex = resolveClosestPointIndex(points, chartX);
-
-        if (nextIndex !== null) {
-          setActiveIndex((previousIndex) =>
-            previousIndex === nextIndex ? previousIndex : nextIndex
-          );
-        }
-      });
-    },
-    [points]
-  );
 
   function handleKeyDown(event) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {

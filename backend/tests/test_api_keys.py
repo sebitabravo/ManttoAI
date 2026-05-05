@@ -23,7 +23,7 @@ def test_create_api_key(db: Session, admin_user: Usuario):
     assert api_key.id is not None
     assert api_key.device_id == "esp32_001"
     assert api_key.is_active is True
-    assert api_key.key_prefix == plain_key[-8:]
+    assert api_key.key_prefix == plain_key[-12:]  # Prefijo ampliado de 8 a 12 chars
     assert plain_key.startswith("mttk_")
 
     # Verificar que se guardó en DB

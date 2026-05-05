@@ -1,8 +1,11 @@
 """Endpoints de autenticación."""
 
+import logging
 import secrets
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from jose import jwt
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -18,10 +21,10 @@ from app.schemas.usuario import (
     UsuarioResponse,
 )
 from app.services.auth_service import change_password, login_user, register_user
-from fastapi import HTTPException
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -79,8 +82,38 @@ def get_me(current_user=Depends(get_current_user)) -> UsuarioResponse:
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(response: Response) -> Response:
-    """Limpia la cookie de autenticación para clientes web."""
+def logout(request: Request, response: Response) -> Response:
+    """Limpia cookie de autenticación y revoca el JWT en blacklist Redis."""
+
+    # Intentar revocar el token actual en Redis
+    token = (
+        request.cookies.get(settings.auth_cookie_name)
+        or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+    )
+    if token:
+        try:
+            payload = jwt.decode(
+                token, settings.secret_key, algorithms=["HS256"],
+                options={"verify_exp": False},
+            )
+            jti = payload.get("jti", "")
+            exp = payload.get("exp", 0)
+            if jti and exp:
+                try:
+                    import redis as redis_lib
+                except ImportError:
+                    redis_lib = None
+                if redis_lib is not None:
+                    ttl = max(int(exp - datetime.now(timezone.utc).timestamp()), 1)
+                    r = redis_lib.Redis(
+                        host=settings.redis_host,
+                        port=settings.redis_port,
+                        password=settings.redis_password or None,
+                        socket_connect_timeout=1,
+                    )
+                    r.setex(f"blacklist:{jti}", ttl, "1")
+        except Exception:
+            pass  # Degradación elegante: el token expira naturalmente
 
     response.delete_cookie(
         key=settings.auth_cookie_name,

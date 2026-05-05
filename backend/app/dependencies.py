@@ -91,6 +91,26 @@ def get_current_user(
     except JWTError as exc:
         raise credentials_exception from exc
 
+    # Verificar blacklist de tokens revocados (logout / cambio de contraseña)
+    jti = payload.get("jti")
+    if jti:
+        try:
+            import redis as redis_lib
+        except ImportError:
+            redis_lib = None
+        if redis_lib is not None:
+            try:
+                r = redis_lib.Redis(
+                    host=settings.redis_host,
+                    port=settings.redis_port,
+                    password=settings.redis_password or None,
+                    socket_connect_timeout=1,
+                )
+                if r.exists(f"blacklist:{jti}"):
+                    raise credentials_exception
+            except (redis_lib.RedisError, OSError):
+                pass  # Degradación elegante si Redis no está disponible
+
     usuario = db.scalars(select(Usuario).where(Usuario.email == subject)).first()
     if usuario is None or not usuario.is_active:
         raise credentials_exception
@@ -157,7 +177,7 @@ def get_api_key_user(
     if not api_key:
         return None
 
-    key_suffix = api_key[-8:] if len(api_key) >= 8 else api_key
+    key_suffix = api_key[-12:] if len(api_key) >= 12 else api_key
     candidates = db.scalars(
         select(APIKey).where(
             APIKey.key_prefix == key_suffix,

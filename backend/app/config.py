@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     auth_cookie_name: str = "manttoai_token"
     auth_csrf_cookie_name: str = "manttoai_csrf"
     auth_csrf_header_name: str = "X-CSRF-Token"
+    # Redis (rate limiting + JWT blacklist)
+    redis_url: str = "redis://redis:6379"
+    redis_host: str = "redis"
+    redis_port: int = 6379
+    redis_password: str = ""
     # Integración con Ollama
     ollama_url: str = "http://ollama:11434"
     ollama_model: str = "qwen2.5:0.5b"
@@ -136,6 +141,13 @@ class Settings(BaseSettings):
                     "SMTP está configurado fuera de desarrollo pero faltan "
                     "SMTP_FROM_EMAIL o SMTP_TO_EMAIL en backend/.env"
                 )
+
+        if app_env_normalized in non_dev_envs and not self.redis_password:
+            _log.warning(
+                "REDIS_PASSWORD no está definido. "
+                "Rate limiting y JWT blacklist usarán memoria local. "
+                "Definí REDIS_PASSWORD en backend/.env antes de producción."
+            )
 
         return self
 

@@ -1,5 +1,6 @@
 """Servicios relacionados a autenticación."""
 
+import secrets
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -39,7 +40,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(subject: str) -> str:
-    """Crea un token JWT básico para el usuario."""
+    """Crea un token JWT con JTI único para permitir revocación."""
 
     expire_at = datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     issued_at = datetime.now(timezone.utc)
@@ -47,6 +48,7 @@ def create_access_token(subject: str) -> str:
         "sub": subject,
         "iat": issued_at.timestamp(),
         "exp": int(expire_at.timestamp()),
+        "jti": secrets.token_urlsafe(16),  # Identificador único para blacklist
     }
     return jwt.encode(payload, settings.secret_key, algorithm=JWT_ALGORITHM)
 

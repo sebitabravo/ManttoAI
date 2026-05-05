@@ -75,15 +75,23 @@ def extract_mac_address(topic: str) -> str:
     return topic_parts[-1]
 
 
+MAX_PAYLOAD_BYTES = 4096  # Límite para prevenir DoS por payloads enormes
+
+
 def parse_message(payload: str | bytes) -> LecturaMqttPayload:
     """Parsea y valida un payload MQTT para lecturas."""
 
-    payload_text = payload
     if isinstance(payload, bytes):
+        if len(payload) > MAX_PAYLOAD_BYTES:
+            raise ValueError("Payload MQTT excede tamaño máximo")
         try:
             payload_text = payload.decode("utf-8")
         except UnicodeDecodeError as exc:
             raise ValueError("Payload MQTT no está codificado en UTF-8") from exc
+    else:
+        if len(payload) > MAX_PAYLOAD_BYTES:
+            raise ValueError("Payload MQTT excede tamaño máximo")
+        payload_text = payload
 
     try:
         payload_data = json.loads(payload_text)

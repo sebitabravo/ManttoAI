@@ -1,5 +1,6 @@
 """Schemas de usuario y autenticación."""
 
+import re
 from datetime import datetime
 from typing import Literal
 
@@ -42,10 +43,16 @@ class UsuarioCreate(UsuarioBase):
 
     @field_validator("password")
     def validate_password(cls, value: str) -> str:
-        """Valida longitud mínima de contraseña para registro."""
+        """Valida complejidad de contraseña para registro."""
 
         if len(value) < 8:
             raise ValueError("password debe tener al menos 8 caracteres")
+        if not re.search(r"[A-Z]", value):
+            raise ValueError("password debe contener al menos una mayúscula")
+        if not re.search(r"[a-z]", value):
+            raise ValueError("password debe contener al menos una minúscula")
+        if not re.search(r"[0-9]", value):
+            raise ValueError("password debe contener al menos un número")
 
         return value
 
@@ -107,10 +114,16 @@ class ChangePasswordRequest(BaseModel):
 
     @field_validator("new_password")
     def validate_new_password(cls, value: str) -> str:
-        """Valida longitud mínima de la nueva contraseña."""
+        """Valida complejidad de la nueva contraseña."""
 
         if len(value) < 8:
             raise ValueError("password debe tener al menos 8 caracteres")
+        if not re.search(r"[A-Z]", value):
+            raise ValueError("password debe contener al menos una mayúscula")
+        if not re.search(r"[a-z]", value):
+            raise ValueError("password debe contener al menos una minúscula")
+        if not re.search(r"[0-9]", value):
+            raise ValueError("password debe contener al menos un número")
 
         return value
 

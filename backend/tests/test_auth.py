@@ -12,7 +12,7 @@ def test_register_endpoint_persists_user_with_hashed_password(unauthenticated_cl
     payload = {
         "nombre": "Sebastián",
         "email": "sebastian@example.com",
-        "password": "12345678",
+        "password": "Test1234",
         "rol": "admin",
     }
 

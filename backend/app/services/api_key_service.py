@@ -57,7 +57,7 @@ def create_api_key(
     # Generar key y hash
     plain_key = generate_api_key()
     key_hash = hash_api_key(plain_key)
-    key_prefix = plain_key[-8:]  # Últimos 8 caracteres para UI
+    key_prefix = plain_key[-12:]  # Últimos 12 caracteres para UI (mayor entropía que 8)
 
     # Crear API key
     api_key = APIKey(
@@ -121,7 +121,7 @@ def validate_api_key(db: Session, plain_key: str) -> APIKey | None:
     Usado por el suscriptor MQTT para autenticar dispositivos.
     """
 
-    key_suffix = plain_key[-8:] if len(plain_key) >= 8 else plain_key
+    key_suffix = plain_key[-12:] if len(plain_key) >= 12 else plain_key
     candidates = db.scalars(
         select(APIKey).where(
             APIKey.key_prefix == key_suffix,

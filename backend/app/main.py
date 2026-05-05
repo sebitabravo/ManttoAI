@@ -185,7 +185,7 @@ app.include_router(
 
 @app.get("/health", tags=["system"])
 def health_check() -> JSONResponse:
-    """Entrega estado de API y conectividad de base de datos."""
+    """Health check mínimo sin exponer detalles de infraestructura."""
 
     db_connected = (
         True
@@ -194,14 +194,8 @@ def health_check() -> JSONResponse:
         else check_database_connection()
     )
     status_code = 200 if db_connected else 503
-    status = "ok" if db_connected else "error"
 
     return JSONResponse(
         status_code=status_code,
-        content={
-            "status": status,
-            "service": settings.app_name,
-            "environment": settings.app_env,
-            "database": {"connected": db_connected},
-        },
+        content={"status": "ok" if db_connected else "error"},
     )

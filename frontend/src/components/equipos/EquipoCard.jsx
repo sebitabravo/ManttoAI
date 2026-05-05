@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { getConfigPrediccion, formatPorcentajeRiesgo } from "../../utils/prediccion";
+import { getRubroBadgeClass, getRubroLabel } from "../../utils/rubro";
 import { deleteEquipo } from "../../api/equipos";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
@@ -70,6 +71,10 @@ export default function EquipoCard({ equipo, onDeleted }) {
 
         {/* Indicador visual de predicción */}
         <PrediccionBadge clasificacion={clasificacion} probabilidad={probabilidad} />
+
+        <span className={`inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getRubroBadgeClass(equipo.rubro)}`}>
+          {getRubroLabel(equipo.rubro)}
+        </span>
 
         <p className="m-0 text-sm text-neutral-700">Estado: {equipo.estado}</p>
         {equipo.tipo ? <p className="m-0 text-sm text-neutral-700">Tipo: {equipo.tipo}</p> : null}

@@ -15,6 +15,26 @@ export const test = base.extend({
     await page.addInitScript(() => {
       window.localStorage.setItem("manttoai_onboarding_done", "true");
     });
+
+    // Mock por defecto para notificaciones del topbar.
+    // Evita redirecciones espurias a /login cuando un test no stubbea alertas.
+    await page.route(/\/api(?:\/v1)?\/alertas(?:\?.*)?$/, async (route) => {
+      if (route.request().method() === "PATCH") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ ok: true }),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      });
+    });
+
     await use(page);
   },
 });

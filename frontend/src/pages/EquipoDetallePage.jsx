@@ -152,13 +152,14 @@ export default function EquipoDetallePage() {
       {equipo && showEditForm ? (
         <section className="rounded-2xl bg-white p-5 shadow-sm">
           <h2 className="mt-0 text-lg font-semibold text-neutral-900">Editar equipo</h2>
-          <EquipoForm
-            initialValues={{
-              nombre: equipo.nombre,
-              ubicacion: equipo.ubicacion,
-              tipo: equipo.tipo,
-              estado: equipo.estado,
-            }}
+              <EquipoForm
+                initialValues={{
+                  nombre: equipo.nombre,
+                  ubicacion: equipo.ubicacion,
+                  tipo: equipo.tipo,
+                  rubro: equipo.rubro,
+                  estado: equipo.estado,
+                }}
             submitLabel="Guardar cambios"
             onSubmit={handleUpdateEquipo}
             onCancel={closeEditForm}

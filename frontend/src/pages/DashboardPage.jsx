@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import ResumenCards from "../components/dashboard/ResumenCards";
 import GraficoTemperatura from "../components/dashboard/GraficoTemperatura";
@@ -9,6 +9,7 @@ import Button from "../components/ui/Button";
 import { getDashboardData } from "../api/dashboard";
 import usePolling from "../hooks/usePolling";
 import { DASHBOARD_POLLING_INTERVAL_MS } from "../utils/constants";
+import { RUBRO_OPTIONS, getRubroLabel, normalizeRubro } from "../utils/rubro";
 
 const resumenInicial = {
   total_equipos: 0,
@@ -18,6 +19,8 @@ const resumenInicial = {
   probabilidad_falla: 0,
   equipos: [],
 };
+
+const RUBRO_FILTER_OPTIONS = [{ value: "todos", label: "Todos" }, ...RUBRO_OPTIONS];
 
 /**
  * Dashboard principal — Estilo Apple.
@@ -31,9 +34,17 @@ const resumenInicial = {
 export default function DashboardPage() {
   const { data, loading, error, refresh } = usePolling(getDashboardData, DASHBOARD_POLLING_INTERVAL_MS, null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
+  const [selectedRubro, setSelectedRubro] = useState("todos");
 
   const resumen = data?.resumen || resumenInicial;
-  const lecturas = Array.isArray(data?.lecturas) ? data.lecturas : [];
+  const lecturas = useMemo(
+    () => (Array.isArray(data?.lecturas) ? data.lecturas : []),
+    [data?.lecturas]
+  );
+  const equipos = useMemo(
+    () => (Array.isArray(resumen?.equipos) ? resumen.equipos : []),
+    [resumen?.equipos]
+  );
 
   const isInitialLoading = loading && !data;
 
@@ -50,6 +61,68 @@ export default function DashboardPage() {
         second: "2-digit",
       })
     : "—";
+
+  const equiposFiltrados = useMemo(() => {
+    if (selectedRubro === "todos") {
+      return equipos;
+    }
+    return equipos.filter((equipo) => normalizeRubro(equipo?.rubro) === selectedRubro);
+  }, [equipos, selectedRubro]);
+
+  const lecturasFiltradas = useMemo(() => {
+    if (selectedRubro === "todos") {
+      return lecturas;
+    }
+    const equipoIds = new Set(equiposFiltrados.map((equipo) => Number(equipo.id)));
+    return lecturas.filter((lectura) => equipoIds.has(Number(lectura?.equipo_id)));
+  }, [lecturas, equiposFiltrados, selectedRubro]);
+
+  const resumenFiltrado = useMemo(() => {
+    if (selectedRubro === "todos") {
+      return {
+        ...resumen,
+        equipos,
+      };
+    }
+
+    const totalEquipos = equiposFiltrados.length;
+    const alertasActivas = equiposFiltrados.reduce(
+      (acc, equipo) => acc + Number(equipo?.alertas_activas || 0),
+      0
+    );
+    const equiposEnRiesgo = equiposFiltrados.filter(
+      (equipo) =>
+        equipo?.ultima_probabilidad !== null &&
+        equipo?.ultima_probabilidad !== undefined &&
+        Number(equipo.ultima_probabilidad) >= 0.5
+    ).length;
+    const equiposConPrediccion = equiposFiltrados.filter(
+      (equipo) =>
+        equipo?.ultima_probabilidad !== null &&
+        equipo?.ultima_probabilidad !== undefined
+    );
+    const equipoMasCritico = equiposConPrediccion.reduce((max, actual) => {
+      if (!max) {
+        return actual;
+      }
+      return Number(actual.ultima_probabilidad) > Number(max.ultima_probabilidad)
+        ? actual
+        : max;
+    }, null);
+
+    return {
+      total_equipos: totalEquipos,
+      alertas_activas: alertasActivas,
+      equipos_en_riesgo: equiposEnRiesgo,
+      ultima_clasificacion: equipoMasCritico?.ultima_clasificacion || "sin datos",
+      probabilidad_falla:
+        equipoMasCritico?.ultima_probabilidad !== undefined &&
+        equipoMasCritico?.ultima_probabilidad !== null
+          ? Number(equipoMasCritico.ultima_probabilidad)
+          : 0,
+      equipos: equiposFiltrados,
+    };
+  }, [equipos, equiposFiltrados, resumen, selectedRubro]);
 
   return (
     <div className="space-y-10">
@@ -72,6 +145,26 @@ export default function DashboardPage() {
             Última actualización: {lastUpdatedLabel}
           </span>
         </p>
+        <div className="flex flex-wrap items-center gap-2 pt-2" role="tablist" aria-label="Filtro por rubro">
+          {RUBRO_FILTER_OPTIONS.map((option) => {
+            const isActive = selectedRubro === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setSelectedRubro(option.value)}
+                className={`
+                  rounded-full px-3 py-1.5 text-xs font-medium tracking-tight transition-colors
+                  ${isActive ? "bg-primary-500 text-white shadow-sm" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}
+                `.replace(/\s+/g, " ").trim()}
+              >
+                {option.value === "todos" ? option.label : getRubroLabel(option.value)}
+              </button>
+            );
+          })}
+        </div>
       </header>
 
       {/* Live region para screen readers */}
@@ -92,7 +185,7 @@ export default function DashboardPage() {
             <SkeletonMetric className="lg:col-span-6" />
           </div>
         ) : (
-          <ResumenCards resumen={resumen} />
+          <ResumenCards resumen={resumenFiltrado} />
         )}
       </section>
 
@@ -126,8 +219,8 @@ export default function DashboardPage() {
             </>
           ) : (
             <>
-              <GraficoTemperatura lecturas={lecturas} />
-              <GraficoVibracion lecturas={lecturas} />
+              <GraficoTemperatura lecturas={lecturasFiltradas} />
+              <GraficoVibracion lecturas={lecturasFiltradas} />
             </>
           )}
         </div>
@@ -141,7 +234,7 @@ export default function DashboardPage() {
         {isInitialLoading ? (
           <SkeletonTable rows={5} cols={6} />
         ) : (
-          <TablaEstadoEquipos equipos={resumen.equipos || []} />
+          <TablaEstadoEquipos equipos={resumenFiltrado.equipos || []} />
         )}
       </section>
     </div>

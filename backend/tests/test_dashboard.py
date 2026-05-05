@@ -12,6 +12,7 @@ def _build_equipo_payload(nombre: str) -> dict[str, str]:
         "nombre": nombre,
         "ubicacion": "Planta piloto",
         "tipo": "Motor",
+        "rubro": "industrial",
         "estado": "operativo",
     }
 
@@ -176,6 +177,7 @@ def test_dashboard_summary_returns_real_data_for_polling(client, monkeypatch):
         == {
             "id",
             "nombre",
+            "rubro",
             "ultima_temperatura",
             "ultima_probabilidad",
             # Campo agregado para el indicador visual de predicción en el frontend
@@ -189,12 +191,14 @@ def test_dashboard_summary_returns_real_data_for_polling(client, monkeypatch):
 
     principal = equipos_por_id[equipo_principal_id]
     assert principal["nombre"] == "Compresor principal"
+    assert principal["rubro"] == "industrial"
     assert principal["ultima_temperatura"] == pytest.approx(51.2, abs=1e-6)
     assert principal["ultima_probabilidad"] == pytest.approx(0.68, abs=1e-6)
     assert principal["alertas_activas"] == 1
 
     respaldo = equipos_por_id[equipo_respaldo_id]
     assert respaldo["nombre"] == "Bomba respaldo"
+    assert respaldo["rubro"] == "industrial"
     assert respaldo["ultima_temperatura"] == pytest.approx(35.4, abs=1e-6)
     assert respaldo["ultima_probabilidad"] == pytest.approx(0.22, abs=1e-6)
     assert respaldo["alertas_activas"] == 0

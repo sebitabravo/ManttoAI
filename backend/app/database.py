@@ -197,6 +197,11 @@ def apply_runtime_schema_fixes() -> None:
             "organizacion_id",
             "organizacion_id INTEGER NULL DEFAULT NULL",
         )
+        equipo_rubro_changed = _add_column_if_missing(
+            "equipos",
+            "rubro",
+            "rubro VARCHAR(20) NOT NULL DEFAULT 'industrial'",
+        )
         mantencion_programada_changed = _add_column_if_missing(
             "mantenciones",
             "fecha_programada",
@@ -243,6 +248,7 @@ def apply_runtime_schema_fixes() -> None:
             [
                 equipo_changed,
                 equipo_org_changed,
+                equipo_rubro_changed,
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
                 usuario_active_changed,
@@ -257,6 +263,7 @@ def apply_runtime_schema_fixes() -> None:
             logger.info(
                 "Se aplicaron parches de compatibilidad de esquema "
                 "(equipos.descripcion=%s, equipos.organizacion_id=%s, "
+                "equipos.rubro=%s, "
                 "mantenciones.fecha_programada=%s, "
                 "mantenciones.fecha_ejecucion=%s, usuarios.is_active=%s, "
                 "usuarios.password_changed_at=%s, usuarios.onboarding_step=%s, "
@@ -264,6 +271,7 @@ def apply_runtime_schema_fixes() -> None:
                 "alerta_unique_index_removed=%s)",
                 equipo_changed,
                 equipo_org_changed,
+                equipo_rubro_changed,
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
                 usuario_active_changed,

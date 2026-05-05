@@ -12,16 +12,21 @@ settings = get_settings()
 
 # Diccionario de reglas simples para respuestas instantáneas
 REGLAS_MANTENIMIENTO = {
-    "temperatura": "La alta temperatura suele deberse a falta de lubricación o fricción en rodamientos. Sugiero revisar el nivel de aceite y la ventilación del equipo.",
-    "vibracion": "Una vibración inusual (valores mayores a 0.5 G) puede indicar desalineación, desbalanceo o desgaste en los rodamientos. Detén el equipo si supera 1.0 G.",
-    "vibración": "Una vibración inusual (valores mayores a 0.5 G) puede indicar desalineación, desbalanceo o desgaste en los rodamientos. Detén el equipo si supera 1.0 G.",
-    "grafico": "Los gráficos de temperatura y vibración te permiten ver tendencias en tiempo real y históricas. Detectan cambios anormales antes de que ocurra una falla, permitiéndote actuar preventivamente.",
-    "gráfico": "Los gráficos de temperatura y vibración te permiten ver tendencias en tiempo real y históricas. Detectan cambios anormales antes de que ocurra una falla, permitiéndote actuar preventivamente.",
-    "bomba": "En bombas centrífugas, revisa que no haya cavitación (burbujas en el fluido) o filtros obstruidos si hay alertas de presión o ruido.",
-    "motor": "Para motores eléctricos, verifica el estado del devanado y posibles cortocircuitos si notas picos de consumo o temperatura alta.",
-    "alerta": "Si hay una alerta activa, revisa en el panel de telemetría qué métrica (temperatura o vibración) superó el umbral. Puedes silenciarla desde el panel de control.",
-    "mantenimiento": "Recuerda registrar cada intervención en el historial del equipo. El mantenimiento preventivo regular incluye limpieza, lubricación y ajuste de piezas.",
-    "dashboard": "El dashboard muestra el estado general de la planta: equipos activos, alertas en tiempo real, gráficos de temperatura y vibración, probabilidad de falla, e historial de mantenimiento. Es tu pantalla central de control.",
+    "temperatura": "La alta temperatura puede deberse a fricción, sobrecarga o ventilación deficiente. Contrasta la lectura con el rubro del equipo para priorizar inspección mecánica, térmica o de proceso.",
+    "vibracion": "Una vibración inusual (valores mayores a 0.5 G) puede indicar desalineación, desbalanceo o desgaste. Si supera 1.0 G, trata el equipo como riesgo alto y planifica detención controlada.",
+    "vibración": "Una vibración inusual (valores mayores a 0.5 G) puede indicar desalineación, desbalanceo o desgaste. Si supera 1.0 G, trata el equipo como riesgo alto y planifica detención controlada.",
+    "grafico": "Los gráficos de temperatura y vibración permiten comparar tendencias históricas por rubro (industrial, agrícola y comercial) para detectar desviaciones antes de una falla.",
+    "gráfico": "Los gráficos de temperatura y vibración permiten comparar tendencias históricas por rubro (industrial, agrícola y comercial) para detectar desviaciones antes de una falla.",
+    "bomba": "En bombas o sistemas de riego, revisa cavitación, filtros, presión y obstrucciones en línea antes de escalar una alerta como falla crítica.",
+    "motor": "Para motores y actuadores eléctricos, revisa consumo, temperatura, ventilación y estado de rodamientos ante picos sostenidos.",
+    "agricola": "En rubro agrícola prioriza continuidad operacional: revisa humedad, vibración y temperatura en riego y cosecha para evitar detenciones en ventana productiva.",
+    "agrícola": "En rubro agrícola prioriza continuidad operacional: revisa humedad, vibración y temperatura en riego y cosecha para evitar detenciones en ventana productiva.",
+    "comercial": "En rubro comercial prioriza seguridad y servicio: valida alarmas en cámaras de frío y escaleras mecánicas para evitar impacto a clientes.",
+    "industrial": "En rubro industrial prioriza criticidad de línea: correlaciona alertas con turnos, carga y condición de proceso para reducir paradas no planificadas.",
+    "rubro": "ManttoAI opera por rubros: industrial, agrícola y comercial. Usa el rubro del equipo para contextualizar umbrales y prioridad de intervención.",
+    "alerta": "Si hay una alerta activa, identifica qué métrica superó el umbral y evalúa su criticidad según el rubro del equipo.",
+    "mantenimiento": "Registra cada intervención en el historial del equipo. En esquema multirrubro, estandariza checklist por tipo y rubro para mejorar trazabilidad.",
+    "dashboard": "El dashboard muestra el estado operativo multirrubro: equipos activos, alertas, tendencias, probabilidad de falla e historial.",
     "probabilidad": "La probabilidad de falla es una predicción (0 a 1). 0-0.3 = bajo riesgo (verde), 0.3-0.7 = moderado (amarillo), 0.7-1.0 = alto riesgo (rojo). Actúa según la urgencia.",
     "falla": "La probabilidad de falla es una predicción (0 a 1). 0-0.3 = bajo riesgo (verde), 0.3-0.7 = moderado (amarillo), 0.7-1.0 = alto riesgo (rojo). Actúa según la urgencia.",
     "riesgo": "La probabilidad de falla es una predicción (0 a 1). 0-0.3 = bajo riesgo (verde), 0.3-0.7 = moderado (amarillo), 0.7-1.0 = alto riesgo (rojo). Actúa según la urgencia.",
@@ -51,7 +56,7 @@ async def procesar_mensaje(mensaje: str, db: Session) -> dict:
         logger.error(f"Error consultando a Ollama: {e}")
         # Si Ollama falla (por OOM o timeout), usamos una degradación elegante
         return {
-            "respuesta": "Lo siento, mi motor de IA predictiva no está disponible en este momento para consultas complejas. Te sugiero revisar el historial de alertas y contactar al ingeniero de planta.",
+            "respuesta": "Lo siento, mi motor de IA predictiva no está disponible en este momento para consultas complejas. Te sugiero revisar el historial de alertas y contactar al equipo técnico.",
             "fuente": "fallback",
         }
 
@@ -60,7 +65,7 @@ async def consultar_ollama(mensaje: str, db: Session) -> str:
     """Consulta a la API local de Ollama de forma asíncrona, inyectando contexto del dashboard."""
     url = f"{settings.ollama_url}/api/generate"
 
-    # Obtener el contexto en tiempo real de la planta
+    # Obtener el contexto en tiempo real de la operación multirrubro
     try:
         summary = get_dashboard_summary(db)
         context_str = f"- Total equipos: {summary.get('total_equipos', 0)}\n"
@@ -76,15 +81,29 @@ async def consultar_ollama(mensaje: str, db: Session) -> str:
                 prob_str = f"{prob * 100:.1f}%" if prob is not None else "N/A"
                 temp = eq.get("ultima_temperatura")
                 temp_str = f"{temp:.1f}°C" if temp is not None else "N/A"
-                context_str += f"  * ID {eq['id']} ({eq['nombre']}): Temp {temp_str}, Riesgo Falla {prob_str}, Alertas {alertas}\n"
+                rubro = eq.get("rubro", "industrial")
+                context_str += f"  * ID {eq['id']} ({eq['nombre']}) [{rubro}]: Temp {temp_str}, Riesgo Falla {prob_str}, Alertas {alertas}\n"
+
+            equipos_en_riesgo = [
+                eq
+                for eq in equipos
+                if eq.get("ultima_probabilidad") is not None
+                and float(eq["ultima_probabilidad"]) >= 0.5
+            ]
+            if equipos_en_riesgo:
+                context_str += "Equipos en riesgo por rubro:\n"
+                for eq in equipos_en_riesgo:
+                    rubro = eq.get("rubro", "industrial")
+                    prob = float(eq["ultima_probabilidad"]) * 100
+                    context_str += f"  - {eq['nombre']} (ID {eq['id']}) | Rubro: {rubro} | Riesgo: {prob:.1f}%\n"
     except Exception as e:
         logger.error(f"Error obteniendo contexto para RAG: {e}")
-        context_str = "No se pudo obtener el estado de la planta."
+        context_str = "No se pudo obtener el estado operativo multirrubro."
 
     # Prompt mínimo y directo (sin archivo externo)
-    prompt = f"""Eres un experto en mantenimiento industrial. Responde en español, máximo 2 oraciones, sé directo.
+    prompt = f"""Eres un experto en mantenimiento predictivo multirrubro (Industrial, Agrícola, Comercial). Responde en español, máximo 2 oraciones, sé directo.
 
-Contexto de la planta:
+Contexto operativo:
 {context_str}
 
 Pregunta del técnico: {mensaje}

@@ -1,4 +1,5 @@
 import { formatMetric, formatProbability } from "../../utils/metrics";
+import { getRubroBadgeClass, getRubroLabel } from "../../utils/rubro";
 
 /**
  * Tabla de estado de equipos — Estilo Apple.
@@ -41,6 +42,9 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
                   Equipo
                 </th>
                 <th scope="col" className="whitespace-nowrap pb-4 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Rubro
+                </th>
+                <th scope="col" className="whitespace-nowrap pb-4 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">
                   Temp.
                 </th>
                 <th scope="col" className="whitespace-nowrap pb-4 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">
@@ -70,6 +74,11 @@ export default function TablaEstadoEquipos({ equipos = [] }) {
                     </td>
                     <td className="py-4 pr-6 text-sm font-medium text-neutral-600">
                       {equipo.nombre || `Equipo ${equipo.id}`}
+                    </td>
+                    <td className="py-4 pr-6 text-sm text-neutral-600">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getRubroBadgeClass(equipo.rubro)}`}>
+                        {getRubroLabel(equipo.rubro)}
+                      </span>
                     </td>
                     <td className="py-4 pr-6 tabular-nums text-sm text-neutral-600">
                       {formatMetric(equipo.ultima_temperatura, "°C", "—")}

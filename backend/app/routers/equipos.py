@@ -163,6 +163,7 @@ def create_equipo_with_umbrales(
             nombre=payload.nombre,
             ubicacion=payload.ubicacion or "Laboratorio",
             tipo=payload.tipo or "Motor",
+            rubro=payload.rubro,
             descripcion=payload.descripcion or "Equipo monitoreado por ManttoAI",
             estado="operativo",
         )

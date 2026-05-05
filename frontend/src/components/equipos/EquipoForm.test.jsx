@@ -12,12 +12,14 @@ describe("EquipoForm", () => {
     await user.clear(screen.getByLabelText("Nombre del equipo"));
     await user.clear(screen.getByLabelText("Ubicación"));
     fireEvent.change(screen.getByLabelText("Tipo"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Rubro"), { target: { value: "" } });
     fireEvent.change(screen.getByLabelText("Estado"), { target: { value: "" } });
     fireEvent.submit(screen.getByRole("button", { name: "Guardar" }).closest("form"));
 
     expect(screen.getByText("El nombre del equipo es obligatorio.")).toBeTruthy();
     expect(screen.getByText("La ubicación es obligatoria.")).toBeTruthy();
     expect(screen.getByText("El tipo es obligatorio.")).toBeTruthy();
+    expect(screen.getByText("El rubro es obligatorio.")).toBeTruthy();
     expect(screen.getByText("El estado es obligatorio.")).toBeTruthy();
   });
 
@@ -32,6 +34,7 @@ describe("EquipoForm", () => {
     await user.clear(screen.getByLabelText("Ubicación"));
     await user.type(screen.getByLabelText("Ubicación"), "  Planta Norte  ");
     await user.selectOptions(screen.getByLabelText("Tipo"), "Compresor");
+    await user.selectOptions(screen.getByLabelText("Rubro"), "comercial");
     await user.selectOptions(screen.getByLabelText("Estado"), "operativo");
     await user.click(screen.getByRole("button", { name: "Guardar" }));
 
@@ -39,6 +42,7 @@ describe("EquipoForm", () => {
       nombre: "Compresor A",
       ubicacion: "Planta Norte",
       tipo: "Compresor",
+      rubro: "comercial",
       estado: "operativo",
       mac_address: undefined,
     });

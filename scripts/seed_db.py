@@ -58,6 +58,7 @@ class EquipoSeed:
     nombre: str
     ubicacion: str
     tipo: str
+    rubro: str
     estado: str
 
 
@@ -72,21 +73,45 @@ class UmbralSeed:
 
 EQUIPOS_DEMO: tuple[EquipoSeed, ...] = (
     EquipoSeed(
-        nombre="Compresor Línea A",
-        ubicacion="Planta Norte",
-        tipo="Compresor",
+        nombre="Torno CNC",
+        ubicacion="Planta Industrial - Línea de mecanizado",
+        tipo="Torno",
+        rubro="industrial",
         estado="operativo",
     ),
     EquipoSeed(
-        nombre="Bomba Hidráulica B",
-        ubicacion="Planta Norte",
-        tipo="Bomba",
+        nombre="Brazo Robótico",
+        ubicacion="Planta Industrial - Celda de ensamblaje",
+        tipo="Robot",
+        rubro="industrial",
         estado="operativo",
     ),
     EquipoSeed(
-        nombre="Motor Ventilación C",
-        ubicacion="Planta Sur",
-        tipo="Motor",
+        nombre="Sistema de Riego Central",
+        ubicacion="Campo Agrícola - Sector Norte",
+        tipo="Sistema de Riego",
+        rubro="agricola",
+        estado="operativo",
+    ),
+    EquipoSeed(
+        nombre="Cosechadora John Deere",
+        ubicacion="Campo Agrícola - Sector Sur",
+        tipo="Cosechadora",
+        rubro="agricola",
+        estado="operativo",
+    ),
+    EquipoSeed(
+        nombre="Cámara de Frío (Supermercado)",
+        ubicacion="Sucursal Comercial - Sala de refrigerados",
+        tipo="Cámara de Frío",
+        rubro="comercial",
+        estado="operativo",
+    ),
+    EquipoSeed(
+        nombre="Escalera Mecánica",
+        ubicacion="Centro Comercial - Acceso principal",
+        tipo="Escalera Mecánica",
+        rubro="comercial",
         estado="operativo",
     ),
 )
@@ -209,6 +234,7 @@ def seed_equipos(db: Session) -> tuple[list[Equipo], int, int]:
                 nombre=equipo_seed.nombre,
                 ubicacion=equipo_seed.ubicacion,
                 tipo=equipo_seed.tipo,
+                rubro=equipo_seed.rubro,
                 estado=equipo_seed.estado,
             )
             db.add(equipo)
@@ -217,6 +243,7 @@ def seed_equipos(db: Session) -> tuple[list[Equipo], int, int]:
         else:
             equipo.ubicacion = equipo_seed.ubicacion
             equipo.tipo = equipo_seed.tipo
+            equipo.rubro = equipo_seed.rubro
             equipo.estado = equipo_seed.estado
             updated_count += 1
 

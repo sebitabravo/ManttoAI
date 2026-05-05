@@ -1,11 +1,9 @@
 """Tests del asistente de chat híbrido (reglas + fallback Ollama)."""
 
 import asyncio
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
 
 
 # ---------------------------------------------------------------------------
@@ -19,6 +17,7 @@ def _build_equipo_payload(nombre: str) -> dict:
         "nombre": nombre,
         "ubicacion": "Planta piloto",
         "tipo": "Motor",
+        "rubro": "industrial",
         "estado": "operativo",
     }
 
@@ -281,6 +280,7 @@ class TestConsultarOllama:
                 {
                     "id": 1,
                     "nombre": "Motor A",
+                    "rubro": "industrial",
                     "alertas_activas": 1,
                     "ultima_probabilidad": 0.85,
                     "ultima_temperatura": 78.5,
@@ -288,6 +288,7 @@ class TestConsultarOllama:
                 {
                     "id": 2,
                     "nombre": "Bomba B",
+                    "rubro": "agricola",
                     "alertas_activas": 0,
                     "ultima_probabilidad": None,
                     "ultima_temperatura": None,

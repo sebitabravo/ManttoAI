@@ -8,6 +8,7 @@ import {
 } from "../../api/onboarding";
 import { createEquipoFull, getEquipos } from "../../api/equipos";
 import { createApiKey } from "../../api/admin";
+import { RUBRO_OPTIONS, normalizeRubro } from "../../utils/rubro";
 import Button from "../ui/Button";
 
 /**
@@ -39,6 +40,7 @@ export default function OnboardingWizard() {
     nombre: "",
     ubicacion: "Laboratorio",
     tipo: "Motor",
+    rubro: "industrial",
     mac_address: "",
   });
   const [umbralesData, setUmbralesData] = useState({
@@ -153,6 +155,7 @@ export default function OnboardingWizard() {
         nombre: equipoData.nombre,
         ubicacion: equipoData.ubicacion,
         tipo: equipoData.tipo,
+        rubro: normalizeRubro(equipoData.rubro),
         mac_address: equipoData.mac_address?.trim() || undefined,
         temperatura_max: umbralesData.temperatura_max,
         vibracion_max: umbralesData.vibracion_max,
@@ -307,6 +310,23 @@ export default function OnboardingWizard() {
                   <option value="Compresor">Compresor</option>
                   <option value="Ventilador">Ventilador</option>
                   <option value="Otro">Otro</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="rubro" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Rubro
+                </label>
+                <select
+                  id="rubro"
+                  value={equipoData.rubro}
+                  onChange={(e) => setEquipoData({ ...equipoData, rubro: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  {RUBRO_OPTIONS.map((rubro) => (
+                    <option key={rubro.value} value={rubro.value}>
+                      {rubro.label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

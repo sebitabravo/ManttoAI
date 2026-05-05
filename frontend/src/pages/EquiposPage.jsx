@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { getDashboardResumen } from "../api/dashboard";
 import { createEquipo, getEquipos } from "../api/equipos";
@@ -12,6 +13,7 @@ import usePolling from "../hooks/usePolling";
 import { getApiErrorMessage } from "../utils/errorHandling";
 import { formatMetric, formatProbability } from "../utils/metrics";
 import { EQUIPOS_POLLING_INTERVAL_MS } from "../utils/constants";
+import { getRubroBadgeClass, getRubroLabel } from "../utils/rubro";
 
 function resolveLatestDataLabel(equipoResumen) {
   if (!equipoResumen) {
@@ -175,7 +177,51 @@ export default function EquiposPage() {
         </EmptyState>
       ) : null}
 
-      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
+      <div className="hidden overflow-x-auto rounded-2xl bg-white shadow-sm md:block">
+        <table className="w-full min-w-[980px]" aria-label="Tabla de equipos">
+          <thead>
+            <tr className="border-b border-neutral-100">
+              <th scope="col" className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">Equipo</th>
+              <th scope="col" className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">Rubro</th>
+              <th scope="col" className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">Tipo</th>
+              <th scope="col" className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">Estado</th>
+              <th scope="col" className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">Ubicación</th>
+              <th scope="col" className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">Último dato</th>
+              <th scope="col" className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">Alertas</th>
+              <th scope="col" className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-400">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-100">
+            {equipos.map((equipo) => (
+              <tr key={equipo.id} className="transition-colors duration-200 hover:bg-neutral-50">
+                <td className="px-5 py-4 text-sm font-medium text-neutral-700">{equipo.nombre}</td>
+                <td className="px-5 py-4 text-sm text-neutral-600">
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getRubroBadgeClass(equipo.rubro)}`}>
+                    {getRubroLabel(equipo.rubro)}
+                  </span>
+                </td>
+                <td className="px-5 py-4 text-sm text-neutral-600">{equipo.tipo || "—"}</td>
+                <td className="px-5 py-4 text-sm text-neutral-600">{equipo.estado || "—"}</td>
+                <td className="px-5 py-4 text-sm text-neutral-600">{equipo.ubicacion || "—"}</td>
+                <td className="px-5 py-4 text-sm text-neutral-600 tabular-nums">
+                  {equipo.dato || formatMetric(null, "°C", "Sin lecturas registradas")}
+                </td>
+                <td className="px-5 py-4 text-sm text-neutral-600 tabular-nums">{Number(equipo.alertas_activas || 0)}</td>
+                <td className="px-5 py-4 text-sm">
+                  <Link
+                    to={`/equipos/${equipo.id}`}
+                    className="font-medium text-primary-500 transition-colors duration-150 ease-out-quart hover:text-primary-600 hover:underline focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary-500"
+                  >
+                    Ver detalle
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))] md:hidden">
         {equipos.map((equipo) => (
           <EquipoCard key={equipo.id} equipo={equipo} onDeleted={refresh} />
         ))}

@@ -85,6 +85,7 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
         select(
             Equipo.id,
             Equipo.nombre,
+            Equipo.rubro,
             ultimas_lecturas.c.ultima_temperatura,
             ultimas_predicciones.c.ultima_probabilidad,
             ultimas_predicciones.c.ultima_clasificacion,
@@ -107,6 +108,7 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
             {
                 "id": int(row.id),
                 "nombre": str(row.nombre),
+                "rubro": str(row.rubro or "industrial"),
                 "ultima_temperatura": _to_float_or_none(row.ultima_temperatura),
                 "ultima_probabilidad": _to_float_or_none(row.ultima_probabilidad),
                 # Clasificacion de la última predicción para el indicador visual del frontend

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import { selectClassName } from "../../utils/formStyles";
+import { RUBRO_OPTIONS, normalizeRubro } from "../../utils/rubro";
 
 const ESTADOS_EQUIPO = [
   { value: "operativo", label: "Operativo" },
@@ -24,6 +25,7 @@ const DEFAULT_VALUES = {
   nombre: "",
   ubicacion: "Laboratorio",
   tipo: "Motor",
+  rubro: "industrial",
   estado: "operativo",
   mac_address: "",
 };
@@ -34,6 +36,7 @@ function resolveInitialValues(initialValues) {
     ubicacion:
       typeof initialValues?.ubicacion === "string" ? initialValues.ubicacion : DEFAULT_VALUES.ubicacion,
     tipo: typeof initialValues?.tipo === "string" ? initialValues.tipo : DEFAULT_VALUES.tipo,
+    rubro: normalizeRubro(initialValues?.rubro || DEFAULT_VALUES.rubro),
     estado: typeof initialValues?.estado === "string" ? initialValues.estado : DEFAULT_VALUES.estado,
     mac_address: typeof initialValues?.mac_address === "string" ? initialValues.mac_address : DEFAULT_VALUES.mac_address,
   };
@@ -52,6 +55,10 @@ function validateForm(values) {
 
   if (!values.tipo.trim()) {
     fieldErrors.tipo = "El tipo es obligatorio.";
+  }
+
+  if (!values.rubro.trim()) {
+    fieldErrors.rubro = "El rubro es obligatorio.";
   }
 
   if (!values.estado.trim()) {
@@ -105,6 +112,7 @@ export default function EquipoForm({
       nombre: form.nombre.trim(),
       ubicacion: form.ubicacion.trim(),
       tipo: form.tipo.trim(),
+      rubro: normalizeRubro(form.rubro),
       estado: form.estado.trim(),
       mac_address: form.mac_address.trim() || undefined,
     };
@@ -165,6 +173,25 @@ export default function EquipoForm({
           ))}
         </select>
         {errors.tipo ? <p className="mt-1 text-xs text-danger-600">{errors.tipo}</p> : null}
+      </div>
+      <div>
+        <label htmlFor="equipo-rubro" className="block mb-1 text-sm font-medium text-neutral-700">
+          Rubro
+        </label>
+        <select
+          id="equipo-rubro"
+          name="rubro"
+          value={form.rubro}
+          onChange={handleChange}
+          disabled={isSubmitting}
+          required
+          className={selectClassName}
+        >
+          {RUBRO_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        {errors.rubro ? <p className="mt-1 text-xs text-danger-600">{errors.rubro}</p> : null}
       </div>
       <div>
         <label htmlFor="equipo-estado" className="block mb-1 text-sm font-medium text-neutral-700">

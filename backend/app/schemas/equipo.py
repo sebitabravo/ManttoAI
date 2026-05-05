@@ -14,6 +14,8 @@ EstadoEquipo = Literal[
     "fuera_servicio",
 ]
 
+RubroEquipo = Literal["industrial", "agricola", "comercial"]
+
 
 def validate_mac_address(v: str | None) -> str | None:
     if v is None:
@@ -29,6 +31,7 @@ class EquipoBase(BaseModel):
     nombre: str
     ubicacion: str = "Laboratorio"
     tipo: str = "Motor"
+    rubro: RubroEquipo = "industrial"
     descripcion: str = "Equipo monitoreado por ManttoAI"
     estado: EstadoEquipo = "operativo"
     mac_address: str | None = Field(default=None, max_length=17)
@@ -48,6 +51,7 @@ class EquipoUpdate(BaseModel):
     nombre: str | None = None
     ubicacion: str | None = None
     tipo: str | None = None
+    rubro: RubroEquipo | None = None
     descripcion: str | None = None
     estado: EstadoEquipo | None = None
     mac_address: str | None = Field(default=None, max_length=17)
@@ -80,6 +84,7 @@ class EquipoFullSetupRequest(BaseModel):
     nombre: str
     ubicacion: str | None = None
     tipo: str | None = None
+    rubro: RubroEquipo = "industrial"
     descripcion: str | None = None
     mac_address: str | None = Field(default=None, max_length=17)
     temperatura_max: float = 80.0

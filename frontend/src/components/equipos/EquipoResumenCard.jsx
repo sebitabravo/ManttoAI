@@ -1,3 +1,5 @@
+import { getRubroBadgeClass, getRubroLabel } from "../../utils/rubro";
+
 export default function EquipoResumenCard({ equipo }) {
   if (!equipo) {
     return null;
@@ -19,6 +21,14 @@ export default function EquipoResumenCard({ equipo }) {
         <div>
           <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">Tipo</dt>
           <dd className="text-sm font-medium text-neutral-700">{equipo.tipo}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">Rubro</dt>
+          <dd className="text-sm font-medium text-neutral-700">
+            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getRubroBadgeClass(equipo.rubro)}`}>
+              {getRubroLabel(equipo.rubro)}
+            </span>
+          </dd>
         </div>
       </dl>
     </article>

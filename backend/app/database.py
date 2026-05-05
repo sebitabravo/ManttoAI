@@ -112,7 +112,9 @@ def _dedupe_alertas_by_logical_key() -> int:
     dialect = engine.dialect.name
     with engine.begin() as connection:
         if dialect == "mysql":
-            result = connection.execute(text("""
+            result = connection.execute(
+                text(
+                    """
                     DELETE a1
                     FROM alertas a1
                     INNER JOIN alertas a2
@@ -120,18 +122,24 @@ def _dedupe_alertas_by_logical_key() -> int:
                         AND a1.tipo = a2.tipo
                         AND a1.mensaje = a2.mensaje
                         AND a1.id > a2.id
-                    """))
+                    """
+                )
+            )
             return int(getattr(result, "rowcount", 0) or 0)
 
         if dialect == "sqlite":
-            result = connection.execute(text("""
+            result = connection.execute(
+                text(
+                    """
                     DELETE FROM alertas
                     WHERE id NOT IN (
                         SELECT MIN(id)
                         FROM alertas
                         GROUP BY equipo_id, tipo, mensaje
                     )
-                    """))
+                    """
+                )
+            )
             return int(getattr(result, "rowcount", 0) or 0)
 
         return 0

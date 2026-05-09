@@ -87,12 +87,12 @@ def _resolve_storage_uri() -> str:
             socket_connect_timeout=2,
         )
         r.ping()
-        logger.info(f"Redis connected for rate limiting: {redis_host}:{redis_port}")
+        logger.info("Redis connected for rate limiting: %s:%s", redis_host, redis_port)
         if redis_password:
             return f"redis://:{redis_password}@{redis_host}:{redis_port}"
         return f"redis://{redis_host}:{redis_port}"
     except Exception as e:
-        logger.warning(f"Redis not available ({e}). Using in-memory rate limiting.")
+        logger.warning("Redis not available (%s). Using in-memory rate limiting.", e)
         return "memory://"
 
 

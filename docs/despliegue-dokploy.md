@@ -65,7 +65,7 @@ SECRET_KEY=__GENERA_UNA_SEGURA__
 # MQTT (backend)
 MQTT_BROKER_HOST=mosquitto
 MQTT_BROKER_PORT=1883
-MQTT_BASE_TOPIC=manttoai/equipo
+MQTT_TELEMETRY_TOPIC=manttoai/telemetria
 MQTT_ENABLED=true
 
 # Predicciones (opcional)
@@ -124,7 +124,7 @@ curl -sS "https://tu-dominio/api/health"
 
 # MQTT (desde cliente externo)
 mosquitto_pub -h tu-dominio -p 1883 -u manttoai_mqtt -P TU_PASSWORD \
-  -t "manttoai/equipo/1/lecturas" \
+  -t "manttoai/telemetria/AA:BB:CC:DD:EE:FF" \
   -m '{"temperatura":45.2,"humedad":60,"vib_x":0.3,"vib_y":0.1,"vib_z":9.8}'
 ```
 

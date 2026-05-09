@@ -145,7 +145,7 @@ class TestRNF01LatenciaMQTT:
         """
         RNF-01: Un payload inválido debe rechazarse rápidamente sin bloquear el pipeline.
         """
-        topic = "manttoai/equipo/999/lecturas"
+        topic = "manttoai/telemetria/99:99:99:99:99:99"
         payload_invalido = '{"campo_inexistente": true}'
 
         inicio = time.perf_counter()

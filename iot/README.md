@@ -54,7 +54,7 @@ Si no existe, `make setup-env` lo crea automáticamente.
 Topic publicado por firmware:
 
 ```text
-manttoai/equipo/{EQUIPO_ID}/lecturas
+manttoai/telemetria/{MAC_ADDRESS}
 ```
 
 ## Pinout y armado
@@ -147,7 +147,7 @@ make verify-3-nodes
 ### Topic
 
 ```text
-manttoai/equipo/{equipo_id}/lecturas
+manttoai/telemetria/{mac_address}
 ```
 
 Se puede customizar con `--topic-prefix`.
@@ -198,7 +198,7 @@ python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <
 ### Topic prefix personalizado
 
 ```bash
-python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <mqtt_user> --password <mqtt_pass> --topic-prefix "manttoai/equipo" --devices 2
+python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <mqtt_user> --password <mqtt_pass> --topic-prefix "manttoai/telemetria" --devices 2
 ```
 
 ### IDs iniciales personalizados
@@ -209,8 +209,8 @@ python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <
 
 Publica en:
 
-- `manttoai/equipo/10/lecturas`
-- `manttoai/equipo/11/lecturas`
+- `manttoai/telemetria/AA:BB:CC:DD:EE:10`
+- `manttoai/telemetria/AA:BB:CC:DD:EE:11`
 
 ## Escuchar mensajes publicados
 

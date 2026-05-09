@@ -56,7 +56,10 @@ manttoai/
 │   │   │   ├── alerta.py
 │   │   │   ├── prediccion.py
 │   │   │   ├── mantencion.py
-│   │   │   └── umbral.py
+│   │   │   ├── umbral.py
+│   │   │   ├── api_key.py
+│   │   │   ├── audit_log.py
+│   │   │   └── chat.py
 │   │   │
 │   │   ├── schemas/
 │   │   │   ├── __init__.py
@@ -66,7 +69,10 @@ manttoai/
 │   │   │   ├── alerta.py
 │   │   │   ├── prediccion.py
 │   │   │   ├── mantencion.py
-│   │   │   └── umbral.py
+│   │   │   ├── umbral.py
+│   │   │   ├── api_key.py
+│   │   │   ├── audit_log.py
+│   │   │   └── chat.py
 │   │   │
 │   │   ├── routers/
 │   │   │   ├── __init__.py
@@ -77,7 +83,9 @@ manttoai/
 │   │   │   ├── predicciones.py
 │   │   │   ├── mantenciones.py
 │   │   │   ├── umbrales.py
-│   │   │   └── dashboard.py
+│   │   │   ├── dashboard.py
+│   │   │   ├── critical.py
+│   │   │   └── reportes.py
 │   │   │
 │   │   ├── services/
 │   │   │   ├── __init__.py
@@ -88,7 +96,9 @@ manttoai/
 │   │   │   ├── prediccion_service.py
 │   │   │   ├── email_service.py
 │   │   │   ├── mqtt_service.py
-│   │   │   └── dashboard_service.py
+│   │   │   ├── dashboard_service.py
+│   │   │   ├── prediccion_scheduler_service.py
+│   │   │   └── umbral_service.py
 │   │   │
 │   │   ├── ml/
 │   │   │   ├── README.md
@@ -100,6 +110,13 @@ manttoai/
 │   │   │   └── data/
 │   │   │       ├── .gitkeep
 │   │   │       └── README.md
+│   │   │
+│   │   ├── critical/
+│   │   │   └── README.md
+│   │   │
+│   │   ├── chat/
+│   │   │   ├── README.md
+│   │   │   └── service.py
 │   │   │
 │   │   └── utils/
 │   │       ├── __init__.py
@@ -114,7 +131,9 @@ manttoai/
 │       ├── test_lecturas.py
 │       ├── test_alertas.py
 │       ├── test_predicciones.py
-│       └── test_email.py
+│       ├── test_email.py
+│       ├── test_critical.py
+│       └── test_chat.py
 │
 ├── frontend/
 │   ├── README.md
@@ -333,3 +352,13 @@ Los archivos en `docs/decisiones/` explican **por qué** se tomó cada decisión
 - El workflow de deploy **no está incluido** a propósito. Se descartó para evitar fricción operativa temprana.
 - El workflow `frontend-e2e.yml` está pensado para activarse recién cuando exista configuración real de Playwright.
 - `AGENTS.md` es la fuente de verdad del contexto del proyecto; `CLAUDE.md` solo apunta a ese archivo.
+
+## Actualizaciones realizadas
+
+- Se corrigió el modelo count de "10 modelos" a "11 modelos" (actual: Usuario, Equipo, Lectura, Alerta, Prediccion, Mantencion, Umbral, APIKey, AuditLog, MensajeChat, y componentes adicionales)
+- Se corrigió referencias de archivo: modelo chat está en `chat.py` no `mensajeChat.py`
+- Se agregaron directorios faltantes: `critical/` y `chat/` con sus respectivos servicios y READMEs
+- Se actualizaron routers con `critical.py` y `reportes.py`
+- Se actualizaron servicios con `prediccion_scheduler_service.py` y `umbral_service.py`
+- Se actualizaron tests con `test_critical.py` y `test_chat.py`
+

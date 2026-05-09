@@ -216,15 +216,15 @@ demo_step_6_iot_mqtt() {
     
     print_subsection "6.1 Publicar lectura simulada via MQTT"
     print_info "Broker: mqtt://${MQTT_BROKER}:${MQTT_PORT}"
-    print_info "Topic: manttoai/equipo/1/lecturas"
-    
+    print_info "Topic: manttoai/telemetria/AA:BB:CC:DD:EE:FF"
+
     # Verificar si mosquitto_pub está disponible
     if ! command -v mosquitto_pub &> /dev/null; then
         print_warning "mosquitto_pub no está instalado, saltando demo MQTT"
         print_info "Instalación: brew install mosquitto (macOS) o apt install mosquitto-clients (Linux)"
         return 0
     fi
-    
+
     local test_payload=$(cat <<EOF
 {
   "temperatura": 55.5,
@@ -236,12 +236,12 @@ demo_step_6_iot_mqtt() {
 }
 EOF
 )
-    
+
     echo "Payload:"
     echo "$test_payload" | jq '.'
-    
+
     mosquitto_pub -h "${MQTT_BROKER}" -p "${MQTT_PORT}" \
-        -t "manttoai/equipo/1/lecturas" \
+        -t "manttoai/telemetria/AA:BB:CC:DD:EE:FF" \
         -m "$test_payload"
     
     print_success "Mensaje MQTT publicado correctamente"

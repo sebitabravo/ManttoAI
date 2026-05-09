@@ -63,7 +63,7 @@ async def procesar_mensaje(mensaje: str, db: Session) -> dict:
         respuesta_ia = await consultar_ollama(mensaje_seguro, db)
         return {"respuesta": respuesta_ia, "fuente": "ollama"}
     except Exception as e:
-        logger.error(f"Error consultando a Ollama: {e}")
+        logger.error("Error consultando a Ollama: %s", e)
         # Si Ollama falla (por OOM o timeout), usamos una degradación elegante
         return {
             "respuesta": "Lo siento, mi motor de IA predictiva no está disponible en este momento para consultas complejas. Te sugiero revisar el historial de alertas y contactar al equipo técnico.",
@@ -107,7 +107,7 @@ async def consultar_ollama(mensaje: str, db: Session) -> str:
                     prob = float(eq["ultima_probabilidad"]) * 100
                     context_str += f"  - {eq['nombre']} (ID {eq['id']}) | Rubro: {rubro} | Riesgo: {prob:.1f}%\n"
     except Exception as e:
-        logger.error(f"Error obteniendo contexto para RAG: {e}")
+        logger.error("Error obteniendo contexto para RAG: %s", e)
         context_str = "No se pudo obtener el estado operativo multirrubro."
 
     # Prompt mínimo y directo (sin archivo externo)
@@ -158,15 +158,15 @@ Respuesta:"""
             )
             return result
         except httpx.TimeoutException as e:
-            logger.error(f"[CHATBOT] TIMEOUT al consultar Ollama (>60s): {e}")
+            logger.error("[CHATBOT] TIMEOUT al consultar Ollama (>60s): %s", e)
             raise
         except httpx.HTTPStatusError as e:
             logger.error(
-                f"[CHATBOT] Error HTTP de Ollama: {e.response.status_code} {e.response.text}"
+                "[CHATBOT] Error HTTP de Ollama: %s %s", e.response.status_code, e.response.text
             )
             raise
         except Exception as e:
             logger.error(
-                f"[CHATBOT] Error inesperado consultando Ollama: {type(e).__name__} {e}"
+                "[CHATBOT] Error inesperado consultando Ollama: %s %s", type(e).__name__, e
             )
             raise

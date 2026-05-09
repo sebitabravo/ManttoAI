@@ -111,7 +111,7 @@ class TestSimulatorService:
         mock_get_settings.return_value = Settings(
             mqtt_broker_host="localhost",
             mqtt_broker_port=1883,
-            mqtt_telemetry_topic="manttoai/equipo",
+            mqtt_telemetry_topic="manttoai/telemetria",
         )
         # Asegura que mqtt es None para simular no disponible
         with patch("app.services.simulator_service.mqtt", None):
@@ -129,7 +129,7 @@ class TestSimulatorService:
         mock_get_settings.return_value = Settings(
             mqtt_broker_host="localhost",
             mqtt_broker_port=1883,
-            mqtt_telemetry_topic="manttoai/equipo",
+            mqtt_telemetry_topic="manttoai/telemetria",
             mqtt_enabled=True,
         )
         mock_list_equipos.return_value = []
@@ -161,7 +161,7 @@ class TestSimulatorService:
         mock_get_settings.return_value = Settings(
             mqtt_broker_host="badhost",
             mqtt_broker_port=1883,
-            mqtt_telemetry_topic="manttoai/equipo",
+            mqtt_telemetry_topic="manttoai/telemetria",
             mqtt_enabled=True,
         )
         mock_list_equipos.return_value = [
@@ -196,7 +196,7 @@ class TestSimulatorService:
         settings = Settings(
             mqtt_broker_host="localhost",
             mqtt_broker_port=1883,
-            mqtt_telemetry_topic="manttoai/equipo",
+            mqtt_telemetry_topic="manttoai/telemetria",
             mqtt_username="user",
             mqtt_password="pass",
             mqtt_enabled=True,
@@ -262,7 +262,7 @@ class TestSimulatorService:
         settings = Settings(
             mqtt_broker_host="localhost",
             mqtt_broker_port=1883,
-            mqtt_telemetry_topic="manttoai/equipo",
+            mqtt_telemetry_topic="manttoai/telemetria",
             mqtt_enabled=True,
         )
         mock_get_settings.return_value = settings

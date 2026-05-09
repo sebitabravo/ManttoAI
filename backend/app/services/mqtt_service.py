@@ -36,7 +36,7 @@ _mqtt_client = None
 
 
 def _normalize_base_topic(raw: str) -> str:
-    """Normaliza mqtt_base_topic eliminando slashes al inicio y al final."""
+    """Normaliza mqtt_telemetry_topic eliminando slashes al inicio y al final."""
 
     return raw.strip("/")
 
@@ -222,6 +222,15 @@ def _on_connect(client, _userdata, _flags, reason_code, _properties) -> None:
     logger.info("Suscripción MQTT activa en topic: %s", topic)
 
 
+def _on_disconnect(_client, _userdata, reason_code, _properties) -> None:
+    """Callback de desconexión MQTT para logging."""
+
+    if reason_code != 0:
+        logger.warning("Desconexión MQTT inesperada: reason_code=%s", reason_code)
+    else:
+        logger.info("Desconexión MQTT limpia")
+
+
 def _on_message(_client, userdata, msg) -> None:
     """Callback de mensaje MQTT que delega en el procesador de lectura."""
 
@@ -262,6 +271,7 @@ def start_mqtt_subscriber(session_factory: SessionFactory = SessionLocal) -> boo
     client.user_data_set({"session_factory": session_factory})
     client.on_connect = _on_connect
     client.on_message = _on_message
+    client.on_disconnect = _on_disconnect
 
     try:
         client.connect(settings.mqtt_broker_host, settings.mqtt_broker_port)

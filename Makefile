@@ -96,5 +96,5 @@ mqtt-listen:
 	mosquitto_sub -h localhost -t "manttoai/#" -v
 
 mqtt-test:
-	mosquitto_pub -h localhost -u "$${MQTT_USERNAME:-manttoai_mqtt}" -P "$${MQTT_PASSWORD:-manttoai_mqtt_dev}" -t "manttoai/equipo/1/lecturas" \
+	mosquitto_pub -h localhost -u "$${MQTT_USERNAME:-manttoai_mqtt}" -P "$${MQTT_PASSWORD:-manttoai_mqtt_dev}" -t "manttoai/telemetria/AA:BB:CC:DD:EE:FF" \
 		-m '{"temperatura":45.2,"humedad":60,"vib_x":0.3,"vib_y":0.1,"vib_z":9.8}'

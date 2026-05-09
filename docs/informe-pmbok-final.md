@@ -26,8 +26,8 @@
 
 ### Resultado final
 - Sistema 100% funcional con telemetría en tiempo real
-- 200 tests backend automatizados (cobertura: 82% core API)
-- 7 tests E2E con Playwright (flujos críticos de usuario)
+- 317 tests backend automatizados (cobertura: 82% core API)
+- 9 tests E2E con Playwright (flujos críticos de usuario)
 - Simulador IoT 24/7 integrado para demo continua
 - Auto-refresh en todas las páginas del dashboard (10-20s)
 - CI/CD con GitHub Actions validando cada PR
@@ -47,10 +47,10 @@
 
 ### Alcance entregado (v1.0.0)
 - ✅ Telemetría IoT con ESP32 + MQTT (Mosquitto)
-- ✅ Backend FastAPI completo (auth, equipos, lecturas, alertas, predicciones, mantenciones, umbrales, dashboard)
+- ✅ Backend FastAPI completo (67 endpoints: auth, equipos, lecturas, alertas, predicciones, mantenciones, umbrales, dashboard)
 - ✅ Base de datos MySQL con migraciones
 - ✅ Modelo ML Random Forest con 94.1% accuracy y 93.0% F1-score
-- ✅ Frontend React con 7 páginas (Login, Dashboard, Equipos, Equipos Detalle, Alertas, Historial, NotFound)
+- ✅ Frontend React con 8 páginas (Login, Dashboard, Equipos, Equipos Detalle, Alertas, Historial, NotFound, Perfil)
 - ✅ Auto-refresh en todas las páginas críticas (polling inteligente)
 - ✅ Simulador IoT 24/7 integrado en backend
 - ✅ CI/CD con GitHub Actions (lint, tests, E2E)
@@ -128,8 +128,8 @@ El plan de negocios aplica los 4 procesos de Gestión de Costos (PMBOK 7.1–7.4
 
 | Métrica | Meta | Real | Estado |
 |---------|------|------|--------|
-| Cobertura de tests backend | ≥ 70% | 82% (200 tests) | ✅ |
-| Tests E2E frontend | ≥ 5 flujos | 7 flujos | ✅ Superado |
+| Cobertura de tests backend | ≥ 70% | 82% (317 tests) | ✅ |
+| Tests E2E frontend | ≥ 5 flujos | 9 flujos | ✅ Superado |
 | Lint warnings | 0 | 0 | ✅ |
 | Build sin errores | 100% | 100% | ✅ |
 | CI/CD verde en PRs | 100% | 98% | ⚠️ (2 PRs con fallas corregidas) |
@@ -149,7 +149,7 @@ El plan de negocios aplica los 4 procesos de Gestión de Costos (PMBOK 7.1–7.4
 #### Backend (pytest)
 ```bash
 $ pytest tests/ -v --cov=app
-200 passed, 2 skipped in 16.05s
+317 passed, 2 skipped in 16.05s
 Coverage: 82% (core API)
 ```
 
@@ -170,6 +170,8 @@ Coverage: 82% (core API)
 - ✅ Detalle de equipo con lecturas y predicciones
 - ✅ Alertas activas visibles
 - ✅ Logout exitoso
+- ✅ Gestión de perfil de usuario
+- ✅ Validación de responsive design
 
 #### Validación funcional end-to-end
 - ✅ Lectura desde simulador → MQTT → Backend → MySQL → Frontend (verificado manualmente)

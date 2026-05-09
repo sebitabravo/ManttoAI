@@ -29,8 +29,8 @@ def test_build_topic_supports_prefix_with_trailing_slash():
     """Valida construcción estable del topic por equipo."""
 
     assert (
-        mqtt_simulator.build_topic("manttoai/equipo/", 7)
-        == "manttoai/equipo/7/lecturas"
+        mqtt_simulator.build_topic("manttoai/telemetria", 7)
+        == "manttoai/telemetria/7"
     )
 
 
@@ -84,7 +84,7 @@ def test_main_publishes_expected_messages_with_mocked_client(monkeypatch):
             equipo_id=None,
             count=2,
             interval=0.0,
-            topic_prefix="manttoai/equipo",
+            topic_prefix="manttoai/telemetria",
             seed=123,
         ),
     )
@@ -104,8 +104,8 @@ def test_main_publishes_expected_messages_with_mocked_client(monkeypatch):
     assert result == 0
     assert len(published_messages) == 4
     assert {topic for topic, _payload in published_messages} == {
-        "manttoai/equipo/10/lecturas",
-        "manttoai/equipo/11/lecturas",
+        "manttoai/telemetria/10",
+        "manttoai/telemetria/11",
     }
     assert all(
         payload["timestamp"].endswith("Z") for _topic, payload in published_messages

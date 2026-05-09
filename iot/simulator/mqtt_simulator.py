@@ -66,7 +66,7 @@ def build_payload(rng: random.Random) -> dict[str, float | str]:
 def build_topic(topic_prefix: str, equipo_id: int) -> str:
     """Construye el topic MQTT para un equipo."""
 
-    return f"{topic_prefix.rstrip('/')}/{equipo_id}/lecturas"
+    return f"{topic_prefix.rstrip('/')}/{equipo_id}"
 
 
 def publish_reading(
@@ -95,7 +95,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--count", type=positive_int, default=5)
     parser.add_argument("--interval", type=positive_float, default=1.5)
-    parser.add_argument("--topic-prefix", default="manttoai/equipo")
+    parser.add_argument("--topic-prefix", default="manttoai/telemetria")
     parser.add_argument("--seed", type=int, default=None)
     return parser.parse_args()
 

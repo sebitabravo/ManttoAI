@@ -7,7 +7,7 @@ flujo explícito y trazabilidad técnica suficiente para defensa.
 
 ```mermaid
 flowchart LR
-  A[ESP32 nodo 1..N\nDHT22 + MPU6050] -->|MQTT JSON\nmanttoai/equipo/{id}/lecturas| B[(Mosquitto)]
+  A[ESP32 nodo 1..N\nDHT22 + MPU6050] -->|MQTT JSON\nmanttoai/telemetria/{mac_address}| B[(Mosquitto)]
   S[Simulador MQTT\niot/simulator] -->|MQTT JSON| B
 
   B --> C[FastAPI backend\nrouters + services]
@@ -31,7 +31,7 @@ flowchart LR
 
 ## Contratos clave
 
-- Topic MQTT: `manttoai/equipo/{equipo_id}/lecturas`
+- Topic MQTT: `manttoai/telemetria/{mac_address}`
 - Payload telemetría: temperatura, humedad, vib_x, vib_y, vib_z, timestamp opcional
 - Endpoint agregador: `GET /dashboard/resumen`
 

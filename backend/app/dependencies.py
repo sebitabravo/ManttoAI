@@ -111,7 +111,7 @@ def get_current_user(
             pass  # Degradación elegante si Redis no está disponible
         except Exception as e:  # Catch any other error during Redis connection
             logger.error(
-                f"Error conectando a Redis para verificar tokens revocados: {e}"
+                "Error conectando a Redis para verificar tokens revocados: %s", e
             )
             pass  # Degradación elegante
 
@@ -120,7 +120,7 @@ def get_current_user(
                 if _redis_client.exists(f"blacklist:{jti}"):
                     raise credentials_exception
             except Exception as e:
-                logger.error(f"Error al verificar blacklist de Redis: {e}")
+                logger.error("Error al verificar blacklist de Redis: %s", e)
                 pass  # Degradación elegante si hay un error de comunicación con Redis
 
     usuario = db.scalars(select(Usuario).where(Usuario.email == subject)).first()

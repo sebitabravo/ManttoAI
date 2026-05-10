@@ -162,11 +162,15 @@ Respuesta:"""
             raise
         except httpx.HTTPStatusError as e:
             logger.error(
-                "[CHATBOT] Error HTTP de Ollama: %s %s", e.response.status_code, e.response.text
+                "[CHATBOT] Error HTTP de Ollama: %s %s",
+                e.response.status_code,
+                e.response.text,
             )
             raise
         except Exception as e:
             logger.error(
-                "[CHATBOT] Error inesperado consultando Ollama: %s %s", type(e).__name__, e
+                "[CHATBOT] Error inesperado consultando Ollama: %s %s",
+                type(e).__name__,
+                e,
             )
             raise

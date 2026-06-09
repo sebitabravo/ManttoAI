@@ -10,6 +10,9 @@ from app.models.prediccion import Prediccion
 from app.models.umbral import Umbral
 from app.models.usuario import Usuario
 from app.models.chat import MensajeChat
+from app.models.organizacion import Organizacion
+from app.models.suscripcion import Suscripcion, Plan
+from app.models.sla import SLAEvent, SLAReport
 
 __all__ = [
     "Usuario",
@@ -22,4 +25,9 @@ __all__ = [
     "APIKey",
     "AuditLog",
     "MensajeChat",
+    "Organizacion",
+    "Suscripcion",
+    "Plan",
+    "SLAEvent",
+    "SLAReport",
 ]

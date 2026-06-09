@@ -94,8 +94,8 @@ export default function App() {
               <Route path="perfil" element={<ProfilePage />} />
               <Route path="admin" element={<AdminGuard><AdminPage /></AdminGuard>} />
               <Route path="chat-historial" element={<AdminGuard><ChatHistoryPage /></AdminGuard>} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
-            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
       </BrowserRouter>

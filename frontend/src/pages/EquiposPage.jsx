@@ -2,11 +2,12 @@ import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { getDashboardResumen } from "../api/dashboard";
-import { createEquipo, getEquipos } from "../api/equipos";
+import { createEquipo, deleteEquipo, getEquipos, updateEquipo } from "../api/equipos";
 import EquipoCard from "../components/equipos/EquipoCard";
 import EquipoForm from "../components/equipos/EquipoForm";
 import SmartProvisioningModal from "../components/equipos/SmartProvisioningModal";
 import EmptyState from "../components/ui/EmptyState";
+import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import usePolling from "../hooks/usePolling";
@@ -36,6 +37,16 @@ export default function EquiposPage() {
   const [createErrorMessage, setCreateErrorMessage] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [showProvisioning, setShowProvisioning] = useState(false);
+
+  // Edición de equipo
+  const [editingEquipo, setEditingEquipo] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateErrorMessage, setUpdateErrorMessage] = useState("");
+
+  // Eliminación de equipo
+  const [deletingEquipo, setDeletingEquipo] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState("");
 
   // Fetcher estable para usePolling - obtiene equipos enriquecidos con datos del dashboard
   const fetchEquipos = useCallback(async () => {
@@ -94,6 +105,60 @@ export default function EquiposPage() {
   function closeCreateForm() {
     setCreateErrorMessage("");
     setShowCreateForm(false);
+  }
+
+  // Handlers de edición
+  function openEditModal(equipo) {
+    setUpdateErrorMessage("");
+    setEditingEquipo(equipo);
+  }
+
+  function closeEditModal() {
+    setUpdateErrorMessage("");
+    setEditingEquipo(null);
+  }
+
+  async function handleUpdateEquipo(payload) {
+    if (!editingEquipo?.id) return;
+    setUpdateErrorMessage("");
+    setIsUpdating(true);
+
+    try {
+      await updateEquipo(editingEquipo.id, payload);
+      await refresh();
+      setEditingEquipo(null);
+    } catch {
+      setUpdateErrorMessage("No pudimos actualizar el equipo. Revisá los datos ingresados.");
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  // Handlers de eliminación
+  function openDeleteModal(equipo) {
+    setDeleteErrorMessage("");
+    setDeletingEquipo(equipo);
+  }
+
+  function closeDeleteModal() {
+    setDeleteErrorMessage("");
+    setDeletingEquipo(null);
+  }
+
+  async function handleDeleteEquipo() {
+    if (!deletingEquipo?.id) return;
+    setDeleteErrorMessage("");
+    setIsDeleting(true);
+
+    try {
+      await deleteEquipo(deletingEquipo.id);
+      await refresh();
+      setDeletingEquipo(null);
+    } catch {
+      setDeleteErrorMessage("No se pudo eliminar el equipo. Probá nuevamente.");
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   const isInitialLoading = loading && equipos.length === 0;
@@ -166,7 +231,7 @@ export default function EquiposPage() {
         </div>
       ) : null}
 
-      {!isInitialLoading && equipos.length === 0 ? (
+      {!isInitialLoading && equipos.length === 0 && !showCreateForm ? (
         <EmptyState
           title="No hay equipos cargados"
           description="Usá el botón 'Nuevo equipo' para cargar activos y habilitar monitoreo en la interfaz."
@@ -208,12 +273,32 @@ export default function EquiposPage() {
                 </td>
                 <td className="px-5 py-4 text-sm text-neutral-600 tabular-nums">{Number(equipo.alertas_activas || 0)}</td>
                 <td className="px-5 py-4 text-sm">
-                  <Link
-                    to={`/equipos/${equipo.id}`}
-                    className="font-medium text-primary-500 transition-colors duration-150 ease-out-quart hover:text-primary-600 hover:underline focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary-500"
-                  >
-                    Ver detalle
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/equipos/${equipo.id}`}
+                      className="font-medium text-primary-500 transition-colors duration-150 ease-out-quart hover:text-primary-600 hover:underline focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary-500"
+                    >
+                      Ver detalle
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(equipo)}
+                      className="rounded px-2 py-1 text-xs text-neutral-400 transition-colors hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                      aria-label={`Editar ${equipo.nombre}`}
+                      disabled={isUpdating || isDeleting}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openDeleteModal(equipo)}
+                      className="rounded px-2 py-1 text-xs text-neutral-400 transition-colors hover:bg-danger-50 hover:text-danger-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-danger-500"
+                      aria-label={`Eliminar ${equipo.nombre}`}
+                      disabled={isUpdating || isDeleting}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -223,11 +308,44 @@ export default function EquiposPage() {
 
       <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))] md:hidden">
         {equipos.map((equipo) => (
-          <EquipoCard key={equipo.id} equipo={equipo} onDeleted={refresh} />
+          <EquipoCard key={equipo.id} equipo={equipo} onDeleted={refresh} onEdited={refresh} />
         ))}
       </div>
 
       <SmartProvisioningModal open={showProvisioning} onClose={() => setShowProvisioning(false)} />
+
+      {/* Modal de edición de equipo */}
+      <Modal open={editingEquipo !== null} onClose={closeEditModal} title="Editar equipo">
+        <EquipoForm
+          key={editingEquipo?.id ?? "nuevo"}
+          initialValues={editingEquipo}
+          submitLabel="Guardar cambios"
+          onSubmit={handleUpdateEquipo}
+          onCancel={closeEditModal}
+          isSubmitting={isUpdating}
+          errorMessage={updateErrorMessage}
+        />
+      </Modal>
+
+      {/* Modal de confirmación para eliminar equipo */}
+      <Modal open={deletingEquipo !== null} onClose={closeDeleteModal} title="Eliminar equipo">
+        <div className="space-y-4">
+          <p className="text-sm text-neutral-600">
+            ¿Estás seguro de que querés eliminar <strong>{deletingEquipo?.nombre}</strong>? Esta acción eliminará todas las lecturas, alertas y mantenciones asociadas.
+          </p>
+          {deleteErrorMessage ? (
+            <p className="text-sm text-danger-600" role="alert">{deleteErrorMessage}</p>
+          ) : null}
+          <div className="flex justify-end space-x-3">
+            <Button type="button" variant="outline" onClick={closeDeleteModal} disabled={isDeleting}>
+              Cancelar
+            </Button>
+            <Button type="button" variant="danger" onClick={handleDeleteEquipo} disabled={isDeleting}>
+              {isDeleting ? "Eliminando..." : "Eliminar"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </section>
   );
 }

@@ -23,9 +23,9 @@ class Settings(BaseSettings):
     api_prefix: str = ""
     database_url: str = "sqlite:///./manttoai.db"
     database_auto_init: bool = True
-    # En desarrollo se permite fallback para facilitar demo local.
-    # En stage/prod se exige valor seguro (ver validate_security_settings).
-    secret_key: str = Field(default="manttoai-dev-secret")
+    # SEC-01: En desarrollo se genera automáticamente con secreto aleatorio.
+    # En stage/prod se exige valor seguro definido en entorno (ver validate_security_settings).
+    secret_key: str = Field(default="")
     mqtt_broker_host: str = "localhost"
     mqtt_broker_port: int = 1883
     mqtt_username: str = ""
@@ -88,16 +88,30 @@ class Settings(BaseSettings):
         app_env_normalized = self.app_env.strip().lower()
         database_url_normalized = self.database_url.strip().lower()
 
-        if not self.secret_key or self.secret_key == "manttoai-dev-secret":
+        if not self.secret_key:
             if app_env_normalized in non_dev_envs:
                 raise ValueError(
-                    "SECRET_KEY vacío o por defecto no permitido fuera de desarrollo. "
+                    "SECRET_KEY vacío no permitido fuera de desarrollo. "
                     "Generá una clave segura con: openssl rand -hex 32"
                 )
-            # Advertencia en desarrollo para que el equipo no olvide cambiarla
+            # SEC-01: En desarrollo generar clave aleatoria automáticamente
+            import secrets
+            self.secret_key = secrets.token_hex(32)
             _log.warning(
-                "SECRET_KEY usa valor por defecto o está vacío en desarrollo. "
-                "Definí SECRET_KEY en backend/.env antes de desplegar."
+                "SECRET_KEY generado automáticamente para desarrollo: %s... "
+                "Definí SECRET_KEY en backend/.env antes de desplegar.",
+                self.secret_key[:8],
+            )
+        elif self.secret_key == "manttoai-dev-secret":
+            # Validación retroactiva para quien aún use el valor viejo
+            if app_env_normalized in non_dev_envs:
+                raise ValueError(
+                    "SECRET_KEY usa el valor por defecto 'manttoai-dev-secret'. "
+                    "Generá una clave segura con: openssl rand -hex 32"
+                )
+            _log.warning(
+                "SECRET_KEY usa el valor por defecto obsoleto. "
+                "Se recomienda eliminarlo del .env y dejar que se genere automáticamente."
             )
 
         if app_env_normalized in non_dev_envs:

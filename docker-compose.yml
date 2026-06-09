@@ -10,7 +10,7 @@ services:
     build:
       context: ./backend
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       APP_ENV: ${APP_ENV:-production}
       DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-}@mysql:3306/${MYSQL_DATABASE:-manttoai_db}}
@@ -117,11 +117,21 @@ services:
     image: redis:7-alpine
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-    command: redis-server --appendonly yes --requirepass $${REDIS_PASSWORD}
+    command: >
+      sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
+               exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD";
+             else
+               exec redis-server --appendonly yes;
+             fi'
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
 
   ollama:

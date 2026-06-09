@@ -9,3 +9,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <App />
   </React.StrictMode>
 );
+
+// Registro del Service Worker para funcionalidad PWA (offline y carga rapida)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) => {
+        console.log("SW registrado:", reg.scope);
+      })
+      .catch((err) => {
+        console.log("SW fallo:", err);
+      });
+  });
+}

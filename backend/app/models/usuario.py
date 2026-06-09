@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -18,6 +18,10 @@ class Usuario(Base):
     email: Mapped[str] = mapped_column(String(150), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     rol: Mapped[str] = mapped_column(String(30), default="visualizador")
+    # Tenant al que pertenece el usuario (multi-tenancy RNF-28)
+    organizacion_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("organizaciones.id"), nullable=True, index=True, default=None
+    )
     telefono: Mapped[str | None] = mapped_column(
         String(30), nullable=True, default=None
     )

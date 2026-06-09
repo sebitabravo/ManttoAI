@@ -7,6 +7,7 @@ from app.schemas.alerta import (
     AlertaUpdate,
 )
 from app.schemas.dashboard import DashboardEquipoResumen, DashboardResumenResponse
+from app.schemas.notification import NotificationResponse
 from app.schemas.equipo import EquipoCreate, EquipoResponse, EquipoUpdate
 from app.schemas.lectura import LecturaCreate, LecturaResponse, LecturaUpdate
 from app.schemas.mantencion import (
@@ -39,6 +40,7 @@ __all__ = [
     "AlertaCountResponse",
     "DashboardEquipoResumen",
     "DashboardResumenResponse",
+    "NotificationResponse",
     "PrediccionCreate",
     "PrediccionUpdate",
     "PrediccionResponse",

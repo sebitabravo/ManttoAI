@@ -62,6 +62,23 @@ class Settings(BaseSettings):
     # Integración con Ollama
     ollama_url: str = "http://ollama:11434"
     ollama_model: str = "qwen2.5:0.5b"
+    # Multi-tenancy (RNF-28)
+    tenant_header_name: str = "X-Tenant-ID"
+
+    # SLA monitoring
+    sla_check_interval_seconds: int = 60
+    sla_default_target: float = 99.5  # % uptime objetivo
+
+    # Notificaciones (Twilio)
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_phone_number: str = ""
+
+    # Billing (Stripe + MercadoPago)
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    mercadopago_access_token: str = ""
+
     # Orígenes CORS permitidos separados por coma.
     # En desarrollo: localhost:5173. En producción: dominio real del frontend.
     # Ejemplo: CORS_ALLOWED_ORIGINS=https://manttoai.ejemplo.com,https://www.manttoai.ejemplo.com

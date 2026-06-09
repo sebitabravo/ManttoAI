@@ -14,12 +14,14 @@ from app.utils.logging_config import setup_logging
 from app.database import check_database_connection, initialize_database_schema
 from app.dependencies import get_current_user, require_role
 from app.middleware.audit import audit_middleware
+from app.middleware.tenant import TenantMiddleware
 from app.middleware.rate_limit import setup_rate_limiting
 from app.routers import (
     alertas,
     api_keys,
     audit_logs,
     auth,
+    billing,
     dashboard,
     equipos,
     iot,
@@ -30,6 +32,7 @@ from app.routers import (
     onboarding,
     predicciones,
     reportes,
+    sla,
     umbrales,
     usuarios,
     chat,
@@ -132,6 +135,8 @@ app.add_middleware(
     expose_headers=["Content-Disposition"],
 )
 
+app.add_middleware(TenantMiddleware)
+
 # Configurar rate limiting para protección contra abuso
 setup_rate_limiting(app)
 
@@ -141,6 +146,9 @@ app.middleware("http")(audit_middleware)
 # Auth expuesto en /api/v1 y raíz por compatibilidad con clientes legacy.
 include_router_with_legacy_support(auth.router)
 app.include_router(legal.router)  # Documentación legal pública
+
+# Billing (mezcla endpoints públicos y autenticados dentro del mismo router)
+include_router_with_legacy_support(billing.router)
 
 # Router IoT (público pero con API key authentication)
 app.include_router(iot.router, prefix=API_V1_PREFIX)
@@ -175,6 +183,9 @@ include_router_with_legacy_support(dashboard.router)
 include_router_with_legacy_support(reportes.router)
 include_router_with_legacy_support(chat.router)
 
+# SLA (requiere auth, RBAC por endpoint)
+include_router_with_legacy_support(sla.router)
+
 # Métricas (requiere auth)
 app.include_router(
     metrics.router,
@@ -197,5 +208,8 @@ def health_check() -> JSONResponse:
 
     return JSONResponse(
         status_code=status_code,
-        content={"status": "ok" if db_connected else "error"},
+        content={
+            "status": "ok" if db_connected else "error",
+            "sla_monitor": "active",
+        },
     )

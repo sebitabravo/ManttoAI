@@ -119,4 +119,5 @@ def login_user(db: Session, email: str, password: str) -> Token:
 
     usuario = authenticate_user(db, email=email, password=password)
 
-    return Token(access_token=create_access_token(usuario.email))
+    # SEC-07: JWT sub usa user.id inmutable en vez de email (mutable).
+    return Token(access_token=create_access_token(str(usuario.id)))

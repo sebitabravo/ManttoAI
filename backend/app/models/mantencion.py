@@ -14,7 +14,12 @@ class Mantencion(Base):
     __tablename__ = "mantenciones"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    equipo_id: Mapped[int] = mapped_column(ForeignKey("equipos.id"), index=True)
+    equipo_id: Mapped[int] = mapped_column(
+        ForeignKey("equipos.id", ondelete="CASCADE"), index=True
+    )
+    organizacion_id: Mapped[int | None] = mapped_column(
+        ForeignKey("organizaciones.id"), nullable=True, index=True
+    )
     tipo: Mapped[str] = mapped_column(String(60), default="preventiva")
     descripcion: Mapped[str] = mapped_column(
         String(255), default="Pendiente de definir"

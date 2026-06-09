@@ -289,6 +289,19 @@ def seed_lecturas_historicas(db: Session, equipos: list[Equipo]) -> tuple[int, i
     created_count = 0
     existing_count = 0
 
+    # DATA-01: Rangos de temperatura por rubro (los nombres antiguos "Compresor",
+    # "Bomba", "Motor" no coincidían con EQUIPOS_DEMO).
+    RUBRO_TEMP_RANGES = {
+        "industrial": (35, 55),
+        "agricola": (25, 45),
+        "comercial": (20, 40),
+    }
+    RUBRO_HUM_RANGES = {
+        "industrial": (30, 50),
+        "agricola": (40, 70),
+        "comercial": (45, 75),
+    }
+
     # Verificar si ya existen lecturas
     for equipo in equipos:
         existing = db.scalars(
@@ -298,24 +311,16 @@ def seed_lecturas_historicas(db: Session, equipos: list[Equipo]) -> tuple[int, i
             existing_count += 1
             continue
 
+        temp_min, temp_max = RUBRO_TEMP_RANGES.get(equipo.rubro, (20, 40))
+        hum_min, hum_max = RUBRO_HUM_RANGES.get(equipo.rubro, (45, 75))
+
         # Generar 30 días de lecturas (cada 4 horas = 6 lecturas/día = 180 total)
         for day in range(30):
             for hour in range(0, 24, 4):
                 timestamp = datetime.now() - timedelta(days=day, hours=hour)
 
-                # Generar valores realistas con algo de variación
-                # Equipo 1: Compresor - tiende a temperatura alta
-                if "Compresor" in equipo.nombre:
-                    temp = SEED_RANDOM.uniform(35, 55)
-                    hum = SEED_RANDOM.uniform(30, 50)
-                # Equipo 2: Bomba - temperatura media
-                elif "Bomba" in equipo.nombre:
-                    temp = SEED_RANDOM.uniform(25, 45)
-                    hum = SEED_RANDOM.uniform(40, 70)
-                # Equipo 3: Motor - temperatura estable
-                else:
-                    temp = SEED_RANDOM.uniform(20, 40)
-                    hum = SEED_RANDOM.uniform(45, 75)
+                temp = SEED_RANDOM.uniform(temp_min, temp_max)
+                hum = SEED_RANDOM.uniform(hum_min, hum_max)
 
                 # Vibración - valores normales pero con algunos picos
                 if SEED_RANDOM.random() < 0.05:  # 5% de anomalías
@@ -347,6 +352,14 @@ def seed_predicciones_historicas(db: Session, equipos: list[Equipo]) -> int:
 
     created_count = 0
 
+    # DATA-01: Clasificación por rubro (los nombres antiguos "Compresor", "Bomba"
+    # no coincidían con EQUIPOS_DEMO).
+    RUBRO_CLASIFICACIONES = {
+        "industrial": ("advertencia", (0.6, 0.75)),
+        "agricola": ("critico", (0.75, 0.9)),
+        "comercial": ("normal", (0.85, 0.95)),
+    }
+
     for equipo in equipos:
         # Verificar si ya tiene predicciones
         existing = db.scalars(
@@ -355,16 +368,10 @@ def seed_predicciones_historicas(db: Session, equipos: list[Equipo]) -> int:
         if existing:
             continue
 
-        # Crear última predicción
-        if "Compresor" in equipo.nombre:
-            clasificacion = "advertencia"
-            probabilidad = SEED_RANDOM.uniform(0.6, 0.75)
-        elif "Bomba" in equipo.nombre:
-            clasificacion = "critico"
-            probabilidad = SEED_RANDOM.uniform(0.75, 0.9)
-        else:
-            clasificacion = "normal"
-            probabilidad = SEED_RANDOM.uniform(0.85, 0.95)
+        clasificacion, (prob_min, prob_max) = RUBRO_CLASIFICACIONES.get(
+            equipo.rubro, ("normal", (0.85, 0.95))
+        )
+        probabilidad = SEED_RANDOM.uniform(prob_min, prob_max)
 
         prediccion = Prediccion(
             equipo_id=equipo.id,
@@ -385,37 +392,37 @@ def seed_alertas_historicas(db: Session, equipos: list[Equipo]) -> tuple[int, in
     created_count = 0
     existing_count = 0
 
-    # Definir alertas de ejemplo
+    # DATA-01: Nombres corregidos para coincidir con EQUIPOS_DEMO.
     alertas_seed = [
-        # Equipo 1: Compresor - algunas alertas de temperatura
+        # Torno CNC (industrial) — algunas alertas de temperatura
         {
-            "equipo_nombre": "Compresor Línea A",
+            "equipo_nombre": "Torno CNC",
             "tipo": "umbral_temperatura",
             "mensaje": "Temperatura elevada detectada: 58°C",
             "nivel": "alto",
         },
         {
-            "equipo_nombre": "Compresor Línea A",
+            "equipo_nombre": "Torno CNC",
             "tipo": "umbral_vibracion",
             "mensaje": "Vibración anormal en eje X: 12.5 m/s²",
             "nivel": "critico",
         },
-        # Equipo 2: Bomba - alertas de vibración
+        # Brazo Robótico (industrial) — alertas de vibración
         {
-            "equipo_nombre": "Bomba Hidráulica B",
+            "equipo_nombre": "Brazo Robótico",
             "tipo": "umbral_vibracion",
             "mensaje": "Vibración excesiva detectada: 15.2 m/s²",
             "nivel": "critico",
         },
         {
-            "equipo_nombre": "Bomba Hidráulica B",
+            "equipo_nombre": "Brazo Robótico",
             "tipo": "prediccion_riesgo",
             "mensaje": "Alto riesgo de falla predicho por ML",
             "nivel": "alto",
         },
-        # Equipo 3: Motor - todo normal, una advertencia leve
+        # Cámara de Frío (comercial) — advertencia leve
         {
-            "equipo_nombre": "Motor Ventilación C",
+            "equipo_nombre": "Cámara de Frío (Supermercado)",
             "tipo": "umbral_temperatura",
             "mensaje": "Temperatura ligeramente elevada: 48°C",
             "nivel": "medio",
@@ -466,57 +473,57 @@ def seed_mantenciones_historicas(db: Session, equipos: list[Equipo]) -> tuple[in
     created_count = 0
     existing_count = 0
 
-    # Definir mantenciones de ejemplo
+    # DATA-01: Nombres corregidos para coincidir con EQUIPOS_DEMO.
     mantenciones_seed = [
-        # Compresor - varias mantenciones
+        # Torno CNC (industrial) — varias mantenciones
         {
-            "equipo_nombre": "Compresor Línea A",
+            "equipo_nombre": "Torno CNC",
             "tipo": "preventiva",
             "descripcion": "Cambio de filtros de aire",
             "estado": "completada",
             "dias_atras": 15,
         },
         {
-            "equipo_nombre": "Compresor Línea A",
+            "equipo_nombre": "Torno CNC",
             "tipo": "correctiva",
             "descripcion": "Reemplazo de correas de transmisión",
             "estado": "completada",
             "dias_atras": 45,
         },
         {
-            "equipo_nombre": "Compresor Línea A",
+            "equipo_nombre": "Torno CNC",
             "tipo": "preventiva",
             "descripcion": "Lubricación de rodamientos",
             "estado": "completada",
             "dias_atras": 60,
         },
-        # Bomba - recientes
+        # Brazo Robótico (industrial) — recientes
         {
-            "equipo_nombre": "Bomba Hidráulica B",
+            "equipo_nombre": "Brazo Robótico",
             "tipo": "predictiva",
             "descripcion": "Inspección por anomalía de vibración",
             "estado": "programada",
             "dias_atras": -3,  # Futura
         },
         {
-            "equipo_nombre": "Bomba Hidráulica B",
+            "equipo_nombre": "Brazo Robótico",
             "tipo": "preventiva",
             "descripcion": "Cambio de aceite hidráulico",
             "estado": "completada",
             "dias_atras": 30,
         },
-        # Motor - una pendiente
+        # Sistema de Riego Central (agrícola) — pendiente
         {
-            "equipo_nombre": "Motor Ventilación C",
+            "equipo_nombre": "Sistema de Riego Central",
             "tipo": "preventiva",
-            "descripcion": "Limpieza de aspas y inspección de rodamientos",
+            "descripcion": "Limpieza de filtros y revisión de aspersores",
             "estado": "programada",
             "dias_atras": -7,  # Futura
         },
         {
-            "equipo_nombre": "Motor Ventilación C",
+            "equipo_nombre": "Sistema de Riego Central",
             "tipo": "correctiva",
-            "descripcion": "Alineación de eje",
+            "descripcion": "Alineación de bomba principal",
             "estado": "completada",
             "dias_atras": 90,
         },
@@ -575,7 +582,8 @@ def seed_demo_story(db: Session, equipos: list[Equipo]) -> tuple[int, int, int]:
     if not equipos:
         return 0, 0, 0
 
-    equipo = next((item for item in equipos if "Compresor" in item.nombre), equipos[0])
+    # DATA-01: Usar nombre real de EQUIPOS_DEMO en vez de "Compresor" (que no existe).
+    equipo = next((item for item in equipos if "Torno CNC" in item.nombre), equipos[0])
 
     story_tag = "[STORY-DEMO]"
     existing_story = db.scalars(

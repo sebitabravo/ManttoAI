@@ -114,11 +114,22 @@ def get_api_limit() -> str:
 SUPPORTED_ROLES = {"admin", "tecnico", "visualizador"}
 
 
+def _rate_limit_logging_handler(request: Request, exc: RateLimitExceeded):
+    """Handler que loggea el rate limit antes de delegar al handler default."""
+    logger.warning(
+        "Rate limit exceeded: ip=%s endpoint=%s method=%s",
+        get_real_ip(request),
+        request.url.path,
+        request.method,
+    )
+    return _rate_limit_exceeded_handler(request, exc)
+
+
 def setup_rate_limiting(app) -> None:
     """Configura rate limiting global en la aplicacion FastAPI."""
 
     app.state.limiter = _global_limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_logging_handler)
     app.add_middleware(SlowAPIMiddleware)
 
 

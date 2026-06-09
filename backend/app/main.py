@@ -4,9 +4,9 @@ from contextlib import asynccontextmanager
 import asyncio
 import logging
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import get_settings
@@ -14,7 +14,9 @@ from app.utils.logging_config import setup_logging
 from app.database import check_database_connection, initialize_database_schema
 from app.dependencies import get_current_user, require_role
 from app.middleware.audit import audit_middleware
+from app.middleware.correlation import CorrelationMiddleware
 from app.middleware.rate_limit import setup_rate_limiting
+from app.middleware.tenant import TenantMiddleware
 from app.routers import (
     alertas,
     api_keys,
@@ -117,6 +119,9 @@ def include_router_with_legacy_support(router, *, dependencies=None) -> None:
     app.include_router(router, dependencies=dependencies, include_in_schema=False)
 
 
+# Correlation ID middleware (primero en la cadena para trazar todos los requests)
+app.add_middleware(CorrelationMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     # Orígenes leídos desde CORS_ALLOWED_ORIGINS en .env para soportar producción
@@ -131,6 +136,9 @@ app.add_middleware(
     ],
     expose_headers=["Content-Disposition"],
 )
+
+# Tenant middleware para multi-tenancy via X-Tenant-ID header
+app.add_middleware(TenantMiddleware)
 
 # Configurar rate limiting para protección contra abuso
 setup_rate_limiting(app)

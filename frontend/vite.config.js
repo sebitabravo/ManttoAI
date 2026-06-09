@@ -17,4 +17,8 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 4173,
   },
+  // VULN-03: Deshabilitar source maps en producción.
+  build: {
+    sourcemap: false,
+  },
 });

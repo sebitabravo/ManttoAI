@@ -3,9 +3,9 @@ import { useParams } from "react-router-dom";
 
 import { getEquipo, updateEquipo } from "../api/equipos";
 import { getLecturas } from "../api/lecturas";
-import { createMantencion, getMantenciones, updateMantencion } from "../api/mantenciones";
 import { getPredicciones } from "../api/predicciones";
 import useEquipoUmbrales from "./useEquipoUmbrales";
+import useMantenciones from "./useMantenciones";
 import { EQUIPO_DETALLE_POLLING_INTERVAL_MS } from "../utils/constants";
 import { getApiErrorMessage } from "../utils/errorHandling";
 import { sortByTimestampDesc } from "../utils/time";
@@ -25,8 +25,9 @@ export function formatVariableLabel(variable) {
 }
 
 /**
- * Hook que encapsula toda la lógica de estado y operaciones para la página de detalle de equipo.
- * Maneja: datos del equipo, lecturas, predicciones, mantenciones y umbrales.
+ * Hook que encapsula la lógica de estado y operaciones para la página de detalle de equipo.
+ * Maneja: datos del equipo, lecturas, predicciones y umbrales.
+ * Mantenciones delegadas a useMantenciones.
  * Incluye polling automático para actualización en tiempo real.
  *
  * @returns {Object} Estado y handlers para el componente EquipoDetallePage
@@ -39,7 +40,6 @@ export default function useEquipoDetalle() {
   const [equipo, setEquipo] = useState(null);
   const [lecturas, setLecturas] = useState([]);
   const [prediccion, setPrediccion] = useState(null);
-  const [mantenciones, setMantenciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -67,13 +67,8 @@ export default function useEquipoDetalle() {
     handleSaveUmbral,
   } = useEquipoUmbrales(resolvedEquipoId);
 
-  // === Estados de mantenciones ===
-  const [showCreateMantencionForm, setShowCreateMantencionForm] = useState(false);
-  const [isCreatingMantencion, setIsCreatingMantencion] = useState(false);
-  const [createMantencionErrorMessage, setCreateMantencionErrorMessage] = useState("");
-  const [editingMantencionId, setEditingMantencionId] = useState(null);
-  const [isSavingMantencion, setIsSavingMantencion] = useState(false);
-  const [updateMantencionErrorMessage, setUpdateMantencionErrorMessage] = useState("");
+  // Mantenciones delegadas a hook especializado
+  const mantencionOps = useMantenciones(resolvedEquipoId);
 
   // === Carga de datos del equipo ===
   const loadEquipoDetalle = useCallback(async (isPolling = false) => {
@@ -94,7 +89,7 @@ export default function useEquipoDetalle() {
     }
 
     try {
-      const [equipoData, lecturasData, prediccionData, mantencionesData] = await Promise.all([
+      const [equipoData, lecturasData, prediccionData] = await Promise.all([
         getEquipo(resolvedEquipoId),
         getLecturas(resolvedEquipoId, 10),
         getPredicciones(resolvedEquipoId).catch((fetchError) => {
@@ -104,13 +99,11 @@ export default function useEquipoDetalle() {
 
           throw fetchError;
         }),
-        getMantenciones({ equipoId: resolvedEquipoId, limit: 10, order: "desc" }),
       ]);
 
       setEquipo(equipoData);
       setLecturas(Array.isArray(lecturasData) ? lecturasData : []);
       setPrediccion(prediccionData);
-      setMantenciones(Array.isArray(mantencionesData) ? mantencionesData : []);
       setError(null);
     } catch (fetchError) {
       // En polling, no mostrar error si ya tenemos datos (stale-while-revalidate)
@@ -134,28 +127,22 @@ export default function useEquipoDetalle() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       loadEquipoDetalle(true);
+      mantencionOps.loadMantenciones(true);
     }, EQUIPO_DETALLE_POLLING_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
-  }, [loadEquipoDetalle]);
+  }, [loadEquipoDetalle, mantencionOps.loadMantenciones]);
 
   // === Valores computados ===
   const lecturasOrdenadas = useMemo(() => {
     return sortByTimestampDesc(lecturas).slice(0, 10);
   }, [lecturas]);
 
-  const mantencionesRecientes = useMemo(() => {
-    return sortByTimestampDesc(mantenciones).slice(0, 10);
-  }, [mantenciones]);
-
-  const selectedMantencion = useMemo(() => {
-    return mantencionesRecientes.find((mantencion) => Number(mantencion.id) === Number(editingMantencionId)) || null;
-  }, [mantencionesRecientes, editingMantencionId]);
-
   // === Handlers de refresh ===
   function handleRefresh() {
     loadEquipoDetalle(false);
     loadUmbrales();
+    mantencionOps.loadMantenciones(false);
   }
 
   // === Handlers de equipo ===
@@ -191,82 +178,6 @@ export default function useEquipoDetalle() {
   function closeEditForm() {
     setUpdateErrorMessage("");
     setShowEditForm(false);
-  }
-
-  // === Handlers de mantenciones ===
-  function openCreateMantencionForm() {
-    setCreateMantencionErrorMessage("");
-    setEditingMantencionId(null);
-    setShowCreateMantencionForm(true);
-  }
-
-  function closeCreateMantencionForm() {
-    setCreateMantencionErrorMessage("");
-    setShowCreateMantencionForm(false);
-  }
-
-  function openMantencionEdit(mantencionId) {
-    setShowCreateMantencionForm(false);
-    setEditingMantencionId(Number(mantencionId));
-    setUpdateMantencionErrorMessage("");
-  }
-
-  function closeMantencionEdit() {
-    setEditingMantencionId(null);
-    setUpdateMantencionErrorMessage("");
-  }
-
-  async function handleCreateMantencion(payload) {
-    if (!Number.isFinite(resolvedEquipoId)) {
-      setCreateMantencionErrorMessage("No se puede crear mantención: identificador de equipo inválido.");
-      return;
-    }
-
-    setCreateMantencionErrorMessage("");
-    setIsCreatingMantencion(true);
-    isUserOperationInProgress.current = true;
-
-    try {
-      await createMantencion({
-        equipo_id: resolvedEquipoId,
-        ...payload,
-      });
-      await loadEquipoDetalle(false);
-      setEditingMantencionId(null);
-      setShowCreateMantencionForm(false);
-    } catch (createError) {
-      setCreateMantencionErrorMessage(
-        getApiErrorMessage(createError, "No pudimos crear la mantención. Revisá los datos ingresados.")
-      );
-    } finally {
-      setIsCreatingMantencion(false);
-      isUserOperationInProgress.current = false;
-    }
-  }
-
-  async function handleUpdateMantencion(payload) {
-    const resolvedMantencionId = Number(editingMantencionId);
-    if (!Number.isFinite(resolvedMantencionId)) {
-      setUpdateMantencionErrorMessage("No se puede actualizar esta mantención.");
-      return;
-    }
-
-    setUpdateMantencionErrorMessage("");
-    setIsSavingMantencion(true);
-    isUserOperationInProgress.current = true;
-
-    try {
-      await updateMantencion(resolvedMantencionId, payload);
-      await loadEquipoDetalle(false);
-      setEditingMantencionId(null);
-    } catch (updateError) {
-      setUpdateMantencionErrorMessage(
-        getApiErrorMessage(updateError, "No pudimos actualizar la mantención. Revisá los datos ingresados.")
-      );
-    } finally {
-      setIsSavingMantencion(false);
-      isUserOperationInProgress.current = false;
-    }
   }
 
   // === Retorno del hook ===
@@ -306,21 +217,8 @@ export default function useEquipoDetalle() {
     handleUmbralDraftChange,
     handleSaveUmbral,
 
-    // Mantenciones
-    mantencionesRecientes,
-    showCreateMantencionForm,
-    isCreatingMantencion,
-    createMantencionErrorMessage,
-    editingMantencionId,
-    selectedMantencion,
-    isSavingMantencion,
-    updateMantencionErrorMessage,
-    openCreateMantencionForm,
-    closeCreateMantencionForm,
-    openMantencionEdit,
-    closeMantencionEdit,
-    handleCreateMantencion,
-    handleUpdateMantencion,
+    // Mantenciones (delegadas a useMantenciones)
+    ...mantencionOps,
 
     // Refresh
     handleRefresh,

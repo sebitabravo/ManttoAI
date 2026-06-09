@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getConfigPrediccion, formatPorcentajeRiesgo } from "../../utils/prediccion";
 import { getRubroBadgeClass, getRubroLabel } from "../../utils/rubro";
@@ -10,7 +10,7 @@ import Button from "../ui/Button";
  * Badge visual que muestra el estado de predicción del equipo.
  * Usa colores semánticos según la clasificación del modelo ML.
  */
-function PrediccionBadge({ clasificacion, probabilidad }) {
+const PrediccionBadge = memo(function PrediccionBadge({ clasificacion, probabilidad }) {
   const config = getConfigPrediccion(clasificacion);
 
   return (
@@ -27,9 +27,9 @@ function PrediccionBadge({ clasificacion, probabilidad }) {
       )}
     </span>
   );
-}
+});
 
-export default function EquipoCard({ equipo, onDeleted }) {
+const EquipoCard = memo(function EquipoCard({ equipo, onDeleted }) {
   const latestValueLabel = equipo.dato || "Sin lecturas registradas";
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -113,4 +113,6 @@ export default function EquipoCard({ equipo, onDeleted }) {
       </Modal>
     </>
   );
-}
+});
+
+export default EquipoCard;

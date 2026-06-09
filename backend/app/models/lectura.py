@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, func
+from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -12,9 +12,17 @@ class Lectura(Base):
     """Representa una lectura telemétrica de un equipo."""
 
     __tablename__ = "lecturas"
+    __table_args__ = (
+        Index("ix_lecturas_equipo_timestamp", "equipo_id", "timestamp"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    equipo_id: Mapped[int] = mapped_column(ForeignKey("equipos.id"), index=True)
+    equipo_id: Mapped[int] = mapped_column(
+        ForeignKey("equipos.id", ondelete="CASCADE"), index=True
+    )
+    organizacion_id: Mapped[int | None] = mapped_column(
+        ForeignKey("organizaciones.id"), nullable=True, index=True
+    )
     temperatura: Mapped[float] = mapped_column(Float)
     humedad: Mapped[float] = mapped_column(Float)
     vib_x: Mapped[float] = mapped_column(Float)

@@ -1,22 +1,22 @@
-import { useEffect, useId, useRef } from "react";
+import { memo, useEffect, useId, useRef } from "react";
 
 /**
  * Modal del sistema de diseño ManttoAI.
- * 
+ *
  * Características:
  * - Overlay semitransparente con backdrop
  * - Contenido centrado con scroll interno si es necesario
  * - Focus trap automático
  * - Cierre con Escape key
  * - Accesibilidad completa con ARIA
- * 
+ *
  * Props:
  * - open: boolean — mostrar/ocultar modal
  * - title: string — título semántico (h2)
  * - onClose: function — callback al cerrar (Escape o click fuera)
  * - children: contenido del modal
  */
-export default function Modal({ open = false, title = "Modal", onClose, children }) {
+function Modal({ open = false, title = "Modal", onClose, children }) {
   const dialogRef = useRef(null);
   const titleId = `modal-title-${useId().replace(/:/g, "")}`;
 
@@ -148,3 +148,5 @@ export default function Modal({ open = false, title = "Modal", onClose, children
     </div>
   );
 }
+
+export default memo(Modal);

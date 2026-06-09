@@ -6,6 +6,7 @@ from app.models.audit_log import AuditLog
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.mantencion import Mantencion
+from app.models.organizacion import Organizacion
 from app.models.prediccion import Prediccion
 from app.models.umbral import Umbral
 from app.models.usuario import Usuario
@@ -19,6 +20,7 @@ __all__ = [
     "Prediccion",
     "Mantencion",
     "Umbral",
+    "Organizacion",
     "APIKey",
     "AuditLog",
     "MensajeChat",

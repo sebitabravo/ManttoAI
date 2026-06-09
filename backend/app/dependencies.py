@@ -123,7 +123,13 @@ def get_current_user(
                 logger.error("Error al verificar blacklist de Redis: %s", e)
                 pass  # Degradación elegante si hay un error de comunicación con Redis
 
-    usuario = db.scalars(select(Usuario).where(Usuario.email == subject)).first()
+    # SEC-07: JWT sub es user.id (int), no email (mutable).
+    try:
+        user_id = int(subject)
+    except (ValueError, TypeError):
+        raise credentials_exception
+
+    usuario = db.scalars(select(Usuario).where(Usuario.id == user_id)).first()
     if usuario is None or not usuario.is_active:
         raise credentials_exception
 

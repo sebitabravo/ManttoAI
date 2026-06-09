@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 /**
  * Componentes Skeleton para estados de carga — Estilo Apple.
  *
@@ -11,20 +13,20 @@
 /**
  * Bloque animado base para skeletons.
  */
-function PulseBlock({ className = "", style }) {
+const PulseBlock = memo(function PulseBlock({ className = "", style }) {
   return (
-    <div 
-      className={`animate-pulse rounded-lg bg-neutral-200 ${className}`} 
+    <div
+      className={`animate-pulse rounded-lg bg-neutral-200 ${className}`}
       style={style}
-      aria-hidden="true" 
+      aria-hidden="true"
     />
   );
-}
+});
 
 /**
  * Skeleton para bloques de texto.
  */
-export function SkeletonText({ lines = 3, className = "" }) {
+export const SkeletonText = memo(function SkeletonText({ lines = 3, className = "" }) {
   const widths = ["w-full", "w-5/6", "w-4/5", "w-3/4", "w-2/3"];
 
   return (
@@ -34,12 +36,12 @@ export function SkeletonText({ lines = 3, className = "" }) {
       ))}
     </div>
   );
-}
+});
 
 /**
  * Skeleton para una card.
  */
-export function SkeletonCard({ className = "" }) {
+export const SkeletonCard = memo(function SkeletonCard({ className = "" }) {
   return (
     <div 
       className={`rounded-2xl bg-white p-6 shadow-sm ${className}`} 
@@ -53,12 +55,12 @@ export function SkeletonCard({ className = "" }) {
       <PulseBlock className="h-4 w-1/2" />
     </div>
   );
-}
+});
 
 /**
  * Skeleton para una métrica grande.
  */
-export function SkeletonMetric({ className = "" }) {
+export const SkeletonMetric = memo(function SkeletonMetric({ className = "" }) {
   return (
     <div 
       className={`rounded-2xl bg-white p-6 shadow-sm ${className}`} 
@@ -76,7 +78,7 @@ export function SkeletonMetric({ className = "" }) {
 /**
  * Skeleton para una tabla.
  */
-export function SkeletonTable({ rows = 5, cols = 4, className = "" }) {
+export const SkeletonTable = memo(function SkeletonTable({ rows = 5, cols = 4, className = "" }) {
   return (
     <div 
       className={`rounded-2xl bg-white p-6 shadow-sm ${className}`} 
@@ -104,12 +106,12 @@ export function SkeletonTable({ rows = 5, cols = 4, className = "" }) {
       ))}
     </div>
   );
-}
+});
 
 /**
  * Skeleton para un gráfico.
  */
-export function SkeletonChart({ className = "" }) {
+export const SkeletonChart = memo(function SkeletonChart({ className = "" }) {
   return (
     <div 
       className={`rounded-2xl bg-white p-6 shadow-sm ${className}`} 
@@ -142,4 +144,4 @@ export function SkeletonChart({ className = "" }) {
       </div>
     </div>
   );
-}
+});

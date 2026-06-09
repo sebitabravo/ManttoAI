@@ -131,7 +131,7 @@ def run_periodic_predictions(
             else:
                 predicciones_error += 1
 
-    logger.info(
+    logger.warning(
         "Ejecución periódica de predicciones finalizada activos=%d ok=%d error=%d",
         equipos_activos,
         predicciones_ok,

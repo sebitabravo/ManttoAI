@@ -1,6 +1,8 @@
+import { memo } from "react";
+
 /**
  * Botón del sistema de diseño ManttoAI — Estilo Apple.
- * 
+ *
  * Variantes:
  * - primary: Apple Blue (#0071e3), texto blanco
  * - secondary: Near Black (#1d1d1f), texto blanco
@@ -8,17 +10,17 @@
  * - ghost: Sin borde, texto Apple Blue
  * - danger: Apple Red (#ff3b30), texto blanco
  * - pill: Link estilo Apple "Learn more" con borde redondeado 980px
- * 
- * Touch target: mínimo 44px altura (WCAG 2.2 Level AA)
+ *
+ * Touch target: mínimo 44px altura (WCAG 2.2 Level AA), 44px ancho
  * Transiciones: 200ms ease Apple
  */
-export default function Button({ 
-  children, 
-  type = "button", 
-  variant = "primary", 
+function Button({
+  children,
+  type = "button",
+  variant = "primary",
   size = "default",
-  className = "", 
-  ...props 
+  className = "",
+  ...props
 }) {
   // Clases base compartidas
   const baseClasses = `
@@ -30,11 +32,12 @@ export default function Button({
   `;
 
   // Tamaños adaptados para dashboard B2B (más compactos)
-  // min-h-[44px] asegura touch target WCAG 2.2 Level AA
+  // min-h-[44px] + min-w-[44px] asegura touch target WCAG 2.5.5 AAA
+  // sm: tamaño compacto sin min-w (para icon-only o contextos reducidos)
   const sizeClasses = {
     sm: "px-3 py-1.5 text-xs rounded-md min-h-[36px]",
-    default: "px-4 py-2 text-sm rounded-md min-h-[44px]",
-    lg: "px-6 py-2.5 text-base rounded-md min-h-[44px]",
+    default: "px-4 py-2 text-sm rounded-md min-h-[44px] min-w-[44px]",
+    lg: "px-6 py-2.5 text-base rounded-md min-h-[44px] min-w-[44px]",
   };
 
   // Variantes de estilo Apple
@@ -106,3 +109,5 @@ export default function Button({
     </button>
   );
 }
+
+export default memo(Button);

@@ -6,6 +6,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
+# DEP-04: Ejecutar como usuario no-root.
+RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
+USER appuser
+
 # En desarrollo, el código se monta como volumen (ver docker-compose.override.yml)
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
@@ -17,6 +21,10 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 RUN npm ci
+
+# DEP-04: Ejecutar como usuario no-root.
+RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
+USER appuser
 
 COPY . .
 ARG VITE_API_URL

@@ -1,5 +1,7 @@
 """Servicios agregados para el dashboard."""
 
+import time
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,13 @@ from app.services import prediccion_service
 
 DashboardEquipoItem = dict[str, int | str | float | None]
 DashboardSummaryPayload = dict[str, int | float | str | list[DashboardEquipoItem]]
+
+# Cache en memoria para get_dashboard_summary con TTL de 5 segundos.
+_dashboard_cache: dict[str, object] = {
+    "data": None,
+    "timestamp": 0.0,
+}
+_DASHBOARD_CACHE_TTL: float = 5.0
 
 
 def _to_float_or_none(value: object) -> float | None:
@@ -122,7 +131,13 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
 
 
 def get_dashboard_summary(db: Session) -> DashboardSummaryPayload:
-    """Retorna un resumen agregado para la vista principal."""
+    """Retorna un resumen agregado para la vista principal con cache de 5s."""
+
+    global _dashboard_cache
+    now = time.time()
+    cached = _dashboard_cache
+    if cached["data"] is not None and (now - cached["timestamp"]) < _DASHBOARD_CACHE_TTL:
+        return cached["data"]  # type: ignore[return-value]
 
     equipos = _build_dashboard_equipo_items(db)
     prediccion = prediccion_service.get_latest_prediction_global(db)
@@ -140,7 +155,7 @@ def get_dashboard_summary(db: Session) -> DashboardSummaryPayload:
         if ultima_probabilidad is not None and float(ultima_probabilidad) >= 0.5:
             equipos_en_riesgo += 1
 
-    return {
+    result = {
         "total_equipos": len(equipos),
         "alertas_activas": alertas_activas,
         "equipos_en_riesgo": equipos_en_riesgo,
@@ -148,3 +163,8 @@ def get_dashboard_summary(db: Session) -> DashboardSummaryPayload:
         "probabilidad_falla": probabilidad,
         "equipos": equipos,
     }
+
+    _dashboard_cache["data"] = result
+    _dashboard_cache["timestamp"] = time.time()
+
+    return result

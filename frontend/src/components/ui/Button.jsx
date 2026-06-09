@@ -1,3 +1,5 @@
+import React from "react";
+
 /**
  * Botón del sistema de diseño ManttoAI — Estilo Apple.
  * 
@@ -12,13 +14,13 @@
  * Touch target: mínimo 44px altura (WCAG 2.2 Level AA)
  * Transiciones: 200ms ease Apple
  */
-export default function Button({ 
-  children, 
-  type = "button", 
-  variant = "primary", 
+const Button = React.memo(function Button({
+  children,
+  type = "button",
+  variant = "primary",
   size = "default",
-  className = "", 
-  ...props 
+  className = "",
+  ...props
 }) {
   // Clases base compartidas
   const baseClasses = `
@@ -105,4 +107,6 @@ export default function Button({
       {children}
     </button>
   );
-}
+});
+
+export default Button;

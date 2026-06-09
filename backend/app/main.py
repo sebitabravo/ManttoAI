@@ -4,9 +4,9 @@ from contextlib import asynccontextmanager
 import asyncio
 import logging
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import get_settings
@@ -14,7 +14,11 @@ from app.utils.logging_config import setup_logging
 from app.database import check_database_connection, initialize_database_schema
 from app.dependencies import get_current_user, require_role
 from app.middleware.audit import audit_middleware
+from app.middleware.correlation import CorrelationMiddleware
 from app.middleware.rate_limit import setup_rate_limiting
+from app.middleware.request_metrics import RequestMetricsMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.middleware.tenant import TenantMiddleware
 from app.routers import (
     alertas,
     api_keys,
@@ -101,20 +105,17 @@ async def lifespan(app_instance: FastAPI):
             stop_mqtt_subscriber()
 
 
-app = FastAPI(title=settings.app_name, lifespan=lifespan)
+# Ocultar documentación OpenAPI en producción (VULN-01)
+_docs_enabled = settings.app_env not in {"production", "staging", "prod"}
+
+app = FastAPI(
+    title=settings.app_name,
+    lifespan=lifespan,
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
+)
 API_V1_PREFIX = "/api/v1"
-
-
-def include_router_with_legacy_support(router, *, dependencies=None) -> None:
-    """Expone rutas en /api/v1 y también en raíz por compatibilidad."""
-
-    if dependencies is None:
-        app.include_router(router, prefix=API_V1_PREFIX)
-        app.include_router(router, include_in_schema=False)
-        return
-
-    app.include_router(router, prefix=API_V1_PREFIX, dependencies=dependencies)
-    app.include_router(router, dependencies=dependencies, include_in_schema=False)
 
 
 app.add_middleware(
@@ -132,15 +133,30 @@ app.add_middleware(
     expose_headers=["Content-Disposition"],
 )
 
+# Security headers (OWASP recomendados)
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Correlation ID para trazabilidad de requests
+app.add_middleware(CorrelationMiddleware)
+
+# Tenant identification via X-Tenant-ID header
+app.add_middleware(TenantMiddleware)
+
 # Configurar rate limiting para protección contra abuso
 setup_rate_limiting(app)
+
+# Métricas de latencia por request
+app.add_middleware(RequestMetricsMiddleware)
 
 # Configurar audit logging automático
 app.middleware("http")(audit_middleware)
 
-# Auth expuesto en /api/v1 y raíz por compatibilidad con clientes legacy.
-include_router_with_legacy_support(auth.router)
-app.include_router(legal.router)  # Documentación legal pública
+# Auth expuesto en /api/v1 y raíz por compatibilidad con clientes legacy
+app.include_router(auth.router)
+app.include_router(auth.router, prefix=API_V1_PREFIX)
+
+# Documentación legal pública
+app.include_router(legal.router)
 
 # Router IoT (público pero con API key authentication)
 app.include_router(iot.router, prefix=API_V1_PREFIX)
@@ -162,18 +178,17 @@ app.include_router(
     prefix=API_V1_PREFIX,
 )
 
-# Routers existentes con RBAC aplicado directamente en cada router
-# Se exponen también en raíz por compatibilidad con test suite legado.
-include_router_with_legacy_support(onboarding.router)
-include_router_with_legacy_support(equipos.router)
-include_router_with_legacy_support(lecturas.router)
-include_router_with_legacy_support(alertas.router)
-include_router_with_legacy_support(predicciones.router)
-include_router_with_legacy_support(mantenciones.router)
-include_router_with_legacy_support(umbrales.router)
-include_router_with_legacy_support(dashboard.router)
-include_router_with_legacy_support(reportes.router)
-include_router_with_legacy_support(chat.router)
+# Domain routers — solo /api/v1
+app.include_router(onboarding.router, prefix=API_V1_PREFIX)
+app.include_router(equipos.router, prefix=API_V1_PREFIX)
+app.include_router(lecturas.router, prefix=API_V1_PREFIX)
+app.include_router(alertas.router, prefix=API_V1_PREFIX)
+app.include_router(predicciones.router, prefix=API_V1_PREFIX)
+app.include_router(mantenciones.router, prefix=API_V1_PREFIX)
+app.include_router(umbrales.router, prefix=API_V1_PREFIX)
+app.include_router(dashboard.router, prefix=API_V1_PREFIX)
+app.include_router(reportes.router, prefix=API_V1_PREFIX)
+app.include_router(chat.router, prefix=API_V1_PREFIX)
 
 # Métricas (requiere auth)
 app.include_router(
@@ -184,18 +199,63 @@ app.include_router(
 
 
 @app.get("/health", tags=["system"])
-def health_check() -> JSONResponse:
-    """Health check mínimo sin exponer detalles de infraestructura."""
+async def health_check() -> JSONResponse:
+    """Health check con verificación de DB, Redis y MQTT."""
 
-    db_connected = (
-        True
-        if hasattr(app.state, "testing_session_local")
-        and check_database_connection is ORIGINAL_CHECK_DATABASE_CONNECTION
-        else check_database_connection()
-    )
-    status_code = 200 if db_connected else 503
+    import os
+
+    components = {"db": False, "redis": False, "mqtt": False}
+
+    # Verificar base de datos
+    try:
+        db_connected = (
+            check_database_connection()
+            if check_database_connection is not ORIGINAL_CHECK_DATABASE_CONNECTION
+            or not hasattr(app.state, "testing_session_local")
+            else True
+        )
+        components["db"] = True if db_connected else False
+    except Exception:
+        components["db"] = False
+
+    # Verificar Redis si está configurado
+    redis_url = os.getenv("REDIS_URL", "")
+    if redis_url:
+        try:
+            import redis
+
+            r = redis.from_url(redis_url, socket_connect_timeout=2)
+            r.ping()
+            components["redis"] = True
+        except Exception:
+            components["redis"] = False
+    else:
+        components["redis"] = True  # No configurado = no requerido
+
+    # Verificar MQTT si está habilitado
+    if settings.mqtt_enabled:
+        try:
+            import socket
+
+            mqtt_host = os.getenv("MQTT_BROKER_HOST", "mosquitto")
+            mqtt_port = int(os.getenv("MQTT_BROKER_PORT", "1883"))
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(2)
+            result = sock.connect_ex((mqtt_host, mqtt_port))
+            sock.close()
+            components["mqtt"] = result == 0
+        except Exception:
+            components["mqtt"] = False
+    else:
+        components["mqtt"] = True  # No habilitado = no requerido
+
+    all_healthy = all(components.values())
+    status_code = 200 if all_healthy else 503
 
     return JSONResponse(
         status_code=status_code,
-        content={"status": "ok" if db_connected else "error"},
+        content={
+            "status": "ok" if all_healthy else "degraded",
+            "components": components,
+        },
     )

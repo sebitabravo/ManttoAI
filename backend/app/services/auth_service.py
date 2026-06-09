@@ -119,4 +119,4 @@ def login_user(db: Session, email: str, password: str) -> Token:
 
     usuario = authenticate_user(db, email=email, password=password)
 
-    return Token(access_token=create_access_token(usuario.email))
+    return Token(access_token=create_access_token(str(usuario.id)))

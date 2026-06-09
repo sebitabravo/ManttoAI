@@ -1,11 +1,15 @@
 """Modelo de equipo."""
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, DateTime, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.organizacion import Organizacion
 
 
 class Equipo(Base):
@@ -48,11 +52,13 @@ class Equipo(Base):
     # Punto de extensión para multi-tenancy (RNF-28).
     # Nullable en MVP single-tenant. Para multi-tenant: agregar FK a organizaciones.
     organizacion_id: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-        index=True,
-        default=None,
+        Integer, ForeignKey("organizaciones.id"), nullable=True, default=None, index=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Relación a organización (multi-tenancy)
+    organizacion: Mapped["Organizacion | None"] = relationship(
+        "Organizacion", back_populates="equipos"
     )

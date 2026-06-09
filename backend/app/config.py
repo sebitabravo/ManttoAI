@@ -67,6 +67,30 @@ class Settings(BaseSettings):
     # Ejemplo: CORS_ALLOWED_ORIGINS=https://manttoai.ejemplo.com,https://www.manttoai.ejemplo.com
     cors_allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
+    # --- Multi-tenancy ---
+    tenant_header_name: str = "X-Tenant-ID"
+    tenant_mode: str = "header"  # "header" | "subdomain" | "none"
+
+    # --- Twilio (WhatsApp/SMS) ---
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_phone_number: str = ""
+    twilio_enabled: bool = False
+
+    # --- Stripe (billing) ---
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_enabled: bool = False
+
+    # --- MercadoPago (billing LATAM) ---
+    mercadopago_access_token: str = ""
+    mercadopago_enabled: bool = False
+
+    # --- SLA ---
+    sla_uptime_target: float = 99.5
+    sla_response_time_target: float = 99.9
+    sla_check_interval_minutes: int = 5
+
     def get_cors_origins(self) -> list[str]:
         """Parsea la lista de orígenes CORS desde la variable de entorno."""
 

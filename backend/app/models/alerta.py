@@ -22,6 +22,9 @@ class Alerta(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     equipo_id: Mapped[int] = mapped_column(ForeignKey("equipos.id"), index=True)
+    organizacion_id: Mapped[int | None] = mapped_column(
+        ForeignKey("organizaciones.id"), nullable=True, index=True, default=None
+    )
     tipo: Mapped[str] = mapped_column(String(50))
     mensaje: Mapped[str] = mapped_column(String(255))
     nivel: Mapped[str] = mapped_column(String(20), default="medio")

@@ -15,11 +15,14 @@ from app.database import check_database_connection, initialize_database_schema
 from app.dependencies import get_current_user, require_role
 from app.middleware.audit import audit_middleware
 from app.middleware.rate_limit import setup_rate_limiting
+from app.middleware.tenant import tenant_middleware
 from app.routers import (
     alertas,
     api_keys,
     audit_logs,
     auth,
+    billing,
+    chat,
     dashboard,
     equipos,
     iot,
@@ -30,9 +33,9 @@ from app.routers import (
     onboarding,
     predicciones,
     reportes,
+    sla,
     umbrales,
     usuarios,
-    chat,
 )
 from app.services.mqtt_service import start_mqtt_subscriber, stop_mqtt_subscriber
 from app.services.prediccion_scheduler_service import (
@@ -138,6 +141,9 @@ setup_rate_limiting(app)
 # Configurar audit logging automático
 app.middleware("http")(audit_middleware)
 
+# Middleware de multi-tenancy (extrae organización del header o subdominio)
+app.middleware("http")(tenant_middleware)
+
 # Auth expuesto en /api/v1 y raíz por compatibilidad con clientes legacy.
 include_router_with_legacy_support(auth.router)
 app.include_router(legal.router)  # Documentación legal pública
@@ -181,6 +187,16 @@ app.include_router(
     dependencies=[Depends(get_current_user)],
     prefix=API_V1_PREFIX,
 )
+
+# SLA (admin, técnico o visualizador)
+app.include_router(
+    sla.router,
+    dependencies=[Depends(get_current_user)],
+    prefix=API_V1_PREFIX,
+)
+
+# Billing (endpoints públicos como /planes y webhooks sin auth)
+app.include_router(billing.router, prefix=API_V1_PREFIX)
 
 
 @app.get("/health", tags=["system"])

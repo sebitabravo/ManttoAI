@@ -48,6 +48,11 @@ export default function useEquipoDetalle() {
   // y evitar que el polling interfiera con ellas
   const isUserOperationInProgress = useRef(false);
 
+  // Ref para mantener referencia fresca a equipo sin incluirlo en
+  // dependencias del useCallback (evita loop infinito de re-creacion)
+  const equipoRef = useRef(equipo);
+  equipoRef.current = equipo;
+
   // === Estados de edición de equipo ===
   const [showEditForm, setShowEditForm] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -115,7 +120,7 @@ export default function useEquipoDetalle() {
     } catch (fetchError) {
       // En polling, no mostrar error si ya tenemos datos (stale-while-revalidate)
       // Keep showing old data instead of error
-      if (isPolling && equipo) {
+      if (isPolling && equipoRef.current) {
         console.warn("Polling failed, keeping previous data:", fetchError.message);
       } else {
         setError(fetchError);
@@ -123,21 +128,22 @@ export default function useEquipoDetalle() {
     } finally {
       setLoading(false);
     }
-  }, [resolvedEquipoId, equipo]);
+  }, [resolvedEquipoId]); // equipo NO va en dependencias — usamos equipoRef para evitar loop
 
-  // Carga inicial
+  // Carga inicial — solo una vez al montar el componente
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     loadEquipoDetalle(false);
-  }, [loadEquipoDetalle]);
+  }, []); // Solo al montar: no depende de loadEquipoDetalle para evitar loop
 
-  // Polling automático
+  // Polling automático — se reinicia solo si cambia resolvedEquipoId
   useEffect(() => {
     const timer = window.setInterval(() => {
       loadEquipoDetalle(true);
     }, EQUIPO_DETALLE_POLLING_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
-  }, [loadEquipoDetalle]);
+  }, [loadEquipoDetalle]); // loadEquipoDetalle es estable (solo depende de resolvedEquipoId)
 
   // === Valores computados ===
   const lecturasOrdenadas = useMemo(() => {

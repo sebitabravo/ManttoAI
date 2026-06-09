@@ -16,6 +16,7 @@ import os
 from collections.abc import Callable
 
 from fastapi import Request
+from fastapi.responses import Response
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -114,11 +115,22 @@ def get_api_limit() -> str:
 SUPPORTED_ROLES = {"admin", "tecnico", "visualizador"}
 
 
+def _rate_limit_logged_handler(request: Request, exc: RateLimitExceeded) -> Response:
+    """Handler que logea antes de delegar al handler por defecto."""
+    logger.warning(
+        "Rate limit triggered for %s on %s %s",
+        request.client.host if request.client else "unknown",
+        request.method,
+        request.url.path,
+    )
+    return _rate_limit_exceeded_handler(request, exc)
+
+
 def setup_rate_limiting(app) -> None:
     """Configura rate limiting global en la aplicacion FastAPI."""
 
     app.state.limiter = _global_limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_logged_handler)
     app.add_middleware(SlowAPIMiddleware)
 
 

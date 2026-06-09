@@ -303,19 +303,21 @@ def seed_lecturas_historicas(db: Session, equipos: list[Equipo]) -> tuple[int, i
             for hour in range(0, 24, 4):
                 timestamp = datetime.now() - timedelta(days=day, hours=hour)
 
-                # Generar valores realistas con algo de variación
-                # Equipo 1: Compresor - tiende a temperatura alta
-                if "Compresor" in equipo.nombre:
-                    temp = SEED_RANDOM.uniform(35, 55)
-                    hum = SEED_RANDOM.uniform(30, 50)
-                # Equipo 2: Bomba - temperatura media
-                elif "Bomba" in equipo.nombre:
-                    temp = SEED_RANDOM.uniform(25, 45)
-                    hum = SEED_RANDOM.uniform(40, 70)
-                # Equipo 3: Motor - temperatura estable
-                else:
-                    temp = SEED_RANDOM.uniform(20, 40)
-                    hum = SEED_RANDOM.uniform(45, 75)
+                # Generar valores realistas según rubro
+                RUBRO_TEMP_RANGES = {
+                    "industrial": (35, 55),
+                    "agricola": (25, 45),
+                    "comercial": (20, 40),
+                }
+                RUBRO_HUM_RANGES = {
+                    "industrial": (30, 50),
+                    "agricola": (40, 70),
+                    "comercial": (45, 75),
+                }
+                temp_min, temp_max = RUBRO_TEMP_RANGES.get(equipo.rubro, (20, 40))
+                hum_min, hum_max = RUBRO_HUM_RANGES.get(equipo.rubro, (45, 75))
+                temp = SEED_RANDOM.uniform(temp_min, temp_max)
+                hum = SEED_RANDOM.uniform(hum_min, hum_max)
 
                 # Vibración - valores normales pero con algunos picos
                 if SEED_RANDOM.random() < 0.05:  # 5% de anomalías
@@ -355,16 +357,16 @@ def seed_predicciones_historicas(db: Session, equipos: list[Equipo]) -> int:
         if existing:
             continue
 
-        # Crear última predicción
-        if "Compresor" in equipo.nombre:
-            clasificacion = "advertencia"
-            probabilidad = SEED_RANDOM.uniform(0.6, 0.75)
-        elif "Bomba" in equipo.nombre:
-            clasificacion = "critico"
-            probabilidad = SEED_RANDOM.uniform(0.75, 0.9)
-        else:
-            clasificacion = "normal"
-            probabilidad = SEED_RANDOM.uniform(0.85, 0.95)
+        # Crear última predicción según rubro
+        RUBRO_CLASIFICACIONES = {
+            "industrial": ("advertencia", (0.6, 0.75)),
+            "agricola": ("critico", (0.75, 0.9)),
+            "comercial": ("normal", (0.85, 0.95)),
+        }
+        clasificacion, (prob_min, prob_max) = RUBRO_CLASIFICACIONES.get(
+            equipo.rubro, ("normal", (0.85, 0.95))
+        )
+        probabilidad = SEED_RANDOM.uniform(prob_min, prob_max)
 
         prediccion = Prediccion(
             equipo_id=equipo.id,
@@ -387,35 +389,35 @@ def seed_alertas_historicas(db: Session, equipos: list[Equipo]) -> tuple[int, in
 
     # Definir alertas de ejemplo
     alertas_seed = [
-        # Equipo 1: Compresor - algunas alertas de temperatura
+        # Equipo Torno CNC - algunas alertas de temperatura
         {
-            "equipo_nombre": "Compresor Línea A",
+            "equipo_nombre": "Torno CNC",
             "tipo": "umbral_temperatura",
             "mensaje": "Temperatura elevada detectada: 58°C",
             "nivel": "alto",
         },
         {
-            "equipo_nombre": "Compresor Línea A",
+            "equipo_nombre": "Torno CNC",
             "tipo": "umbral_vibracion",
             "mensaje": "Vibración anormal en eje X: 12.5 m/s²",
             "nivel": "critico",
         },
-        # Equipo 2: Bomba - alertas de vibración
+        # Equipo Brazo Robótico - alertas de vibración
         {
-            "equipo_nombre": "Bomba Hidráulica B",
+            "equipo_nombre": "Brazo Robótico",
             "tipo": "umbral_vibracion",
             "mensaje": "Vibración excesiva detectada: 15.2 m/s²",
             "nivel": "critico",
         },
         {
-            "equipo_nombre": "Bomba Hidráulica B",
+            "equipo_nombre": "Brazo Robótico",
             "tipo": "prediccion_riesgo",
             "mensaje": "Alto riesgo de falla predicho por ML",
             "nivel": "alto",
         },
-        # Equipo 3: Motor - todo normal, una advertencia leve
+        # Equipo Cámara de Frío - todo normal, una advertencia leve
         {
-            "equipo_nombre": "Motor Ventilación C",
+            "equipo_nombre": "Cámara de Frío (Supermercado)",
             "tipo": "umbral_temperatura",
             "mensaje": "Temperatura ligeramente elevada: 48°C",
             "nivel": "medio",
@@ -470,21 +472,21 @@ def seed_mantenciones_historicas(db: Session, equipos: list[Equipo]) -> tuple[in
     mantenciones_seed = [
         # Compresor - varias mantenciones
         {
-            "equipo_nombre": "Compresor Línea A",
+            "equipo_nombre": "Torno CNC",
             "tipo": "preventiva",
             "descripcion": "Cambio de filtros de aire",
             "estado": "completada",
             "dias_atras": 15,
         },
         {
-            "equipo_nombre": "Compresor Línea A",
+            "equipo_nombre": "Torno CNC",
             "tipo": "correctiva",
             "descripcion": "Reemplazo de correas de transmisión",
             "estado": "completada",
             "dias_atras": 45,
         },
         {
-            "equipo_nombre": "Compresor Línea A",
+            "equipo_nombre": "Torno CNC",
             "tipo": "preventiva",
             "descripcion": "Lubricación de rodamientos",
             "estado": "completada",
@@ -492,14 +494,14 @@ def seed_mantenciones_historicas(db: Session, equipos: list[Equipo]) -> tuple[in
         },
         # Bomba - recientes
         {
-            "equipo_nombre": "Bomba Hidráulica B",
+            "equipo_nombre": "Brazo Robótico",
             "tipo": "predictiva",
             "descripcion": "Inspección por anomalía de vibración",
             "estado": "programada",
             "dias_atras": -3,  # Futura
         },
         {
-            "equipo_nombre": "Bomba Hidráulica B",
+            "equipo_nombre": "Brazo Robótico",
             "tipo": "preventiva",
             "descripcion": "Cambio de aceite hidráulico",
             "estado": "completada",
@@ -507,14 +509,14 @@ def seed_mantenciones_historicas(db: Session, equipos: list[Equipo]) -> tuple[in
         },
         # Motor - una pendiente
         {
-            "equipo_nombre": "Motor Ventilación C",
+            "equipo_nombre": "Sistema de Riego Central",
             "tipo": "preventiva",
             "descripcion": "Limpieza de aspas y inspección de rodamientos",
             "estado": "programada",
             "dias_atras": -7,  # Futura
         },
         {
-            "equipo_nombre": "Motor Ventilación C",
+            "equipo_nombre": "Sistema de Riego Central",
             "tipo": "correctiva",
             "descripcion": "Alineación de eje",
             "estado": "completada",
@@ -575,7 +577,7 @@ def seed_demo_story(db: Session, equipos: list[Equipo]) -> tuple[int, int, int]:
     if not equipos:
         return 0, 0, 0
 
-    equipo = next((item for item in equipos if "Compresor" in item.nombre), equipos[0])
+    equipo = next((item for item in equipos if "Torno CNC" in item.nombre), equipos[0])
 
     story_tag = "[STORY-DEMO]"
     existing_story = db.scalars(

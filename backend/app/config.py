@@ -1,12 +1,16 @@
 """Configuración centralizada del backend."""
 
+import logging
+import os
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
+
+_log = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -23,9 +27,55 @@ class Settings(BaseSettings):
     api_prefix: str = ""
     database_url: str = "sqlite:///./manttoai.db"
     database_auto_init: bool = True
-    # En desarrollo se permite fallback para facilitar demo local.
-    # En stage/prod se exige valor seguro (ver validate_security_settings).
-    secret_key: str = Field(default="manttoai-dev-secret")
+    secret_key: str = Field(default="")
+
+    @field_validator("secret_key")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        """Valida o genera SECRET_KEY según entorno."""
+        non_dev_envs = {"production", "staging", "prod"}
+
+        if not v:
+            app_env_raw = os.getenv("APP_ENV", "development")
+            app_env_normalized = app_env_raw.strip().lower()
+
+            if app_env_normalized in non_dev_envs:
+                raise ValueError(
+                    "SECRET_KEY vacío no permitido fuera de desarrollo "
+                    "(APP_ENV actual: %s). "
+                    "Generá uno con: python -c 'import secrets; print(secrets.token_hex(32))'"
+                    % app_env_raw
+                )
+
+            import secrets
+
+            v = secrets.token_hex(32)
+            _log.warning(
+                "SECRET_KEY generado automáticamente para desarrollo: %s...",
+                v[:8],
+            )
+            return v
+
+        if v == "manttoai-dev-secret":
+            app_env_raw = os.getenv("APP_ENV", "development")
+            app_env_normalized = app_env_raw.strip().lower()
+
+            if app_env_normalized in non_dev_envs:
+                raise ValueError(
+                    "SECRET_KEY usa el valor por defecto 'manttoai-dev-secret' "
+                    "que no es seguro para producción (APP_ENV actual: %s). "
+                    "Configurá SECRET_KEY en .env o secrets manager."
+                    % app_env_raw
+                )
+
+            _log.warning(
+                "SECRET_KEY usa el valor por defecto obsoleto "
+                "'manttoai-dev-secret'. Generá uno propio con: "
+                "python -c 'import secrets; print(secrets.token_hex(32))'"
+            )
+
+        return v
+
     mqtt_broker_host: str = "localhost"
     mqtt_broker_port: int = 1883
     mqtt_username: str = ""
@@ -87,18 +137,6 @@ class Settings(BaseSettings):
         non_dev_envs = {"staging", "stage", "production", "prod"}
         app_env_normalized = self.app_env.strip().lower()
         database_url_normalized = self.database_url.strip().lower()
-
-        if not self.secret_key or self.secret_key == "manttoai-dev-secret":
-            if app_env_normalized in non_dev_envs:
-                raise ValueError(
-                    "SECRET_KEY vacío o por defecto no permitido fuera de desarrollo. "
-                    "Generá una clave segura con: openssl rand -hex 32"
-                )
-            # Advertencia en desarrollo para que el equipo no olvide cambiarla
-            _log.warning(
-                "SECRET_KEY usa valor por defecto o está vacío en desarrollo. "
-                "Definí SECRET_KEY en backend/.env antes de desplegar."
-            )
 
         if app_env_normalized in non_dev_envs:
             if database_url_normalized.startswith("sqlite"):

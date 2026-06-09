@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from "react";
+import React, { useEffect, useId, useRef } from "react";
 
 /**
  * Modal del sistema de diseño ManttoAI.
@@ -16,7 +16,7 @@ import { useEffect, useId, useRef } from "react";
  * - onClose: function — callback al cerrar (Escape o click fuera)
  * - children: contenido del modal
  */
-export default function Modal({ open = false, title = "Modal", onClose, children }) {
+const Modal = React.memo(function Modal({ open = false, title = "Modal", onClose, children }) {
   const dialogRef = useRef(null);
   const titleId = `modal-title-${useId().replace(/:/g, "")}`;
 
@@ -147,4 +147,6 @@ export default function Modal({ open = false, title = "Modal", onClose, children
       </div>
     </div>
   );
-}
+});
+
+export default Modal;

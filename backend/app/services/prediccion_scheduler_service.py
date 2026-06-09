@@ -98,7 +98,7 @@ def run_periodic_predictions(
             )
             return False
         except Exception:
-            logger.exception(
+            logger.warning(
                 "Error inesperado ejecutando predicción periódica equipo_id=%s",
                 equipo_id,
             )

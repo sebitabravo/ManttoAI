@@ -2,14 +2,24 @@
 
 from app.routers import (
     alertas,
+    api_keys,
+    audit_logs,
     auth,
+    billing,
+    chat,
     dashboard,
     equipos,
+    iot,
     lecturas,
+    legal,
     mantenciones,
+    metrics,
+    onboarding,
     predicciones,
     reportes,
+    sla,
     umbrales,
+    usuarios,
 )
 
 __all__ = [
@@ -22,4 +32,14 @@ __all__ = [
     "umbrales",
     "dashboard",
     "reportes",
+    "api_keys",
+    "audit_logs",
+    "billing",
+    "chat",
+    "iot",
+    "legal",
+    "metrics",
+    "onboarding",
+    "sla",
+    "usuarios",
 ]

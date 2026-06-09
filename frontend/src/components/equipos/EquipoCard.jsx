@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { getConfigPrediccion, formatPorcentajeRiesgo } from "../../utils/prediccion";
 import { getRubroBadgeClass, getRubroLabel } from "../../utils/rubro";
-import { deleteEquipo } from "../../api/equipos";
+import { deleteEquipo, updateEquipo } from "../../api/equipos";
+import EquipoForm from "./EquipoForm";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 
@@ -29,11 +30,15 @@ function PrediccionBadge({ clasificacion, probabilidad }) {
   );
 }
 
-export default function EquipoCard({ equipo, onDeleted }) {
+export default function EquipoCard({ equipo, onDeleted, onEdited }) {
   const latestValueLabel = equipo.dato || "Sin lecturas registradas";
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  // Edicion
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState("");
 
   async function handleDelete() {
     setIsDeleting(true);
@@ -49,6 +54,21 @@ export default function EquipoCard({ equipo, onDeleted }) {
     }
   }
 
+  async function handleEdit(payload) {
+    if (!equipo?.id) return;
+    setUpdateError("");
+    setIsUpdating(true);
+    try {
+      await updateEquipo(equipo.id, payload);
+      setShowEditModal(false);
+      onEdited?.();
+    } catch {
+      setUpdateError("No pudimos actualizar el equipo. Probá nuevamente.");
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
   // Datos de predicción enriquecidos desde EquiposPage
   const clasificacion = equipo.ultima_clasificacion ?? null;
   const probabilidad = equipo.ultima_probabilidad ?? null;
@@ -59,14 +79,24 @@ export default function EquipoCard({ equipo, onDeleted }) {
       <article className="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-sm transition-all duration-150 ease-out-quart hover:shadow-[rgba(0,0,0,0.22)_3px_5px_30px_0px]">
         <div className="flex items-start justify-between gap-2">
           <h2 className="mb-1 mt-0 text-base font-semibold text-neutral-900">{equipo.nombre}</h2>
-          <button
-            type="button"
-            onClick={() => setShowDeleteModal(true)}
-            className="shrink-0 rounded px-2 py-1 text-xs text-neutral-400 transition-colors hover:bg-danger-50 hover:text-danger-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-danger-500"
-            aria-label={`Eliminar ${equipo.nombre}`}
-          >
-            ✕
-          </button>
+          <div className="flex shrink-0 gap-1">
+            <button
+              type="button"
+              onClick={() => setShowEditModal(true)}
+              className="shrink-0 rounded px-2 py-1 text-xs text-neutral-400 transition-colors hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              aria-label={`Editar ${equipo.nombre}`}
+            >
+              ✎
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="shrink-0 rounded px-2 py-1 text-xs text-neutral-400 transition-colors hover:bg-danger-50 hover:text-danger-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-danger-500"
+              aria-label={`Eliminar ${equipo.nombre}`}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Indicador visual de predicción */}
@@ -109,6 +139,25 @@ export default function EquipoCard({ equipo, onDeleted }) {
               {isDeleting ? "Eliminando..." : "Eliminar"}
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal open={showEditModal} onClose={() => setShowEditModal(false)} title="Editar equipo">
+        <div className="space-y-4">
+          <EquipoForm
+            submitLabel="Guardar cambios"
+            onSubmit={handleEdit}
+            onCancel={() => setShowEditModal(false)}
+            isSubmitting={isUpdating}
+            errorMessage={updateError}
+            initialValues={{
+              nombre: equipo.nombre,
+              tipo: equipo.tipo,
+              rubro: equipo.rubro,
+              estado: equipo.estado,
+              ubicacion: equipo.ubicacion,
+            }}
+          />
         </div>
       </Modal>
     </>

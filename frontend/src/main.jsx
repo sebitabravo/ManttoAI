@@ -9,3 +9,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <App />
   </React.StrictMode>
 );
+
+// Registrar Service Worker para PWA (solo en producción)
+if (
+  import.meta.env.PROD &&
+  "serviceWorker" in navigator
+) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {
+    // Fallo silencioso: la app funciona sin offline
+  });
+}

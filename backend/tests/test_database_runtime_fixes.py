@@ -224,6 +224,9 @@ def test_apply_runtime_schema_fixes_logs_info_when_any_patch_applies(
         return column_name == "descripcion"
 
     monkeypatch.setattr(database, "_add_column_if_missing", fake_add_column)
+    monkeypatch.setattr(
+        database, "_alter_column_type_if_needed", lambda t, c, d: False
+    )
     monkeypatch.setattr(database, "_ensure_alerta_unique_index", lambda: False)
 
     with caplog.at_level("INFO"):

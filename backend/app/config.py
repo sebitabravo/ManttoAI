@@ -1,11 +1,10 @@
 """Configuración centralizada del backend."""
 
 import logging
-import os
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -31,14 +30,18 @@ class Settings(BaseSettings):
 
     @field_validator("secret_key")
     @classmethod
-    def validate_secret_key(cls, v: str) -> str:
+    def validate_secret_key(cls, v: str, info: ValidationInfo) -> str:
         """Valida o genera SECRET_KEY según entorno."""
         non_dev_envs = {"production", "staging", "prod"}
 
-        if not v:
-            app_env_raw = os.getenv("APP_ENV", "development")
-            app_env_normalized = app_env_raw.strip().lower()
+        # Resolver app_env una sola vez; en tests info.data puede ser None
+        if info.data:
+            app_env_raw = info.data.get("app_env", "development")
+        else:
+            app_env_raw = "development"
+        app_env_normalized = app_env_raw.strip().lower()
 
+        if not v:
             if app_env_normalized in non_dev_envs:
                 raise ValueError(
                     "SECRET_KEY vacío no permitido fuera de desarrollo "
@@ -51,21 +54,17 @@ class Settings(BaseSettings):
 
             v = secrets.token_hex(32)
             _log.warning(
-                "SECRET_KEY generado automáticamente para desarrollo: %s...",
-                v[:8],
+                "SECRET_KEY generado automáticamente para desarrollo (longitud=%d)",
+                len(v),
             )
             return v
 
         if v == "manttoai-dev-secret":
-            app_env_raw = os.getenv("APP_ENV", "development")
-            app_env_normalized = app_env_raw.strip().lower()
-
             if app_env_normalized in non_dev_envs:
                 raise ValueError(
                     "SECRET_KEY usa el valor por defecto 'manttoai-dev-secret' "
                     "que no es seguro para producción (APP_ENV actual: %s). "
-                    "Configurá SECRET_KEY en .env o secrets manager."
-                    % app_env_raw
+                    "Configurá SECRET_KEY en .env o secrets manager." % app_env_raw
                 )
 
             _log.warning(

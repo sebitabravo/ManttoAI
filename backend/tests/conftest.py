@@ -17,6 +17,15 @@ from app.models.usuario import Usuario
 from app.middleware.rate_limit import limiter
 from app.services.auth_service import create_access_token, hash_password
 
+
+def _reset_dashboard_cache() -> None:
+    """Resetea el cache en memoria del dashboard service entre tests."""
+    import app.services.dashboard_service as ds
+
+    ds._cache_timestamp = 0.0
+    ds._cached_summary = None
+
+
 @pytest.fixture(autouse=True)
 def _reset_rate_limiter():
     """Resetea el rate limiter en memoria antes de cada test."""
@@ -26,6 +35,8 @@ def _reset_rate_limiter():
         storage.reset()
     elif storage is not None and hasattr(storage, "clear"):
         storage.clear()
+
+    _reset_dashboard_cache()
 
 
 TEST_USER_EMAIL = "admin@manttoai.local"

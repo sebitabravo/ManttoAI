@@ -101,6 +101,7 @@ def run_periodic_predictions(
             logger.warning(
                 "Error inesperado ejecutando predicción periódica equipo_id=%s",
                 equipo_id,
+                exc_info=True,
             )
             return False
         finally:
@@ -212,7 +213,8 @@ def start_prediction_scheduler(session_factory: SessionFactory | None = None) ->
         validation_session.close()
     except Exception:
         logger.warning(
-            "No se pudo cerrar sesión de validación del scheduler de predicciones"
+            "No se pudo cerrar sesión de validación del scheduler de predicciones",
+            exc_info=True,
         )
 
     with _prediction_scheduler_lock:
@@ -237,7 +239,9 @@ def start_prediction_scheduler(session_factory: SessionFactory | None = None) ->
             try:
                 scheduler.shutdown(wait=False)
             except Exception:
-                logger.warning("Fallo al limpiar scheduler parcialmente creado")
+                logger.warning(
+                    "Fallo al limpiar scheduler parcialmente creado", exc_info=True
+                )
             return False
 
         _prediction_scheduler = scheduler

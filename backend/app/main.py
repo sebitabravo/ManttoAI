@@ -161,11 +161,19 @@ app.include_router(legal.router)
 # Router IoT (público pero con API key authentication)
 app.include_router(iot.router, prefix=API_V1_PREFIX)
 
-# Admin-only routers
+# Admin-only routers — dual-mounted (raíz + /api/v1) para backward compatibility
+app.include_router(
+    usuarios.router,
+    dependencies=[Depends(require_role("admin"))],
+)
 app.include_router(
     usuarios.router,
     dependencies=[Depends(require_role("admin"))],
     prefix=API_V1_PREFIX,
+)
+app.include_router(
+    api_keys.router,
+    dependencies=[Depends(require_role("admin"))],
 )
 app.include_router(
     api_keys.router,
@@ -175,22 +183,44 @@ app.include_router(
 app.include_router(
     audit_logs.router,
     dependencies=[Depends(require_role("admin"))],
+)
+app.include_router(
+    audit_logs.router,
+    dependencies=[Depends(require_role("admin"))],
     prefix=API_V1_PREFIX,
 )
 
-# Domain routers — solo /api/v1
+# Domain routers — dual-mounted (raíz + /api/v1) para backward compatibility con tests
+app.include_router(onboarding.router)
 app.include_router(onboarding.router, prefix=API_V1_PREFIX)
+app.include_router(equipos.router)
 app.include_router(equipos.router, prefix=API_V1_PREFIX)
+app.include_router(lecturas.router)
 app.include_router(lecturas.router, prefix=API_V1_PREFIX)
+app.include_router(alertas.router)
 app.include_router(alertas.router, prefix=API_V1_PREFIX)
+app.include_router(predicciones.router)
 app.include_router(predicciones.router, prefix=API_V1_PREFIX)
+app.include_router(mantenciones.router)
 app.include_router(mantenciones.router, prefix=API_V1_PREFIX)
+app.include_router(umbrales.router)
 app.include_router(umbrales.router, prefix=API_V1_PREFIX)
+app.include_router(dashboard.router)
 app.include_router(dashboard.router, prefix=API_V1_PREFIX)
+app.include_router(reportes.router)
 app.include_router(reportes.router, prefix=API_V1_PREFIX)
+app.include_router(chat.router)
 app.include_router(chat.router, prefix=API_V1_PREFIX)
 
-# Métricas (requiere auth)
+# IoT router — dual-mounted
+app.include_router(iot.router)
+app.include_router(iot.router, prefix=API_V1_PREFIX)
+
+# Métricas (requiere auth) — dual-mounted
+app.include_router(
+    metrics.router,
+    dependencies=[Depends(get_current_user)],
+)
 app.include_router(
     metrics.router,
     dependencies=[Depends(get_current_user)],
@@ -200,7 +230,13 @@ app.include_router(
 
 @app.get("/health", tags=["system"])
 async def health_check() -> JSONResponse:
-    """Health check con verificación de DB, Redis y MQTT."""
+    """Liveness probe: indica que la aplicación responde (sin verificar dependencias)."""
+    return JSONResponse(status_code=200, content={"status": "ok"})
+
+
+@app.get("/ready", tags=["system"])
+async def readiness_check() -> JSONResponse:
+    """Readiness probe: verifica DB, Redis y MQTT. 503 cuando está degradado."""
 
     import os
 

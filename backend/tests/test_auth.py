@@ -18,7 +18,7 @@ def test_register_endpoint_persists_user_with_hashed_password(unauthenticated_cl
     payload = {
         "nombre": "Sebastián",
         "email": "sebastian@example.com",
-        "password": "Test1234",
+        "password": "Test1234!",
         "rol": "admin",
     }
 
@@ -206,8 +206,9 @@ def test_protected_endpoint_rejects_inactive_user_token(unauthenticated_client):
         assert usuario is not None
         usuario.is_active = False
         db.commit()
+        user_id = usuario.id
 
-    token = create_access_token("admin@manttoai.local")
+    token = create_access_token(str(user_id))
     response = unauthenticated_client.get(
         "/equipos",
         headers={"Authorization": f"Bearer {token}"},

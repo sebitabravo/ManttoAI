@@ -47,7 +47,11 @@ def session_factory_sqlite() -> Generator[sessionmaker, None, None]:
     engine.dispose()
 
 
-def _crear_equipo(session_factory: sessionmaker, equipo_id_hint: int = 1, mac_address: str = "00:1A:2B:3C:4D:5E") -> int:
+def _crear_equipo(
+    session_factory: sessionmaker,
+    equipo_id_hint: int = 1,
+    mac_address: str = "00:1A:2B:3C:4D:5E",
+) -> int:
     """Crea un equipo auxiliar y retorna su ID real persistido."""
 
     db = session_factory()
@@ -82,7 +86,7 @@ class TestRNF01LatenciaMQTT:
         RNF-01: El procesamiento completo de un mensaje MQTT (parse + validación
         + persistencia en DB) debe completarse en menos de 5 segundos.
         """
-        equipo_id = _crear_equipo(session_factory_sqlite)
+        _crear_equipo(session_factory_sqlite)
         topic = "manttoai/telemetria/00:1A:2B:3C:4D:5E"
         payload = (
             '{"temperatura": 45.2, "humedad": 60.0, '
@@ -108,7 +112,7 @@ class TestRNF01LatenciaMQTT:
         RNF-01: Procesar 10 lecturas consecutivas debe completarse en < 5s por lectura.
         Valida que no hay degradación acumulativa en el pipeline.
         """
-        equipo_id = _crear_equipo(session_factory_sqlite, equipo_id_hint=2)
+        _crear_equipo(session_factory_sqlite, equipo_id_hint=2)
         topic = "manttoai/telemetria/00:1A:2B:3C:4D:5E"
         n_lecturas = 10
         latencias: list[float] = []

@@ -206,7 +206,7 @@ def print_results(results: Dict[str, LoadTestResult]):
         print(f"   ❌ Fallidos: {result.failed_requests}")
         print(f"   📈 Error rate: {result.error_rate}%")
         print(f"   ⚡ Requests/seg: {result.requests_per_second}")
-        print(f"\n   🕐 Tiempos de respuesta (ms):")
+        print("\n   🕐 Tiempos de respuesta (ms):")
         print(f"   Promedio: {result.avg_response_time_ms}ms")
         print(f"   P50: {result.p50_response_time_ms}ms")
         print(f"   P95: {result.p95_response_time_ms}ms")
@@ -216,11 +216,11 @@ def print_results(results: Dict[str, LoadTestResult]):
 
         # Evaluación de performance
         if result.error_rate > 5:
-            print(f"   ⚠️  WARNING: Error rate alto (>5%)")
+            print("   ⚠️  WARNING: Error rate alto (>5%)")
         if result.avg_response_time_ms > 1000:
-            print(f"   ⚠️  WARNING: Tiempo promedio alto (>1000ms)")
+            print("   ⚠️  WARNING: Tiempo promedio alto (>1000ms)")
         if result.p95_response_time_ms > 2000:
-            print(f"   ⚠️  WARNING: P95 alto (>2000ms)")
+            print("   ⚠️  WARNING: P95 alto (>2000ms)")
 
     # Resumen general
     print("\n" + "=" * 80)

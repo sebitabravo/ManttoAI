@@ -18,7 +18,9 @@ class Prediccion(Base):
     __tablename__ = "predicciones"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    equipo_id: Mapped[int] = mapped_column(ForeignKey("equipos.id", ondelete="CASCADE"), index=True)
+    equipo_id: Mapped[int] = mapped_column(
+        ForeignKey("equipos.id", ondelete="CASCADE"), index=True
+    )
     clasificacion: Mapped[str] = mapped_column(String(30), default="normal")
     probabilidad: Mapped[float] = mapped_column(Float, default=0.0)
     modelo_version: Mapped[str] = mapped_column(String(30), default="rf-mvp")

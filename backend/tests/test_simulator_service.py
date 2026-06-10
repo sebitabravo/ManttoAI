@@ -16,14 +16,14 @@ from app.services.simulator_service import (
     stop_simulator,
     _SIMULATOR_JOB_ID,
 )
-from app.config import Settings, get_settings
+from app.config import Settings
 from sqlalchemy.orm import Session
 from collections.abc import Callable
 
 try:
     import paho.mqtt.client as mqtt_client_lib
 except ImportError:
-    mqtt_client_lib = MagicMock() # Mock if not available
+    mqtt_client_lib = MagicMock()  # Mock if not available
 
 
 @pytest.fixture(autouse=True)
@@ -66,9 +66,7 @@ class TestSimulatorService:
     @patch("app.services.simulator_service.datetime")
     def test_build_reading(self, mock_datetime):
         """Verifica que _build_reading genera lecturas con el formato y rangos correctos."""
-        mock_datetime.now.return_value.isoformat.return_value = (
-            "2023-01-01T12:00:00Z"
-        )
+        mock_datetime.now.return_value.isoformat.return_value = "2023-01-01T12:00:00Z"
         rng = random.Random(42)  # Seed para reproducibilidad
         profile = {
             "temp_range": (10.0, 20.0),
@@ -102,8 +100,8 @@ class TestSimulatorService:
         assert resolved is mock_session_local
 
     @patch("app.services.simulator_service.get_settings")
-    @patch("app.services.equipo_service.list_equipos") # Patch where it's imported
-    @patch("app.database.SessionLocal") # Patch where it's imported
+    @patch("app.services.equipo_service.list_equipos")  # Patch where it's imported
+    @patch("app.database.SessionLocal")  # Patch where it's imported
     def test_run_simulator_cycle_mqtt_unavailable(
         self, mock_session_local, mock_list_equipos, mock_get_settings
     ):
@@ -183,10 +181,10 @@ class TestSimulatorService:
     @patch("app.services.simulator_service.mqtt.Client")
     @patch("app.services.equipo_service.list_equipos")
     @patch("app.services.simulator_service.random.Random")
-    @patch("app.database.SessionLocal") # Add this patch
+    @patch("app.database.SessionLocal")  # Add this patch
     def test_run_simulator_cycle_success(
         self,
-        mock_session_local, # Added
+        mock_session_local,  # Added
         mock_random,
         mock_list_equipos,
         mock_mqtt_client,
@@ -249,10 +247,10 @@ class TestSimulatorService:
     @patch("app.services.simulator_service.mqtt.Client")
     @patch("app.services.equipo_service.list_equipos")
     @patch("app.services.simulator_service.random.Random")
-    @patch("app.database.SessionLocal") # Add this patch
+    @patch("app.database.SessionLocal")  # Add this patch
     def test_run_simulator_cycle_partial_publish_failure(
         self,
-        mock_session_local, # Added
+        mock_session_local,  # Added
         mock_random,
         mock_list_equipos,
         mock_mqtt_client,
@@ -308,7 +306,6 @@ class TestSimulatorService:
         mock_mqtt_instance.disconnect.assert_called_once()
         mock_session.close.assert_called_once()
 
-
     @patch("app.services.simulator_service._simulator_scheduler")
     def test_is_simulator_running_true_from_running(self, mock_scheduler):
         """Verifica que is_simulator_running retorna True si el scheduler está corriendo (atributo 'running')."""
@@ -339,20 +336,23 @@ class TestSimulatorService:
         """Verifica que is_simulator_running retorna False si no hay scheduler."""
         assert is_simulator_running() is False
 
-
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.logger")
     def test_start_simulator_disabled_by_config(self, mock_logger, mock_get_settings):
         """Verifica que el simulador no inicia si está deshabilitado por configuración."""
         mock_get_settings.return_value = Settings(simulator_enabled=False)
         assert start_simulator() is False
-        mock_logger.info.assert_called_with("Simulador IoT deshabilitado por configuración")
+        mock_logger.info.assert_called_with(
+            "Simulador IoT deshabilitado por configuración"
+        )
 
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.logger")
     def test_start_simulator_mqtt_disabled(self, mock_logger, mock_get_settings):
         """Verifica que el simulador no inicia si MQTT está deshabilitado."""
-        mock_get_settings.return_value = Settings(simulator_enabled=True, mqtt_enabled=False)
+        mock_get_settings.return_value = Settings(
+            simulator_enabled=True, mqtt_enabled=False
+        )
         assert start_simulator() is False
         mock_logger.info.assert_called_with("Simulador IoT requiere MQTT habilitado")
 
@@ -364,22 +364,30 @@ class TestSimulatorService:
             simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=0
         )
         assert start_simulator() is False
-        mock_logger.warning.assert_called_with("Intervalo inválido para simulador: %s", 0)
+        mock_logger.warning.assert_called_with(
+            "Intervalo inválido para simulador: %s", 0
+        )
 
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.logger")
     @patch("app.services.simulator_service.BackgroundScheduler", new=None)
-    def test_start_simulator_apscheduler_unavailable(self, mock_logger, mock_get_settings):
+    def test_start_simulator_apscheduler_unavailable(
+        self, mock_logger, mock_get_settings
+    ):
         """Verifica que el simulador no inicia si APScheduler no está disponible."""
         mock_get_settings.return_value = Settings(
             simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
         )
         assert start_simulator() is False
-        mock_logger.warning.assert_called_with("APScheduler no disponible para simulador")
+        mock_logger.warning.assert_called_with(
+            "APScheduler no disponible para simulador"
+        )
 
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.logger")
-    def test_start_simulator_invalid_session_factory(self, mock_logger, mock_get_settings):
+    def test_start_simulator_invalid_session_factory(
+        self, mock_logger, mock_get_settings
+    ):
         """Verifica que el simulador no inicia con una SessionFactory inválida."""
         mock_get_settings.return_value = Settings(
             simulator_enabled=True, mqtt_enabled=True, simulator_interval_seconds=10
@@ -392,10 +400,7 @@ class TestSimulatorService:
     @patch("app.services.simulator_service.BackgroundScheduler")
     @patch("app.services.simulator_service.logger")
     def test_start_simulator_success(
-        self,
-        mock_logger,
-        mock_background_scheduler,
-        mock_get_settings
+        self, mock_logger, mock_background_scheduler, mock_get_settings
     ):
         """Verifica que el simulador inicia correctamente."""
         settings = Settings(
@@ -437,13 +442,17 @@ class TestSimulatorService:
 
         mock_scheduler_instance = MagicMock()
         mock_background_scheduler.return_value = mock_scheduler_instance
-        mock_scheduler_instance.start.side_effect = Exception("Scheduler start failed") # Simulate exception during start
+        mock_scheduler_instance.start.side_effect = Exception(
+            "Scheduler start failed"
+        )  # Simulate exception during start
 
         mock_session_factory = MagicMock(spec=Callable[[], Session])
 
         assert start_simulator(session_factory=mock_session_factory) is False
         mock_logger.exception.assert_called_with("No se pudo iniciar el simulador")
-        mock_scheduler_instance.shutdown.assert_called_once_with(wait=False) # Ensure shutdown is called
+        mock_scheduler_instance.shutdown.assert_called_once_with(
+            wait=False
+        )  # Ensure shutdown is called
 
     @patch("app.services.simulator_service.logger")
     def test_stop_simulator_not_running(self, mock_logger):

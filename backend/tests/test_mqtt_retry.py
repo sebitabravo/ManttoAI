@@ -41,7 +41,9 @@ def session_factory_sqlite() -> Generator[sessionmaker, None, None]:
     engine.dispose()
 
 
-def _crear_equipo(session_factory: sessionmaker, mac_address: str = "00:1A:2B:3C:4D:5E") -> int:
+def _crear_equipo(
+    session_factory: sessionmaker, mac_address: str = "00:1A:2B:3C:4D:5E"
+) -> int:
     """Crea un equipo auxiliar y retorna su ID."""
 
     db = session_factory()
@@ -85,11 +87,11 @@ class TestPersistLecturaWithRetry:
         self, session_factory_sqlite: sessionmaker
     ) -> None:
         """RNF-17: Sin errores de DB, persiste en el primer intento."""
-        equipo_id = _crear_equipo(session_factory_sqlite)
+        _crear_equipo(session_factory_sqlite)
         payload = _build_lectura_payload()
 
         resultado = _persist_lectura_with_retry(
-            topic=f"manttoai/telemetria/00:1A:2B:3C:4D:5E",
+            topic="manttoai/telemetria/00:1A:2B:3C:4D:5E",
             mac_address="00:1A:2B:3C:4D:5E",
             lectura_payload=payload,
             session_factory=session_factory_sqlite,
@@ -106,7 +108,7 @@ class TestPersistLecturaWithRetry:
         RNF-17: Si la DB falla con OperationalError en el primer intento
         pero se recupera en el segundo, debe persistir exitosamente.
         """
-        equipo_id = _crear_equipo(session_factory_sqlite)
+        _crear_equipo(session_factory_sqlite)
         payload = _build_lectura_payload()
         topic = "manttoai/telemetria/00:1A:2B:3C:4D:5E"
 
@@ -148,7 +150,7 @@ class TestPersistLecturaWithRetry:
         RNF-17: Si la DB falla en todos los intentos, debe retornar False
         y no propagar la excepción.
         """
-        equipo_id = _crear_equipo(session_factory_sqlite)
+        _crear_equipo(session_factory_sqlite)
         payload = _build_lectura_payload()
         topic = "manttoai/telemetria/00:1A:2B:3C:4D:5E"
 
@@ -178,7 +180,7 @@ class TestPersistLecturaWithRetry:
         """
         from fastapi import HTTPException
 
-        equipo_id = _crear_equipo(session_factory_sqlite, mac_address="99:99:99:99:99:99")
+        _crear_equipo(session_factory_sqlite, mac_address="99:99:99:99:99:99")
         payload = _build_lectura_payload()
         topic = "manttoai/telemetria/99:99:99:99:99:99"
 
@@ -208,7 +210,7 @@ class TestPersistLecturaWithRetry:
         RNF-17: process_mqtt_message debe delegar en _persist_lectura_with_retry,
         garantizando que el retry está activo en el pipeline completo.
         """
-        equipo_id = _crear_equipo(session_factory_sqlite)
+        _crear_equipo(session_factory_sqlite)
         topic = "manttoai/telemetria/00:1A:2B:3C:4D:5E"
         payload = (
             '{"temperatura": 50.0, "humedad": 55.0, '

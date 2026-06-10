@@ -30,7 +30,7 @@ def check_ml_metrics():
         dataset = generate_synthetic_dataset(size=500, seed=42)
         metrics = evaluate_model(dataframe=dataset, test_size=0.2, random_state=42)
 
-        print(f"\n📊 Métricas del modelo:")
+        print("\n📊 Métricas del modelo:")
         print(f"   Accuracy: {metrics['accuracy']:.2%}")
         print(f"   Precision: {metrics['precision']:.2%}")
         print(f"   Recall: {metrics['recall']:.2%}")
@@ -82,7 +82,7 @@ def check_test_coverage():
 
     try:
         # Ejecutar tests con coverage
-        result = subprocess.run(
+        subprocess.run(
             [
                 "pytest",
                 "tests/",
@@ -110,7 +110,7 @@ def check_test_coverage():
             print(f"\n📊 Cobertura total: {total_coverage:.1f}%")
 
             # Mostrar cobertura por módulo
-            print(f"\n📦 Cobertura por módulo:")
+            print("\n📦 Cobertura por módulo:")
             for file_path, file_data in coverage_data.get("files", {}).items():
                 if file_path.startswith("app/"):
                     module_name = file_path.replace("app/", "").replace(".py", "")
@@ -140,7 +140,7 @@ def check_test_coverage():
                 )
 
             if total_coverage < required_coverage:
-                print(f"\n⚠️  Módulos con baja cobertura:")
+                print("\n⚠️  Módulos con baja cobertura:")
                 for file_path, file_data in coverage_data.get("files", {}).items():
                     if file_path.startswith("app/"):
                         module_name = file_path.replace("app/", "").replace(".py", "")

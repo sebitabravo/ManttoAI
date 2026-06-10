@@ -17,10 +17,10 @@ def test_health_endpoint_reports_database_down(client, monkeypatch):
 
     monkeypatch.setattr(main, "check_database_connection", lambda: False)
 
-    response = client.get("/health")
+    response = client.get("/ready")
     assert response.status_code == 503
     payload = response.json()
-    assert payload["status"] == "error"
+    assert payload["status"] == "degraded"
 
 
 def test_dashboard_summary(client):

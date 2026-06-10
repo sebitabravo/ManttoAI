@@ -18,7 +18,9 @@ class Lectura(Base):
     __tablename__ = "lecturas"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    equipo_id: Mapped[int] = mapped_column(ForeignKey("equipos.id", ondelete="CASCADE"), index=True)
+    equipo_id: Mapped[int] = mapped_column(
+        ForeignKey("equipos.id", ondelete="CASCADE"), index=True
+    )
     temperatura: Mapped[float] = mapped_column(Float)
     humedad: Mapped[float] = mapped_column(Float)
     vib_x: Mapped[float] = mapped_column(Float)

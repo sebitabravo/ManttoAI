@@ -291,7 +291,7 @@ class TestRNF04TiempoRespuestaAPI:
     def test_get_equipos_responde_en_menos_de_500ms(self, client) -> None:
         """RNF-04: GET /equipos debe responder en < 500ms."""
         inicio = time.perf_counter()
-        response = client.get("/equipos")
+        response = client.get("/api/v1/equipos")
         duracion = time.perf_counter() - inicio
 
         assert response.status_code == 200
@@ -303,7 +303,7 @@ class TestRNF04TiempoRespuestaAPI:
     def test_get_alertas_responde_en_menos_de_500ms(self, client) -> None:
         """RNF-04: GET /alertas debe responder en < 500ms."""
         inicio = time.perf_counter()
-        response = client.get("/alertas")
+        response = client.get("/api/v1/alertas")
         duracion = time.perf_counter() - inicio
 
         assert response.status_code == 200
@@ -315,7 +315,7 @@ class TestRNF04TiempoRespuestaAPI:
     def test_get_lecturas_responde_en_menos_de_500ms(self, client) -> None:
         """RNF-04: GET /lecturas debe responder en < 500ms."""
         inicio = time.perf_counter()
-        response = client.get("/lecturas")
+        response = client.get("/api/v1/lecturas")
         duracion = time.perf_counter() - inicio
 
         assert response.status_code == 200
@@ -327,7 +327,7 @@ class TestRNF04TiempoRespuestaAPI:
     def test_get_dashboard_resumen_responde_en_menos_de_500ms(self, client) -> None:
         """RNF-04: GET /dashboard/resumen debe responder en < 500ms."""
         inicio = time.perf_counter()
-        response = client.get("/dashboard/resumen")
+        response = client.get("/api/v1/dashboard/resumen")
         duracion = time.perf_counter() - inicio
 
         assert response.status_code == 200
@@ -346,7 +346,7 @@ class TestRNF04TiempoRespuestaAPI:
         }
 
         inicio = time.perf_counter()
-        response = client.post("/equipos", json=payload)
+        response = client.post("/api/v1/equipos", json=payload)
         duracion = time.perf_counter() - inicio
 
         assert response.status_code == 201
@@ -359,7 +359,7 @@ class TestRNF04TiempoRespuestaAPI:
         """RNF-04: POST /mantenciones debe responder en < 1 segundo."""
         # Crear equipo primero
         equipo_resp = client.post(
-            "/equipos",
+            "/api/v1/equipos",
             json={
                 "nombre": "Equipo Para Mantencion",
                 "ubicacion": "Planta",
@@ -378,7 +378,7 @@ class TestRNF04TiempoRespuestaAPI:
         }
 
         inicio = time.perf_counter()
-        response = client.post("/mantenciones", json=payload)
+        response = client.post("/api/v1/mantenciones", json=payload)
         duracion = time.perf_counter() - inicio
 
         assert response.status_code == 201
@@ -390,7 +390,7 @@ class TestRNF04TiempoRespuestaAPI:
     def test_put_equipo_responde_en_menos_de_1_segundo(self, client) -> None:
         """RNF-04: PUT /equipos/{id} debe responder en < 1 segundo."""
         equipo_resp = client.post(
-            "/equipos",
+            "/api/v1/equipos",
             json={
                 "nombre": "Equipo PUT Test",
                 "ubicacion": "Sala",
@@ -403,7 +403,7 @@ class TestRNF04TiempoRespuestaAPI:
 
         inicio = time.perf_counter()
         response = client.put(
-            f"/equipos/{equipo_id}",
+            f"/api/v1/equipos/{equipo_id}",
             json={"estado": "mantenimiento"},
         )
         duracion = time.perf_counter() - inicio

@@ -20,7 +20,7 @@ def _build_equipo_payload(nombre: str) -> dict[str, str]:
 def _create_equipo(client, nombre: str) -> int:
     """Crea equipo auxiliar y retorna su id."""
 
-    response = client.post("/equipos", json=_build_equipo_payload(nombre))
+    response = client.post("/api/v1/equipos", json=_build_equipo_payload(nombre))
     assert response.status_code == 201
     return response.json()["id"]
 
@@ -35,7 +35,7 @@ def _create_umbral(
     """Crea umbral para forzar o evitar alertas según cada equipo."""
 
     response = client.post(
-        "/umbrales",
+        "/api/v1/umbrales",
         json={
             "equipo_id": equipo_id,
             "variable": variable,
@@ -50,7 +50,7 @@ def _create_lectura(client, equipo_id: int, temperatura: float) -> None:
     """Crea lectura persistida para dashboard y predicciones."""
 
     response = client.post(
-        "/lecturas",
+        "/api/v1/lecturas",
         json={
             "equipo_id": equipo_id,
             "temperatura": temperatura,
@@ -89,7 +89,7 @@ def _mock_model_loader(probabilities: list[float]):
 def test_dashboard_summary_returns_compact_contract_without_data(client):
     """Valida contrato estable y compacto cuando no existen registros."""
 
-    response = client.get("/dashboard/resumen")
+    response = client.get("/api/v1/dashboard/resumen")
 
     assert response.status_code == 200
     payload = response.json()
@@ -143,16 +143,16 @@ def test_dashboard_summary_returns_real_data_for_polling(client, monkeypatch):
     _create_lectura(client, equipo_id=equipo_respaldo_id, temperatura=35.4)
 
     assert (
-        client.post(f"/predicciones/ejecutar/{equipo_respaldo_id}").status_code == 201
+        client.post(f"/api/v1/predicciones/ejecutar/{equipo_respaldo_id}").status_code == 201
     )
     assert (
-        client.post(f"/predicciones/ejecutar/{equipo_principal_id}").status_code == 201
+        client.post(f"/api/v1/predicciones/ejecutar/{equipo_principal_id}").status_code == 201
     )
     assert (
-        client.post(f"/predicciones/ejecutar/{equipo_principal_id}").status_code == 201
+        client.post(f"/api/v1/predicciones/ejecutar/{equipo_principal_id}").status_code == 201
     )
 
-    response = client.get("/dashboard/resumen")
+    response = client.get("/api/v1/dashboard/resumen")
 
     assert response.status_code == 200
     payload = response.json()

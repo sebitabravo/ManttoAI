@@ -18,7 +18,7 @@ def test_register_endpoint_persists_user_with_hashed_password(unauthenticated_cl
     payload = {
         "nombre": "Sebastián",
         "email": "sebastian@example.com",
-        "password": "Test1234",
+        "password": "Test1234!",
         "rol": "admin",
     }
 
@@ -111,7 +111,7 @@ def test_protected_endpoint_accepts_http_only_cookie_authentication(
     )
     assert login_response.status_code == 200
 
-    response = unauthenticated_client.get("/equipos")
+    response = unauthenticated_client.get("/api/v1/equipos")
 
     assert response.status_code == 200
 
@@ -132,12 +132,12 @@ def test_cookie_auth_requires_csrf_header_for_mutations(unauthenticated_client):
         "estado": "operativo",
     }
 
-    blocked_response = unauthenticated_client.post("/equipos", json=payload)
+    blocked_response = unauthenticated_client.post("/api/v1/equipos", json=payload)
     assert blocked_response.status_code == 403
 
     csrf_token = unauthenticated_client.cookies.get("manttoai_csrf")
     allowed_response = unauthenticated_client.post(
-        "/equipos",
+        "/api/v1/equipos",
         json=payload,
         headers={"X-CSRF-Token": csrf_token},
     )
@@ -158,7 +158,7 @@ def test_logout_endpoint_clears_auth_cookie(unauthenticated_client):
     assert logout_response.status_code == 204
     assert "manttoai_token=" in logout_response.headers.get("set-cookie", "")
 
-    protected_response = unauthenticated_client.get("/equipos")
+    protected_response = unauthenticated_client.get("/api/v1/equipos")
     assert protected_response.status_code == 401
 
 
@@ -206,10 +206,11 @@ def test_protected_endpoint_rejects_inactive_user_token(unauthenticated_client):
         assert usuario is not None
         usuario.is_active = False
         db.commit()
+        usuario_id = usuario.id
 
-    token = create_access_token("admin@manttoai.local")
+    token = create_access_token(str(usuario_id))
     response = unauthenticated_client.get(
-        "/equipos",
+        "/api/v1/equipos",
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -250,7 +251,7 @@ def test_change_password_invalidates_previous_access_token(unauthenticated_clien
 def test_protected_endpoint_rejects_request_without_token(unauthenticated_client):
     """Valida rechazo de endpoints operativos sin autenticación."""
 
-    response = unauthenticated_client.get("/equipos")
+    response = unauthenticated_client.get("/api/v1/equipos")
 
     assert response.status_code == 401
     assert response.json()["detail"] in {"Not authenticated", "No autenticado"}
@@ -289,7 +290,7 @@ def test_logout_revokes_cookie_and_blocks_access(unauthenticated_client):
 
     # 2. Usar token en endpoint protegido (header Authorization)
     equipos_response = unauthenticated_client.get(
-        "/equipos",
+        "/api/v1/equipos",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert equipos_response.status_code == 200
@@ -303,14 +304,14 @@ def test_logout_revokes_cookie_and_blocks_access(unauthenticated_client):
     assert "manttoai_token=" in set_cookie_header
 
     # 5. Sin cookie ni header → rechazado
-    protected_response = unauthenticated_client.get("/equipos")
+    protected_response = unauthenticated_client.get("/api/v1/equipos")
     assert protected_response.status_code == 401
 
     # 6. Con el token viejo vía header → aceptado si Redis no está disponible
     # (degradación elegante), rechazado si Redis está activo.
     # En entorno de test sin Redis, el token sigue siendo válido.
     response = unauthenticated_client.get(
-        "/equipos",
+        "/api/v1/equipos",
         headers={"Authorization": f"Bearer {token}"},
     )
     # Sin Redis, el token no se puede revocar → 200
@@ -322,7 +323,7 @@ def test_protected_endpoint_rejects_invalid_token(unauthenticated_client):
     """Valida rechazo de token inválido en endpoints protegidos."""
 
     response = unauthenticated_client.get(
-        "/equipos",
+        "/api/v1/equipos",
         headers={"Authorization": "Bearer token-invalido"},
     )
 

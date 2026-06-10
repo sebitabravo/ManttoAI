@@ -24,7 +24,7 @@ def _build_equipo_payload(nombre: str) -> dict[str, str]:
 def _create_equipo(client, nombre: str = "Equipo Predicciones") -> int:
     """Crea un equipo auxiliar y retorna su id."""
 
-    response = client.post("/equipos", json=_build_equipo_payload(nombre))
+    response = client.post("/api/v1/equipos", json=_build_equipo_payload(nombre))
     assert response.status_code == 201
     return response.json()["id"]
 
@@ -41,7 +41,7 @@ def _create_lectura(
     """Crea una lectura persistida para pruebas de inferencia."""
 
     response = client.post(
-        "/lecturas",
+        "/api/v1/lecturas",
         json={
             "equipo_id": equipo_id,
             "temperatura": temperatura,
@@ -110,8 +110,9 @@ def _create_visualizador_headers(
             )
             db.add(usuario)
             db.commit()
+            db.refresh(usuario)
 
-    return {"Authorization": f"Bearer {create_access_token(email)}"}
+    return {"Authorization": f"Bearer {create_access_token(str(usuario.id))}"}
 
 
 def test_post_prediccion_ejecuta_inferencia_real_y_persiste(client, monkeypatch):
@@ -131,7 +132,7 @@ def test_post_prediccion_ejecuta_inferencia_real_y_persiste(client, monkeypatch)
     equipo_id = _create_equipo(client)
     _create_lectura(client, equipo_id=equipo_id)
 
-    execute_response = client.post(f"/predicciones/ejecutar/{equipo_id}")
+    execute_response = client.post(f"/api/v1/predicciones/ejecutar/{equipo_id}")
 
     assert execute_response.status_code == 201
     payload = execute_response.json()
@@ -139,11 +140,11 @@ def test_post_prediccion_ejecuta_inferencia_real_y_persiste(client, monkeypatch)
     assert payload["clasificacion"] == "falla"
     assert payload["probabilidad"] == 0.82
 
-    latest_response = client.get(f"/predicciones/{equipo_id}")
+    latest_response = client.get(f"/api/v1/predicciones/{equipo_id}")
     assert latest_response.status_code == 200
     assert latest_response.json()["id"] == payload["id"]
 
-    alertas_response = client.get("/alertas", params={"equipo_id": equipo_id})
+    alertas_response = client.get("/api/v1/alertas", params={"equipo_id": equipo_id})
     assert alertas_response.status_code == 200
     alertas = alertas_response.json()
     assert len(alertas) == 1
@@ -152,7 +153,7 @@ def test_post_prediccion_ejecuta_inferencia_real_y_persiste(client, monkeypatch)
     assert alertas[0]["leida"] is False
     assert alertas[0]["email_enviado"] is True
 
-    dashboard_response = client.get("/dashboard/resumen")
+    dashboard_response = client.get("/api/v1/dashboard/resumen")
     assert dashboard_response.status_code == 200
     assert dashboard_response.json()["alertas_activas"] >= 1
 
@@ -176,12 +177,12 @@ def test_post_prediccion_normal_no_crea_alerta_critica(client, monkeypatch):
     equipo_id = _create_equipo(client)
     _create_lectura(client, equipo_id=equipo_id)
 
-    execute_response = client.post(f"/predicciones/ejecutar/{equipo_id}")
+    execute_response = client.post(f"/api/v1/predicciones/ejecutar/{equipo_id}")
 
     assert execute_response.status_code == 201
     assert execute_response.json()["clasificacion"] == "normal"
 
-    alertas_response = client.get("/alertas", params={"equipo_id": equipo_id})
+    alertas_response = client.get("/api/v1/alertas", params={"equipo_id": equipo_id})
     assert alertas_response.status_code == 200
     assert alertas_response.json() == []
     assert email_calls == []
@@ -204,14 +205,14 @@ def test_post_prediccion_falla_no_duplica_alerta_activa(client, monkeypatch):
     equipo_id = _create_equipo(client)
     _create_lectura(client, equipo_id=equipo_id)
 
-    first_response = client.post(f"/predicciones/ejecutar/{equipo_id}")
-    second_response = client.post(f"/predicciones/ejecutar/{equipo_id}")
+    first_response = client.post(f"/api/v1/predicciones/ejecutar/{equipo_id}")
+    second_response = client.post(f"/api/v1/predicciones/ejecutar/{equipo_id}")
 
     assert first_response.status_code == 201
     assert second_response.status_code == 201
 
     alertas_response = client.get(
-        "/alertas",
+        "/api/v1/alertas",
         params={"equipo_id": equipo_id, "solo_no_leidas": True},
     )
     assert alertas_response.status_code == 200
@@ -242,12 +243,12 @@ def test_post_prediccion_falla_con_error_email_no_rompe_alerta(client, monkeypat
     equipo_id = _create_equipo(client)
     _create_lectura(client, equipo_id=equipo_id)
 
-    execute_response = client.post(f"/predicciones/ejecutar/{equipo_id}")
+    execute_response = client.post(f"/api/v1/predicciones/ejecutar/{equipo_id}")
 
     assert execute_response.status_code == 201
     assert execute_response.json()["clasificacion"] == "falla"
 
-    alertas_response = client.get("/alertas", params={"equipo_id": equipo_id})
+    alertas_response = client.get("/api/v1/alertas", params={"equipo_id": equipo_id})
     assert alertas_response.status_code == 200
     alertas = alertas_response.json()
     assert len(alertas) == 1
@@ -267,13 +268,13 @@ def test_get_prediccion_devuelve_ultima_persistida(client, monkeypatch):
     equipo_id = _create_equipo(client)
     _create_lectura(client, equipo_id=equipo_id)
 
-    first = client.post(f"/predicciones/ejecutar/{equipo_id}")
-    second = client.post(f"/predicciones/ejecutar/{equipo_id}")
+    first = client.post(f"/api/v1/predicciones/ejecutar/{equipo_id}")
+    second = client.post(f"/api/v1/predicciones/ejecutar/{equipo_id}")
 
     assert first.status_code == 201
     assert second.status_code == 201
 
-    latest = client.get(f"/predicciones/{equipo_id}")
+    latest = client.get(f"/api/v1/predicciones/{equipo_id}")
 
     assert latest.status_code == 200
     assert latest.json()["id"] == second.json()["id"]
@@ -290,7 +291,7 @@ def test_post_prediccion_sin_lectura_retorna_404(client, monkeypatch):
     )
 
     equipo_id = _create_equipo(client)
-    response = client.post(f"/predicciones/ejecutar/{equipo_id}")
+    response = client.post(f"/api/v1/predicciones/ejecutar/{equipo_id}")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Lectura no encontrada para el equipo"
@@ -309,7 +310,7 @@ def test_post_prediccion_rejects_visualizador_role(client, monkeypatch):
     _create_lectura(client, equipo_id=equipo_id)
 
     response = client.post(
-        f"/predicciones/ejecutar/{equipo_id}",
+        f"/api/v1/predicciones/ejecutar/{equipo_id}",
         headers=_create_visualizador_headers(client),
     )
 
@@ -321,7 +322,7 @@ def test_get_prediccion_sin_registros_retorna_404(client):
     """Valida GET /predicciones/{equipo_id} cuando no hay resultados guardados."""
 
     equipo_id = _create_equipo(client)
-    response = client.get(f"/predicciones/{equipo_id}")
+    response = client.get(f"/api/v1/predicciones/{equipo_id}")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Predicción no encontrada para el equipo"

@@ -4,8 +4,10 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from app.middleware.rate_limit import limiter
+from app.models.usuario import Usuario
 from app.services.auth_service import create_access_token
 
 
@@ -22,7 +24,7 @@ def _create_user_for_test(
     email: str,
     password: str,
     rol: str,
-) -> None:
+) -> int:
     """Crea un usuario vía API admin para pruebas de límites por rol."""
 
     response = client.post(
@@ -35,6 +37,7 @@ def _create_user_for_test(
         },
     )
     assert response.status_code == 201
+    return response.json()["id"]
 
 
 def _assert_dashboard_limit_for_role(
@@ -67,14 +70,14 @@ def test_dashboard_resumen_aplica_limites_diferenciados_por_rol(client: TestClie
     tecnico_email = f"tecnico_rl_{suffix}@manttoai.local"
     visualizador_email = f"visualizador_rl_{suffix}@manttoai.local"
 
-    _create_user_for_test(
+    tecnico_id = _create_user_for_test(
         client,
         nombre="Tecnico Rate Limit",
         email=tecnico_email,
         password="Tecnico123!",
         rol="tecnico",
     )
-    _create_user_for_test(
+    visualizador_id = _create_user_for_test(
         client,
         nombre="Visualizador Rate Limit",
         email=visualizador_email,
@@ -82,9 +85,16 @@ def test_dashboard_resumen_aplica_limites_diferenciados_por_rol(client: TestClie
         rol="visualizador",
     )
 
-    admin_token = create_access_token("admin@manttoai.local")
-    tecnico_token = create_access_token(tecnico_email)
-    visualizador_token = create_access_token(visualizador_email)
+    session_local = client.app.state.testing_session_local
+    with session_local() as db:
+        admin = db.scalars(
+            select(Usuario).where(Usuario.email == "admin@manttoai.local")
+        ).first()
+        admin_id = admin.id
+
+    admin_token = create_access_token(str(admin_id))
+    tecnico_token = create_access_token(str(tecnico_id))
+    visualizador_token = create_access_token(str(visualizador_id))
 
     # visualizador: 3/minute
     _assert_dashboard_limit_for_role(

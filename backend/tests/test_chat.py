@@ -344,7 +344,7 @@ class TestChatRouter:
     def test_chat_con_keyword_retorna_respuesta_reglas(self, client):
         """POST /chat con keyword conocido devuelve fuente 'reglas'."""
         payload = {"mensaje": "tengo una alerta activa"}
-        response = client.post("/chat", json=payload)
+        response = client.post("/api/v1/chat", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert data["fuente"] == "reglas"
@@ -353,11 +353,11 @@ class TestChatRouter:
     def test_chat_persiste_historial(self, client):
         """POST /chat guarda el mensaje en la tabla mensajes_chat."""
         payload = {"mensaje": "hablame de la vibración del equipo"}
-        response = client.post("/chat", json=payload)
+        response = client.post("/api/v1/chat", json=payload)
         assert response.status_code == 200
 
         # Verificar que se puede obtener el historial
-        hist_response = client.get("/chat/historial")
+        hist_response = client.get("/api/v1/chat/historial")
         assert hist_response.status_code == 200
         historial = hist_response.json()
         assert len(historial) >= 1
@@ -367,19 +367,19 @@ class TestChatRouter:
     def test_chat_requiere_autenticacion(self, unauthenticated_client):
         """POST /chat rechaza si no hay token."""
         payload = {"mensaje": "temperatura alta"}
-        response = unauthenticated_client.post("/chat", json=payload)
+        response = unauthenticated_client.post("/api/v1/chat", json=payload)
         assert response.status_code in (401, 403)
 
     def test_chat_mensaje_muy_corto(self, client):
         """POST /chat rechaza mensajes con menos de 2 caracteres."""
         payload = {"mensaje": "x"}
-        response = client.post("/chat", json=payload)
+        response = client.post("/api/v1/chat", json=payload)
         assert response.status_code == 422
 
     def test_chat_mensaje_muy_largo(self, client):
         """POST /chat rechaza mensajes con más de 500 caracteres."""
         payload = {"mensaje": "a" * 501}
-        response = client.post("/chat", json=payload)
+        response = client.post("/api/v1/chat", json=payload)
         assert response.status_code == 422
 
 
@@ -393,23 +393,23 @@ class TestChatHistorial:
 
     def test_historial_vacio_retorna_lista_vacia(self, client):
         """GET /chat/historial sin mensajes retorna lista vacía."""
-        response = client.get("/chat/historial")
+        response = client.get("/api/v1/chat/historial")
         assert response.status_code == 200
         assert response.json() == []
 
     def test_historial_requiere_admin(self, client):
         """GET /chat/historial está disponible para admin (el client fixture es admin)."""
-        response = client.get("/chat/historial")
+        response = client.get("/api/v1/chat/historial")
         assert response.status_code == 200
 
     def test_historial_respeta_paginacion(self, client):
         """GET /chat/historial con skip/limit funciona correctamente."""
         # Crear algunos mensajes
         for i in range(3):
-            client.post("/chat", json={"mensaje": f"pregunta sobre temperatura {i}"})
+            client.post("/api/v1/chat", json={"mensaje": f"pregunta sobre temperatura {i}"})
 
         # Pedir solo 2
-        response = client.get("/chat/historial?limit=2")
+        response = client.get("/api/v1/chat/historial?limit=2")
         assert response.status_code == 200
         assert len(response.json()) == 2
 
@@ -424,16 +424,16 @@ class TestChatDatasetExport:
 
     def test_dataset_export_sin_mensajes(self, client):
         """GET /chat/dataset-export retorna vacío si no hay mensajes."""
-        response = client.get("/chat/dataset-export")
+        response = client.get("/api/v1/chat/dataset-export")
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/x-ndjson"
 
     def test_dataset_export_con_mensajes(self, client):
         """GET /chat/dataset-export retorna JSONL válido con mensajes previos."""
         # Crear un mensaje primero
-        client.post("/chat", json={"mensaje": "qué es la temperatura alta?"})
+        client.post("/api/v1/chat", json={"mensaje": "qué es la temperatura alta?"})
 
-        response = client.get("/chat/dataset-export")
+        response = client.get("/api/v1/chat/dataset-export")
         assert response.status_code == 200
         content = response.text
         assert "system" in content
@@ -442,5 +442,5 @@ class TestChatDatasetExport:
 
     def test_dataset_export_requiere_admin(self, unauthenticated_client):
         """GET /chat/dataset-export rechaza sin autenticación."""
-        response = unauthenticated_client.get("/chat/dataset-export")
+        response = unauthenticated_client.get("/api/v1/chat/dataset-export")
         assert response.status_code in (401, 403)

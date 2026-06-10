@@ -54,7 +54,7 @@ def _validate_password_complexity(value: str) -> str:
     if not _SPECIAL_CHARS_RE.search(value):
         raise ValueError(
             "password debe contener al menos un carácter especial "
-            "(!@#$%^&*(),.?\":{}|<>_\\-+=;[]/`~)"
+            '(!@#$%^&*(),.?":{}|<>_\\-+=;[]/`~)'
         )
     return value
 

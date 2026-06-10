@@ -82,9 +82,28 @@ def test_dashboard_resumen_aplica_limites_diferenciados_por_rol(client: TestClie
         rol="visualizador",
     )
 
-    admin_token = create_access_token("admin@manttoai.local")
-    tecnico_token = create_access_token(tecnico_email)
-    visualizador_token = create_access_token(visualizador_email)
+    # Obtener IDs reales de la DB para generar JWTs con subject correcto
+    from app.models.usuario import Usuario
+    from sqlalchemy import select
+
+    session_local = client.app.state.testing_session_local
+    with session_local() as db:
+        admin_user = db.scalars(
+            select(Usuario).where(Usuario.email == "admin@manttoai.local")
+        ).first()
+        tecnico_user = db.scalars(
+            select(Usuario).where(Usuario.email == tecnico_email)
+        ).first()
+        visualizador_user = db.scalars(
+            select(Usuario).where(Usuario.email == visualizador_email)
+        ).first()
+        admin_id = admin_user.id
+        tecnico_id = tecnico_user.id
+        visualizador_id = visualizador_user.id
+
+    admin_token = create_access_token(str(admin_id))
+    tecnico_token = create_access_token(str(tecnico_id))
+    visualizador_token = create_access_token(str(visualizador_id))
 
     # visualizador: 3/minute
     _assert_dashboard_limit_for_role(

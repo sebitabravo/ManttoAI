@@ -204,10 +204,11 @@ def test_protected_endpoint_rejects_inactive_user_token(unauthenticated_client):
             select(Usuario).where(Usuario.email == "admin@manttoai.local")
         ).first()
         assert usuario is not None
+        user_id = usuario.id
         usuario.is_active = False
         db.commit()
 
-    token = create_access_token("admin@manttoai.local")
+    token = create_access_token(str(user_id))
     response = unauthenticated_client.get(
         "/equipos",
         headers={"Authorization": f"Bearer {token}"},

@@ -34,7 +34,10 @@ def test_track_request_metrics_acota_historial_de_duraciones() -> None:
     # Verificar que el buffer en memoria esta acotado
     # (Redis puede no estar disponible en tests, asi que verificamos el fallback)
     if endpoint in metrics._mem_request_duration:
-        assert len(metrics._mem_request_duration[endpoint]) == metrics._MAX_DURATION_SAMPLES
+        assert (
+            len(metrics._mem_request_duration[endpoint])
+            == metrics._MAX_DURATION_SAMPLES
+        )
 
 
 def test_get_average_duration_considera_ultimos_n_registros() -> None:

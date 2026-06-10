@@ -200,7 +200,13 @@ app.include_router(
 
 @app.get("/health", tags=["system"])
 async def health_check() -> JSONResponse:
-    """Health check con verificación de DB, Redis y MQTT."""
+    """Liveness probe: indica que la aplicación responde (sin verificar dependencias)."""
+    return JSONResponse(status_code=200, content={"status": "ok"})
+
+
+@app.get("/ready", tags=["system"])
+async def readiness_check() -> JSONResponse:
+    """Readiness probe: verifica conectividad con DB, Redis y MQTT."""
 
     import os
 

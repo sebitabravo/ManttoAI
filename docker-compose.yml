@@ -53,7 +53,8 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      # Liveness: solo verifica que el proceso responde (sin golpear DB/Redis/MQTT)
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -81,6 +82,10 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     environment:
+      # ATENCIÓN: MYSQL_ROOT_PASSWORD solo se aplica al crear la base de datos por
+      # primera vez dentro del volumen mysql_data. Si cambias la contraseña después
+      # de que el volumen existe, MySQL la ignora. Para aplicar una nueva contraseña
+      # debes eliminar el volumen: docker compose down -v && docker compose up -d
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-manttoai_db}
     volumes:

@@ -8,7 +8,7 @@ from app.config import Settings
 def test_settings_rejects_default_secret_key_outside_development():
     """No permite SECRET_KEY por defecto en entorno productivo."""
 
-    with pytest.raises(ValueError, match="SECRET_KEY vacío o por defecto"):
+    with pytest.raises(ValueError, match="SECRET_KEY usa el valor por defecto"):
         Settings(
             _env_file=None,
             app_env="production",
@@ -19,7 +19,7 @@ def test_settings_rejects_default_secret_key_outside_development():
 def test_settings_rejects_empty_secret_key_outside_development():
     """No permite SECRET_KEY vacío fuera de desarrollo."""
 
-    with pytest.raises(ValueError, match="SECRET_KEY vacío o por defecto"):
+    with pytest.raises(ValueError, match="SECRET_KEY vacío no permitido"):
         Settings(_env_file=None, app_env="production", secret_key="")
 
 

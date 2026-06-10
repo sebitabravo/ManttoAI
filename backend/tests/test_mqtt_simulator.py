@@ -29,8 +29,7 @@ def test_build_topic_supports_prefix_with_trailing_slash():
     """Valida construcción estable del topic por equipo."""
 
     assert (
-        mqtt_simulator.build_topic("manttoai/telemetria", 7)
-        == "manttoai/telemetria/7"
+        mqtt_simulator.build_topic("manttoai/telemetria", 7) == "manttoai/telemetria/7"
     )
 
 

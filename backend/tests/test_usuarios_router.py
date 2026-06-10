@@ -52,7 +52,7 @@ def test_create_usuario_as_admin(db: Session, admin_user: Usuario, admin_token: 
     payload = {
         "nombre": "Nuevo Usuario",
         "email": "nuevo@test.com",
-        "password": "Test1234",
+        "password": "Test1234!",
         "rol": "tecnico",
     }
 
@@ -78,7 +78,7 @@ def test_create_usuario_as_technico(
     payload = {
         "nombre": "Nuevo Usuario",
         "email": "nuevo@test.com",
-        "password": "Test1234",
+        "password": "Test1234!",
         "rol": "visualizador",
     }
 

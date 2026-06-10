@@ -110,8 +110,9 @@ def _create_visualizador_headers(
             )
             db.add(usuario)
             db.commit()
-
-    return {"Authorization": f"Bearer {create_access_token(email)}"}
+            db.refresh(usuario)
+        user_id = usuario.id
+    return {"Authorization": f"Bearer {create_access_token(str(user_id))}"}
 
 
 def test_post_prediccion_ejecuta_inferencia_real_y_persiste(client, monkeypatch):

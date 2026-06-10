@@ -35,7 +35,9 @@ def _make_visualizador_token(client) -> str:
         )
         db.add(usuario)
         db.commit()
-    return create_access_token("visualizador@manttoai.local")
+        db.refresh(usuario)
+        user_id = usuario.id
+    return create_access_token(str(user_id))
 
 
 # ─── GET /onboarding/status ──────────────────────────────────────────────────

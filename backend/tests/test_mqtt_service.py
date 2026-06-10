@@ -45,7 +45,11 @@ def session_factory() -> Generator[sessionmaker, None, None]:
     engine.dispose()
 
 
-def _create_equipo(session_factory: sessionmaker, nombre: str = "Equipo MQTT", mac_address: str = "00:1A:2B:3C:4D:5E") -> int:
+def _create_equipo(
+    session_factory: sessionmaker,
+    nombre: str = "Equipo MQTT",
+    mac_address: str = "00:1A:2B:3C:4D:5E",
+) -> int:
     """Crea un equipo auxiliar para validar FK de lecturas."""
 
     db = session_factory()
@@ -99,7 +103,7 @@ def test_process_mqtt_message_persists_lectura(session_factory: sessionmaker):
     }
 
     processed = process_mqtt_message(
-        topic=f"manttoai/telemetria/00:1A:2B:3C:4D:5E",
+        topic="manttoai/telemetria/00:1A:2B:3C:4D:5E",
         payload=json.dumps(payload).encode("utf-8"),
         session_factory=session_factory,
     )
@@ -121,10 +125,10 @@ def test_process_mqtt_message_invalid_payload_does_not_break_loop(
 ):
     """Valida que payload inválido no rompa el proceso de ingesta."""
 
-    equipo_id = _create_equipo(session_factory, mac_address="00:1A:2B:3C:4D:5E")
+    _create_equipo(session_factory, mac_address="00:1A:2B:3C:4D:5E")
 
     processed = process_mqtt_message(
-        topic=f"manttoai/telemetria/00:1A:2B:3C:4D:5E",
+        topic="manttoai/telemetria/00:1A:2B:3C:4D:5E",
         payload=b"{json_invalido",
         session_factory=session_factory,
     )

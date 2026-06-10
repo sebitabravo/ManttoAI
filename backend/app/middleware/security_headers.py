@@ -38,12 +38,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         )
 
         # Cross-Origin isolation headers
-        response.headers.setdefault(
-            "Cross-Origin-Opener-Policy", "same-origin"
-        )
-        response.headers.setdefault(
-            "Cross-Origin-Resource-Policy", "same-origin"
-        )
+        response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+        response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
 
         # HSTS solo en HTTPS (no activar en HTTP local)
         if request.url.scheme == "https":

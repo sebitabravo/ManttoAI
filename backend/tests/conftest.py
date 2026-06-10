@@ -73,15 +73,16 @@ def _build_client(authenticated: bool) -> Generator[TestClient, None, None]:
             db.close()
 
     with testing_session_local() as db:
-        db.add(
-            Usuario(
-                nombre=TEST_USER_NAME,
-                email=TEST_USER_EMAIL,
-                password_hash=hash_password(TEST_USER_PASSWORD),
-                rol="admin",
-            )
+        user = Usuario(
+            nombre=TEST_USER_NAME,
+            email=TEST_USER_EMAIL,
+            password_hash=hash_password(TEST_USER_PASSWORD),
+            rol="admin",
         )
+        db.add(user)
         db.commit()
+        db.refresh(user)
+        test_user_id = user.id
 
     previous_database_auto_init = main.settings.database_auto_init
     previous_mqtt_enabled = main.settings.mqtt_enabled
@@ -95,7 +96,7 @@ def _build_client(authenticated: bool) -> Generator[TestClient, None, None]:
     main.app.dependency_overrides[get_db] = override_get_db
     main.app.state.testing_session_local = testing_session_local
 
-    token = create_access_token(TEST_USER_EMAIL)
+    token = create_access_token(str(test_user_id))
 
     with TestClient(main.app) as test_client:
         if authenticated:
@@ -229,11 +230,11 @@ def tecnico_user(db: Session) -> Usuario:
 def admin_token(admin_user: Usuario) -> str:
     """Entrega JWT válido para usuario admin de tests."""
 
-    return create_access_token(admin_user.email)
+    return create_access_token(str(admin_user.id))
 
 
 @pytest.fixture
 def tecnico_token(tecnico_user: Usuario) -> str:
     """Entrega JWT válido para usuario técnico de tests."""
 
-    return create_access_token(tecnico_user.email)
+    return create_access_token(str(tecnico_user.id))

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { getConfigPrediccion, formatPorcentajeRiesgo } from "../../utils/prediccion";
 import { getRubroBadgeClass, getRubroLabel } from "../../utils/rubro";
@@ -29,7 +29,7 @@ function PrediccionBadge({ clasificacion, probabilidad }) {
   );
 }
 
-export default function EquipoCard({ equipo, onDeleted }) {
+const EquipoCard = React.memo(function EquipoCard({ equipo, onDeleted }) {
   const latestValueLabel = equipo.dato || "Sin lecturas registradas";
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -113,4 +113,6 @@ export default function EquipoCard({ equipo, onDeleted }) {
       </Modal>
     </>
   );
-}
+});
+
+export default EquipoCard;

@@ -1,6 +1,5 @@
 """Tests de endpoints para gestión de API Keys."""
 
-
 BASE_API_KEYS = "/api/v1/api-keys"
 
 

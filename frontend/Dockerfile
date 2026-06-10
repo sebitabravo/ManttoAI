@@ -7,6 +7,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 # En desarrollo, el código se monta como volumen (ver docker-compose.override.yml)
+RUN adduser -D appuser && chown -R appuser:appuser /app
+USER appuser
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
@@ -29,5 +31,8 @@ FROM nginx:alpine AS production
 
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+RUN adduser -D appuser && chown -R appuser:appuser /usr/share/nginx/html /var/cache/nginx /var/run
+USER appuser
 
 EXPOSE 80

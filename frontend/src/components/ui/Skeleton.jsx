@@ -1,3 +1,5 @@
+import React from "react";
+
 /**
  * Componentes Skeleton para estados de carga — Estilo Apple.
  *
@@ -24,7 +26,7 @@ function PulseBlock({ className = "", style }) {
 /**
  * Skeleton para bloques de texto.
  */
-export function SkeletonText({ lines = 3, className = "" }) {
+export const SkeletonText = React.memo(function SkeletonText({ lines = 3, className = "" }) {
   const widths = ["w-full", "w-5/6", "w-4/5", "w-3/4", "w-2/3"];
 
   return (
@@ -34,17 +36,17 @@ export function SkeletonText({ lines = 3, className = "" }) {
       ))}
     </div>
   );
-}
+});
 
 /**
  * Skeleton para una card.
  */
-export function SkeletonCard({ className = "" }) {
+export const SkeletonCard = React.memo(function SkeletonCard({ className = "" }) {
   return (
-    <div 
-      className={`rounded-2xl bg-white p-6 shadow-sm ${className}`} 
-      role="status" 
-      aria-busy="true" 
+    <div
+      className={`rounded-2xl bg-white p-6 shadow-sm ${className}`}
+      role="status"
+      aria-busy="true"
       aria-label="Cargando card"
     >
       <PulseBlock className="mb-4 h-5 w-2/3" />
@@ -53,17 +55,17 @@ export function SkeletonCard({ className = "" }) {
       <PulseBlock className="h-4 w-1/2" />
     </div>
   );
-}
+});
 
 /**
  * Skeleton para una métrica grande.
  */
-export function SkeletonMetric({ className = "" }) {
+export const SkeletonMetric = React.memo(function SkeletonMetric({ className = "" }) {
   return (
-    <div 
-      className={`rounded-2xl bg-white p-6 shadow-sm ${className}`} 
-      role="status" 
-      aria-busy="true" 
+    <div
+      className={`rounded-2xl bg-white p-6 shadow-sm ${className}`}
+      role="status"
+      aria-busy="true"
       aria-label="Cargando métrica"
     >
       <PulseBlock className="mb-3 h-3 w-24" />
@@ -71,17 +73,17 @@ export function SkeletonMetric({ className = "" }) {
       <PulseBlock className="h-4 w-3/4" />
     </div>
   );
-}
+});
 
 /**
  * Skeleton para una tabla.
  */
-export function SkeletonTable({ rows = 5, cols = 4, className = "" }) {
+export const SkeletonTable = React.memo(function SkeletonTable({ rows = 5, cols = 4, className = "" }) {
   return (
-    <div 
-      className={`rounded-2xl bg-white p-6 shadow-sm ${className}`} 
-      role="status" 
-      aria-busy="true" 
+    <div
+      className={`rounded-2xl bg-white p-6 shadow-sm ${className}`}
+      role="status"
+      aria-busy="true"
       aria-label="Cargando tabla"
     >
       {/* Título */}
@@ -104,17 +106,17 @@ export function SkeletonTable({ rows = 5, cols = 4, className = "" }) {
       ))}
     </div>
   );
-}
+});
 
 /**
  * Skeleton para un gráfico.
  */
-export function SkeletonChart({ className = "" }) {
+export const SkeletonChart = React.memo(function SkeletonChart({ className = "" }) {
   return (
-    <div 
-      className={`rounded-2xl bg-white p-6 shadow-sm ${className}`} 
-      role="status" 
-      aria-busy="true" 
+    <div
+      className={`rounded-2xl bg-white p-6 shadow-sm ${className}`}
+      role="status"
+      aria-busy="true"
       aria-label="Cargando gráfico"
     >
       <PulseBlock className="mb-2 h-5 w-40" />
@@ -142,4 +144,4 @@ export function SkeletonChart({ className = "" }) {
       </div>
     </div>
   );
-}
+});

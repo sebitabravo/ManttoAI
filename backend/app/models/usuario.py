@@ -1,11 +1,15 @@
 """Modelo de usuario."""
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.organizacion import Organizacion
 
 
 class Usuario(Base):
@@ -45,4 +49,14 @@ class Usuario(Base):
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Multi-tenancy
+    organizacion_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("organizaciones.id"), nullable=True, default=None
+    )
+
+    # Relación a organización (multi-tenancy)
+    organizacion: Mapped["Organizacion | None"] = relationship(
+        "Organizacion", back_populates="usuarios"
     )

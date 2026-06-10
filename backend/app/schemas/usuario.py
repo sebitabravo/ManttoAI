@@ -36,25 +36,38 @@ class UsuarioBase(BaseModel):
         return _normalize_and_validate_email(value)
 
 
+_SPECIAL_CHARS_RE = re.compile(r'[!@#$%^&*(),.?":{}|<>_\-+=;\[\]\\/`~]')
+
+
+def _validate_password_complexity(value: str) -> str:
+    """Valida complejidad de password: min 8, max 128, mayúscula, minúscula, número, carácter especial."""
+    if len(value) < 8:
+        raise ValueError("password debe tener al menos 8 caracteres")
+    if len(value) > 128:
+        raise ValueError("password no debe exceder 128 caracteres")
+    if not re.search(r"[A-Z]", value):
+        raise ValueError("password debe contener al menos una mayúscula")
+    if not re.search(r"[a-z]", value):
+        raise ValueError("password debe contener al menos una minúscula")
+    if not re.search(r"[0-9]", value):
+        raise ValueError("password debe contener al menos un número")
+    if not _SPECIAL_CHARS_RE.search(value):
+        raise ValueError(
+            "password debe contener al menos un carácter especial "
+            '(!@#$%^&*(),.?":{}|<>_\\-+=;[]/`~)'
+        )
+    return value
+
+
 class UsuarioCreate(UsuarioBase):
     """Payload para registrar usuario."""
 
     password: str
 
     @field_validator("password")
-    def validate_password(cls, value: str) -> str:
-        """Valida complejidad de contraseña para registro."""
-
-        if len(value) < 8:
-            raise ValueError("password debe tener al menos 8 caracteres")
-        if not re.search(r"[A-Z]", value):
-            raise ValueError("password debe contener al menos una mayúscula")
-        if not re.search(r"[a-z]", value):
-            raise ValueError("password debe contener al menos una minúscula")
-        if not re.search(r"[0-9]", value):
-            raise ValueError("password debe contener al menos un número")
-
-        return value
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        return _validate_password_complexity(v)
 
 
 class UsuarioResponse(UsuarioBase):
@@ -113,19 +126,9 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
     @field_validator("new_password")
-    def validate_new_password(cls, value: str) -> str:
-        """Valida complejidad de la nueva contraseña."""
-
-        if len(value) < 8:
-            raise ValueError("password debe tener al menos 8 caracteres")
-        if not re.search(r"[A-Z]", value):
-            raise ValueError("password debe contener al menos una mayúscula")
-        if not re.search(r"[a-z]", value):
-            raise ValueError("password debe contener al menos una minúscula")
-        if not re.search(r"[0-9]", value):
-            raise ValueError("password debe contener al menos un número")
-
-        return value
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        return _validate_password_complexity(v)
 
 
 class UsuarioListResponse(BaseModel):

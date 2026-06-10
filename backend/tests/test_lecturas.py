@@ -15,7 +15,7 @@ def _build_equipo_payload(nombre: str) -> dict[str, str]:
 def _create_equipo(client, nombre: str = "Equipo Lecturas") -> int:
     """Crea un equipo auxiliar y retorna su id."""
 
-    response = client.post("/equipos", json=_build_equipo_payload(nombre))
+    response = client.post("/api/v1/equipos", json=_build_equipo_payload(nombre))
     assert response.status_code == 201
     return response.json()["id"]
 
@@ -46,14 +46,14 @@ def test_create_lectura_persists_and_list_endpoint_reads_db(client):
     equipo_id = _create_equipo(client)
     payload = _build_lectura_payload(equipo_id=equipo_id, temperatura=43.2)
 
-    create_response = client.post("/lecturas", json=payload)
+    create_response = client.post("/api/v1/lecturas", json=payload)
 
     assert create_response.status_code == 201
     created = create_response.json()
     assert created["equipo_id"] == equipo_id
     assert created["temperatura"] == 43.2
 
-    list_response = client.get("/lecturas", params={"equipo_id": equipo_id})
+    list_response = client.get("/api/v1/lecturas", params={"equipo_id": equipo_id})
 
     assert list_response.status_code == 200
     lecturas = list_response.json()
@@ -66,13 +66,13 @@ def test_latest_lectura_returns_last_persisted_record(client):
 
     equipo_id = _create_equipo(client)
     client.post(
-        "/lecturas", json=_build_lectura_payload(equipo_id=equipo_id, temperatura=38.5)
+        "/api/v1/lecturas", json=_build_lectura_payload(equipo_id=equipo_id, temperatura=38.5)
     )
     client.post(
-        "/lecturas", json=_build_lectura_payload(equipo_id=equipo_id, temperatura=47.1)
+        "/api/v1/lecturas", json=_build_lectura_payload(equipo_id=equipo_id, temperatura=47.1)
     )
 
-    response = client.get(f"/lecturas/latest/{equipo_id}")
+    response = client.get(f"/api/v1/lecturas/latest/{equipo_id}")
 
     assert response.status_code == 200
     data = response.json()
@@ -84,7 +84,7 @@ def test_create_lectura_rejects_unknown_equipo(client):
     """Valida que no se creen lecturas para equipos inexistentes."""
 
     payload = _build_lectura_payload(equipo_id=99999)
-    response = client.post("/lecturas", json=payload)
+    response = client.post("/api/v1/lecturas", json=payload)
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Equipo no encontrado"
@@ -94,7 +94,7 @@ def test_latest_lectura_not_found_returns_404(client):
     """Valida que latest responda 404 si el equipo no tiene lecturas."""
 
     equipo_id = _create_equipo(client)
-    response = client.get(f"/lecturas/latest/{equipo_id}")
+    response = client.get(f"/api/v1/lecturas/latest/{equipo_id}")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Lectura no encontrada para el equipo"
@@ -110,11 +110,11 @@ def test_get_lecturas_aplica_limite_por_defecto_de_50(client):
             equipo_id=equipo_id,
             temperatura=float(indice),
         )
-        create_response = client.post("/lecturas", json=payload)
+        create_response = client.post("/api/v1/lecturas", json=payload)
         assert create_response.status_code == 201
 
     # Sin parametros: paginacion por defecto (per_page=50)
-    response = client.get("/lecturas", params={"equipo_id": equipo_id})
+    response = client.get("/api/v1/lecturas", params={"equipo_id": equipo_id})
 
     assert response.status_code == 200
     lecturas = response.json()
@@ -133,10 +133,10 @@ def test_get_lecturas_limit_legacy_retrocompatible(client):
             equipo_id=equipo_id,
             temperatura=float(indice),
         )
-        create_response = client.post("/lecturas", json=payload)
+        create_response = client.post("/api/v1/lecturas", json=payload)
         assert create_response.status_code == 201
 
-    response = client.get("/lecturas", params={"equipo_id": equipo_id, "limit": 100})
+    response = client.get("/api/v1/lecturas", params={"equipo_id": equipo_id, "limit": 100})
 
     assert response.status_code == 200
     lecturas = response.json()

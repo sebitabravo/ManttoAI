@@ -27,7 +27,7 @@ def test_dashboard_summary(client):
     """Valida el resumen del dashboard con equipos persistidos."""
 
     client.post(
-        "/equipos",
+        "/api/v1/equipos",
         json={
             "nombre": "Compresor dashboard",
             "ubicacion": "Sala 1",
@@ -36,7 +36,7 @@ def test_dashboard_summary(client):
         },
     )
 
-    response = client.get("/dashboard/resumen")
+    response = client.get("/api/v1/dashboard/resumen")
     assert response.status_code == 200
     assert response.json()["total_equipos"] >= 1
 

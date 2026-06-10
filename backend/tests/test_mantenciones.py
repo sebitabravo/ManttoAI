@@ -19,7 +19,7 @@ def _build_equipo_payload(nombre: str) -> dict[str, str]:
 def _create_equipo(client, nombre: str = "Equipo Mantención") -> int:
     """Crea un equipo auxiliar y retorna su id."""
 
-    response = client.post("/equipos", json=_build_equipo_payload(nombre))
+    response = client.post("/api/v1/equipos", json=_build_equipo_payload(nombre))
     assert response.status_code == 201
     return response.json()["id"]
 
@@ -45,7 +45,7 @@ def test_list_mantenciones_returns_persisted_records(client):
 
     equipo_id = _create_equipo(client)
     client.post(
-        "/mantenciones",
+        "/api/v1/mantenciones",
         json=_build_mantencion_payload(
             equipo_id=equipo_id,
             tipo="preventiva",
@@ -53,7 +53,7 @@ def test_list_mantenciones_returns_persisted_records(client):
         ),
     )
     client.post(
-        "/mantenciones",
+        "/api/v1/mantenciones",
         json=_build_mantencion_payload(
             equipo_id=equipo_id,
             tipo="correctiva",
@@ -61,7 +61,7 @@ def test_list_mantenciones_returns_persisted_records(client):
         ),
     )
 
-    response = client.get("/mantenciones")
+    response = client.get("/api/v1/mantenciones")
 
     assert response.status_code == 200
     mantenciones = response.json()
@@ -75,7 +75,7 @@ def test_list_mantenciones_order_usa_created_at(client):
 
     equipo_id = _create_equipo(client, "Equipo orden mantenciones")
     first_response = client.post(
-        "/mantenciones",
+        "/api/v1/mantenciones",
         json=_build_mantencion_payload(
             equipo_id=equipo_id,
             tipo="preventiva",
@@ -83,7 +83,7 @@ def test_list_mantenciones_order_usa_created_at(client):
         ),
     )
     second_response = client.post(
-        "/mantenciones",
+        "/api/v1/mantenciones",
         json=_build_mantencion_payload(
             equipo_id=equipo_id,
             tipo="correctiva",
@@ -108,11 +108,11 @@ def test_list_mantenciones_order_usa_created_at(client):
         db.commit()
 
     asc_response = client.get(
-        "/mantenciones",
+        "/api/v1/mantenciones",
         params={"equipo_id": equipo_id, "order": "asc", "limit": 2},
     )
     desc_response = client.get(
-        "/mantenciones",
+        "/api/v1/mantenciones",
         params={"equipo_id": equipo_id, "order": "desc", "limit": 2},
     )
 
@@ -130,7 +130,7 @@ def test_create_mantencion_rejects_unknown_equipo(client):
     """Valida que no se creen mantenciones con equipo inexistente."""
 
     payload = _build_mantencion_payload(equipo_id=99999)
-    response = client.post("/mantenciones", json=payload)
+    response = client.post("/api/v1/mantenciones", json=payload)
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Equipo no encontrado"
@@ -146,14 +146,14 @@ def test_create_mantencion_persists_and_can_be_retrieved(client):
         descripcion="Análisis de vibración",
     )
 
-    create_response = client.post("/mantenciones", json=payload)
+    create_response = client.post("/api/v1/mantenciones", json=payload)
 
     assert create_response.status_code == 201
     created = create_response.json()
     assert created["equipo_id"] == equipo_id
     assert created["tipo"] == "predictiva"
 
-    get_response = client.get(f"/mantenciones/{created['id']}")
+    get_response = client.get(f"/api/v1/mantenciones/{created['id']}")
 
     assert get_response.status_code == 200
     assert get_response.json()["id"] == created["id"]
@@ -165,7 +165,7 @@ def test_update_mantencion_persists_changes(client):
 
     equipo_id = _create_equipo(client)
     create_response = client.post(
-        "/mantenciones",
+        "/api/v1/mantenciones",
         json=_build_mantencion_payload(equipo_id=equipo_id),
     )
     mantencion_id = create_response.json()["id"]
@@ -174,13 +174,13 @@ def test_update_mantencion_persists_changes(client):
         "descripcion": "Revisión trimestral completa",
         "estado": "ejecutada",
     }
-    update_response = client.put(f"/mantenciones/{mantencion_id}", json=update_payload)
+    update_response = client.put(f"/api/v1/mantenciones/{mantencion_id}", json=update_payload)
 
     assert update_response.status_code == 200
     assert update_response.json()["descripcion"] == "Revisión trimestral completa"
     assert update_response.json()["estado"] == "ejecutada"
 
-    get_response = client.get(f"/mantenciones/{mantencion_id}")
+    get_response = client.get(f"/api/v1/mantenciones/{mantencion_id}")
 
     assert get_response.status_code == 200
     assert get_response.json()["descripcion"] == "Revisión trimestral completa"
@@ -190,7 +190,7 @@ def test_update_mantencion_persists_changes(client):
 def test_put_mantencion_not_found_returns_404(client):
     """Valida que PUT /mantenciones/{id} responda 404 cuando no existe."""
 
-    response = client.put("/mantenciones/99999", json={"estado": "ejecutada"})
+    response = client.put("/api/v1/mantenciones/99999", json={"estado": "ejecutada"})
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Mantención no encontrada"
@@ -201,23 +201,23 @@ def test_delete_mantencion_removes_record(client):
 
     equipo_id = _create_equipo(client)
     create_response = client.post(
-        "/mantenciones",
+        "/api/v1/mantenciones",
         json=_build_mantencion_payload(equipo_id=equipo_id),
     )
     mantencion_id = create_response.json()["id"]
 
-    delete_response = client.delete(f"/mantenciones/{mantencion_id}")
+    delete_response = client.delete(f"/api/v1/mantenciones/{mantencion_id}")
 
     assert delete_response.status_code == 204
 
-    get_response = client.get(f"/mantenciones/{mantencion_id}")
+    get_response = client.get(f"/api/v1/mantenciones/{mantencion_id}")
     assert get_response.status_code == 404
 
 
 def test_delete_mantencion_not_found_returns_404(client):
     """Valida que DELETE /mantenciones/{id} responda 404 cuando no existe."""
 
-    response = client.delete("/mantenciones/99999")
+    response = client.delete("/api/v1/mantenciones/99999")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Mantención no encontrada"

@@ -26,7 +26,7 @@ def _create_equipo(client, nombre: str = "Equipo IoT") -> int:
     """Crea un equipo auxiliar para pruebas del endpoint IoT."""
 
     response = client.post(
-        "/equipos",
+        "/api/v1/equipos",
         json={
             "nombre": nombre,
             "ubicacion": "Laboratorio",

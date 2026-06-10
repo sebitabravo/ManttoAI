@@ -22,7 +22,7 @@ def _build_equipo_payload(nombre: str) -> dict[str, str]:
 def _create_equipo(client, nombre: str = "Equipo Alertas") -> int:
     """Crea un equipo auxiliar y retorna su id."""
 
-    response = client.post("/equipos", json=_build_equipo_payload(nombre))
+    response = client.post("/api/v1/equipos", json=_build_equipo_payload(nombre))
     assert response.status_code == 201
     return response.json()["id"]
 
@@ -37,7 +37,7 @@ def _create_umbral(
     """Crea un umbral para el equipo indicado."""
 
     response = client.post(
-        "/umbrales",
+        "/api/v1/umbrales",
         json={
             "equipo_id": equipo_id,
             "variable": variable,
@@ -60,7 +60,7 @@ def _create_lectura(
     """Crea una lectura para gatillar evaluación de umbrales."""
 
     response = client.post(
-        "/lecturas",
+        "/api/v1/lecturas",
         json={
             "equipo_id": equipo_id,
             "temperatura": temperatura,
@@ -87,7 +87,7 @@ def test_breach_temperatura_creates_persisted_alert(client):
 
     _create_lectura(client, equipo_id=equipo_id, temperatura=58.0)
 
-    response = client.get("/alertas", params={"equipo_id": equipo_id})
+    response = client.get("/api/v1/alertas", params={"equipo_id": equipo_id})
 
     assert response.status_code == 200
     alertas = response.json()
@@ -125,7 +125,7 @@ def test_critical_alert_marks_email_enviado_when_send_succeeds(client, monkeypat
 
     _create_lectura(client, equipo_id=equipo_id, temperatura=57.0)
 
-    response = client.get("/alertas", params={"equipo_id": equipo_id})
+    response = client.get("/api/v1/alertas", params={"equipo_id": equipo_id})
     assert response.status_code == 200
 
     alertas = response.json()
@@ -160,7 +160,7 @@ def test_critical_alert_marks_email_enviado_false_when_send_fails(
 
     _create_lectura(client, equipo_id=equipo_id, temperatura=58.5)
 
-    response = client.get("/alertas", params={"equipo_id": equipo_id})
+    response = client.get("/api/v1/alertas", params={"equipo_id": equipo_id})
     assert response.status_code == 200
 
     alertas = response.json()
@@ -184,7 +184,7 @@ def test_repeated_breach_does_not_duplicate_active_alert(client):
     _create_lectura(client, equipo_id=equipo_id, temperatura=59.0)
 
     response = client.get(
-        "/alertas",
+        "/api/v1/alertas",
         params={"equipo_id": equipo_id, "solo_no_leidas": True},
     )
 
@@ -208,7 +208,7 @@ def test_normal_reading_does_not_create_new_alert(client):
 
     _create_lectura(client, equipo_id=equipo_id, temperatura=42.0)
 
-    response = client.get("/alertas", params={"equipo_id": equipo_id})
+    response = client.get("/api/v1/alertas", params={"equipo_id": equipo_id})
 
     assert response.status_code == 200
     assert response.json() == []
@@ -238,7 +238,7 @@ def test_breach_vibracion_creates_persisted_alert(client):
 
     _create_lectura(client, equipo_id=equipo_id, vib_x=0.9)
 
-    response = client.get("/alertas", params={"equipo_id": equipo_id})
+    response = client.get("/api/v1/alertas", params={"equipo_id": equipo_id})
 
     assert response.status_code == 200
     alertas = response.json()
@@ -260,7 +260,7 @@ def test_patch_alerta_marks_record_as_read(client):
     _create_lectura(client, equipo_id=equipo_id, temperatura=59.0)
 
     initial = client.get(
-        "/alertas",
+        "/api/v1/alertas",
         params={"equipo_id": equipo_id, "solo_no_leidas": True},
     )
     assert initial.status_code == 200
@@ -268,13 +268,13 @@ def test_patch_alerta_marks_record_as_read(client):
     assert len(alertas_no_leidas) == 1
     alerta_id = alertas_no_leidas[0]["id"]
 
-    patch_response = client.patch(f"/alertas/{alerta_id}/leer")
+    patch_response = client.patch(f"/api/v1/alertas/{alerta_id}/leer")
     assert patch_response.status_code == 200
     assert patch_response.json()["id"] == alerta_id
     assert patch_response.json()["leida"] is True
 
     after_patch = client.get(
-        "/alertas",
+        "/api/v1/alertas",
         params={"equipo_id": equipo_id, "solo_no_leidas": True},
     )
     assert after_patch.status_code == 200
@@ -295,20 +295,20 @@ def test_repeated_breach_after_mark_as_read_creates_new_alert(client):
     _create_lectura(client, equipo_id=equipo_id, temperatura=58.0)
 
     primera_alerta = client.get(
-        "/alertas",
+        "/api/v1/alertas",
         params={"equipo_id": equipo_id, "solo_no_leidas": True},
     )
     assert primera_alerta.status_code == 200
     primera_alerta_id = primera_alerta.json()[0]["id"]
 
-    marcar_leida = client.patch(f"/alertas/{primera_alerta_id}/leer")
+    marcar_leida = client.patch(f"/api/v1/alertas/{primera_alerta_id}/leer")
     assert marcar_leida.status_code == 200
 
     _create_lectura(client, equipo_id=equipo_id, temperatura=60.0)
 
-    todas = client.get("/alertas", params={"equipo_id": equipo_id})
+    todas = client.get("/api/v1/alertas", params={"equipo_id": equipo_id})
     no_leidas = client.get(
-        "/alertas",
+        "/api/v1/alertas",
         params={"equipo_id": equipo_id, "solo_no_leidas": True},
     )
 
@@ -332,19 +332,19 @@ def test_get_alertas_count_returns_totals(client):
     )
     _create_lectura(client, equipo_id=equipo_id, temperatura=58.0)
 
-    by_equipo = client.get("/alertas/count", params={"equipo_id": equipo_id})
+    by_equipo = client.get("/api/v1/alertas/count", params={"equipo_id": equipo_id})
     assert by_equipo.status_code == 200
     assert by_equipo.json()["total"] == 1
     assert by_equipo.json()["no_leidas"] == 1
 
     alerta_id = client.get(
-        "/alertas",
+        "/api/v1/alertas",
         params={"equipo_id": equipo_id, "solo_no_leidas": True},
     ).json()[0]["id"]
-    mark_read_response = client.patch(f"/alertas/{alerta_id}/leer")
+    mark_read_response = client.patch(f"/api/v1/alertas/{alerta_id}/leer")
     assert mark_read_response.status_code == 200
 
-    by_equipo_after = client.get("/alertas/count", params={"equipo_id": equipo_id})
+    by_equipo_after = client.get("/api/v1/alertas/count", params={"equipo_id": equipo_id})
     assert by_equipo_after.status_code == 200
     assert by_equipo_after.json()["total"] == 1
     assert by_equipo_after.json()["no_leidas"] == 0

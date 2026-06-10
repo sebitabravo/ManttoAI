@@ -143,6 +143,15 @@ def get_current_user(
         if token_iat is None or token_iat < password_changed_at:
             raise credentials_exception
 
+    # Tenant isolation: si el middleware detectó X-Tenant-ID, verificar membresía
+    tenant_id = getattr(request.state, "tenant_id", None)
+    if tenant_id is not None:
+        if usuario.organizacion_id != tenant_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acceso denegado: no pertenece al tenant especificado",
+            )
+
     return usuario
 
 

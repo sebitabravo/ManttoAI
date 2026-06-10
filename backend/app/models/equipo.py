@@ -52,7 +52,11 @@ class Equipo(Base):
     # Punto de extensión para multi-tenancy (RNF-28).
     # Nullable en MVP single-tenant. Para multi-tenant: agregar FK a organizaciones.
     organizacion_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("organizaciones.id"), nullable=True, default=None, index=True
+        Integer,
+        ForeignKey("organizaciones.id"),
+        nullable=True,
+        default=None,
+        index=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

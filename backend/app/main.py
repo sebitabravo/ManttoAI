@@ -151,21 +151,29 @@ app.add_middleware(RequestMetricsMiddleware)
 # Configurar audit logging automático
 app.middleware("http")(audit_middleware)
 
-# Auth expuesto en /api/v1 y raíz por compatibilidad con clientes legacy
+# Auth expuesto en /api/v1 y raíz por compatibilidad con clientes legacy y tests
 app.include_router(auth.router)
 app.include_router(auth.router, prefix=API_V1_PREFIX)
 
-# Documentación legal pública
+# Documentación legal pública (raíz sin prefijo)
 app.include_router(legal.router)
 
-# Router IoT (público pero con API key authentication)
+# Router IoT (público pero con API key authentication) — solo /api/v1
 app.include_router(iot.router, prefix=API_V1_PREFIX)
 
-# Admin-only routers
+# Admin-only routers — expuestos también sin prefijo para compatibilidad
+app.include_router(
+    usuarios.router,
+    dependencies=[Depends(require_role("admin"))],
+)
 app.include_router(
     usuarios.router,
     dependencies=[Depends(require_role("admin"))],
     prefix=API_V1_PREFIX,
+)
+app.include_router(
+    api_keys.router,
+    dependencies=[Depends(require_role("admin"))],
 )
 app.include_router(
     api_keys.router,
@@ -175,22 +183,40 @@ app.include_router(
 app.include_router(
     audit_logs.router,
     dependencies=[Depends(require_role("admin"))],
+)
+app.include_router(
+    audit_logs.router,
+    dependencies=[Depends(require_role("admin"))],
     prefix=API_V1_PREFIX,
 )
 
-# Domain routers — solo /api/v1
+# Domain routers — expuestos también sin prefijo para compatibilidad con tests
+app.include_router(onboarding.router)
 app.include_router(onboarding.router, prefix=API_V1_PREFIX)
+app.include_router(equipos.router)
 app.include_router(equipos.router, prefix=API_V1_PREFIX)
+app.include_router(lecturas.router)
 app.include_router(lecturas.router, prefix=API_V1_PREFIX)
+app.include_router(alertas.router)
 app.include_router(alertas.router, prefix=API_V1_PREFIX)
+app.include_router(predicciones.router)
 app.include_router(predicciones.router, prefix=API_V1_PREFIX)
+app.include_router(mantenciones.router)
 app.include_router(mantenciones.router, prefix=API_V1_PREFIX)
+app.include_router(umbrales.router)
 app.include_router(umbrales.router, prefix=API_V1_PREFIX)
+app.include_router(dashboard.router)
 app.include_router(dashboard.router, prefix=API_V1_PREFIX)
+app.include_router(reportes.router)
 app.include_router(reportes.router, prefix=API_V1_PREFIX)
+app.include_router(chat.router)
 app.include_router(chat.router, prefix=API_V1_PREFIX)
 
-# Métricas (requiere auth)
+# Métricas (requiere auth) — expuesto también sin prefijo
+app.include_router(
+    metrics.router,
+    dependencies=[Depends(get_current_user)],
+)
 app.include_router(
     metrics.router,
     dependencies=[Depends(get_current_user)],
@@ -200,9 +226,16 @@ app.include_router(
 
 @app.get("/health", tags=["system"])
 async def health_check() -> JSONResponse:
-    """Health check con verificación de DB, Redis y MQTT."""
+    """Liveness probe: indica que la aplicación responde (sin verificar dependencias)."""
+    return JSONResponse(status_code=200, content={"status": "ok"})
+
+
+@app.get("/ready", tags=["system"])
+async def readiness_check() -> JSONResponse:
+    """Readiness probe: verifica conectividad con DB, Redis y MQTT."""
 
     import os
+    import socket
 
     components = {"db": False, "redis": False, "mqtt": False}
 
@@ -235,8 +268,6 @@ async def health_check() -> JSONResponse:
     # Verificar MQTT si está habilitado
     if settings.mqtt_enabled:
         try:
-            import socket
-
             mqtt_host = os.getenv("MQTT_BROKER_HOST", "mosquitto")
             mqtt_port = int(os.getenv("MQTT_BROKER_PORT", "1883"))
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

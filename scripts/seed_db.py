@@ -121,6 +121,23 @@ UMBRALES_BASE: tuple[UmbralSeed, ...] = (
     UmbralSeed(variable="vibracion", valor_min=0.0, valor_max=9.9),
 )
 
+# Rangos por rubro para generación de lecturas históricas
+RUBRO_TEMP_RANGES = {
+    "industrial": (35, 55),
+    "agricola": (25, 45),
+    "comercial": (20, 40),
+}
+RUBRO_HUM_RANGES = {
+    "industrial": (30, 50),
+    "agricola": (40, 70),
+    "comercial": (45, 75),
+}
+RUBRO_CLASIFICACIONES = {
+    "industrial": ("advertencia", (0.6, 0.75)),
+    "agricola": ("critico", (0.75, 0.9)),
+    "comercial": ("normal", (0.85, 0.95)),
+}
+
 # Semilla para reproducibilidad del demo
 SEED_RANDOM = random.Random(42)
 
@@ -304,16 +321,6 @@ def seed_lecturas_historicas(db: Session, equipos: list[Equipo]) -> tuple[int, i
                 timestamp = datetime.now() - timedelta(days=day, hours=hour)
 
                 # Generar valores realistas según rubro
-                RUBRO_TEMP_RANGES = {
-                    "industrial": (35, 55),
-                    "agricola": (25, 45),
-                    "comercial": (20, 40),
-                }
-                RUBRO_HUM_RANGES = {
-                    "industrial": (30, 50),
-                    "agricola": (40, 70),
-                    "comercial": (45, 75),
-                }
                 temp_min, temp_max = RUBRO_TEMP_RANGES.get(equipo.rubro, (20, 40))
                 hum_min, hum_max = RUBRO_HUM_RANGES.get(equipo.rubro, (45, 75))
                 temp = SEED_RANDOM.uniform(temp_min, temp_max)
@@ -358,11 +365,6 @@ def seed_predicciones_historicas(db: Session, equipos: list[Equipo]) -> int:
             continue
 
         # Crear última predicción según rubro
-        RUBRO_CLASIFICACIONES = {
-            "industrial": ("advertencia", (0.6, 0.75)),
-            "agricola": ("critico", (0.75, 0.9)),
-            "comercial": ("normal", (0.85, 0.95)),
-        }
         clasificacion, (prob_min, prob_max) = RUBRO_CLASIFICACIONES.get(
             equipo.rubro, ("normal", (0.85, 0.95))
         )

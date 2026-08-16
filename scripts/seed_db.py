@@ -60,6 +60,7 @@ class EquipoSeed:
     tipo: str
     rubro: str
     estado: str
+    mac_address: str
 
 
 @dataclass(frozen=True)
@@ -78,6 +79,7 @@ EQUIPOS_DEMO: tuple[EquipoSeed, ...] = (
         tipo="Torno",
         rubro="industrial",
         estado="operativo",
+        mac_address="02:00:00:00:00:01",
     ),
     EquipoSeed(
         nombre="Brazo Robótico",
@@ -85,6 +87,7 @@ EQUIPOS_DEMO: tuple[EquipoSeed, ...] = (
         tipo="Robot",
         rubro="industrial",
         estado="operativo",
+        mac_address="02:00:00:00:00:02",
     ),
     EquipoSeed(
         nombre="Sistema de Riego Central",
@@ -92,6 +95,7 @@ EQUIPOS_DEMO: tuple[EquipoSeed, ...] = (
         tipo="Sistema de Riego",
         rubro="agricola",
         estado="operativo",
+        mac_address="02:00:00:00:00:03",
     ),
     EquipoSeed(
         nombre="Cosechadora John Deere",
@@ -99,6 +103,7 @@ EQUIPOS_DEMO: tuple[EquipoSeed, ...] = (
         tipo="Cosechadora",
         rubro="agricola",
         estado="operativo",
+        mac_address="02:00:00:00:00:04",
     ),
     EquipoSeed(
         nombre="Cámara de Frío (Supermercado)",
@@ -106,6 +111,7 @@ EQUIPOS_DEMO: tuple[EquipoSeed, ...] = (
         tipo="Cámara de Frío",
         rubro="comercial",
         estado="operativo",
+        mac_address="02:00:00:00:00:05",
     ),
     EquipoSeed(
         nombre="Escalera Mecánica",
@@ -113,6 +119,7 @@ EQUIPOS_DEMO: tuple[EquipoSeed, ...] = (
         tipo="Escalera Mecánica",
         rubro="comercial",
         estado="operativo",
+        mac_address="02:00:00:00:00:06",
     ),
 )
 
@@ -170,24 +177,37 @@ def _assert_safe_seed_environment() -> None:
     )
 
 
+def _require_seed_password(env_name: str, password: str) -> str:
+    """Exige una contraseña explícita y rechaza valores publicados."""
+
+    normalized = password.strip()
+    if not normalized:
+        raise RuntimeError(
+            f"{env_name} es obligatorio para crear o resetear usuarios. "
+            "Definilo fuera del repositorio."
+        )
+
+    if normalized in {"Admin123!", "Tecnico123!", "admin123"}:
+        raise RuntimeError(
+            f"{env_name} usa una contraseña demo publicada. Elegí otra antes de ejecutar seed."
+        )
+
+    return normalized
+
+
 def seed_admin_user(db: Session) -> tuple[str, bool]:
     """Crea o actualiza el usuario admin demo."""
 
     admin_name = os.getenv("SEED_ADMIN_NAME", "Admin ManttoAI")
     admin_email = os.getenv("SEED_ADMIN_EMAIL", "admin@manttoai.local")
-    admin_password = os.getenv("SEED_ADMIN_PASSWORD", "Admin123!")
+    admin_password = os.getenv("SEED_ADMIN_PASSWORD", "")
     reset_admin_password = _env_bool("SEED_RESET_ADMIN_PASSWORD", default=False)
-
-    if admin_password == "Admin123!":
-        print(
-            "⚠️ Usando contraseña demo por defecto para admin. "
-            "Cambiá SEED_ADMIN_PASSWORD en backend/.env para una demo más realista."
-        )
 
     usuario = db.scalars(select(Usuario).where(Usuario.email == admin_email)).first()
     created = usuario is None
 
     if usuario is None:
+        admin_password = _require_seed_password("SEED_ADMIN_PASSWORD", admin_password)
         usuario = Usuario(
             nombre=admin_name,
             email=admin_email,
@@ -198,9 +218,12 @@ def seed_admin_user(db: Session) -> tuple[str, bool]:
     else:
         usuario.nombre = admin_name
         usuario.rol = "admin"
+        usuario.is_demo = False
 
         if reset_admin_password:
-            usuario.password_hash = hash_password(admin_password)
+            usuario.password_hash = hash_password(
+                _require_seed_password("SEED_ADMIN_PASSWORD", admin_password)
+            )
 
     return admin_email, created
 
@@ -210,13 +233,16 @@ def seed_tecnico_user(db: Session) -> tuple[str, bool]:
 
     tecnico_name = os.getenv("SEED_TECNICO_NAME", "Tecnico ManttoAI")
     tecnico_email = os.getenv("SEED_TECNICO_EMAIL", "tecnico@manttoai.local")
-    tecnico_password = os.getenv("SEED_TECNICO_PASSWORD", "Tecnico123!")
+    tecnico_password = os.getenv("SEED_TECNICO_PASSWORD", "")
     reset_tecnico_password = _env_bool("SEED_RESET_TECNICO_PASSWORD", default=False)
 
     usuario = db.scalars(select(Usuario).where(Usuario.email == tecnico_email)).first()
     created = usuario is None
 
     if usuario is None:
+        tecnico_password = _require_seed_password(
+            "SEED_TECNICO_PASSWORD", tecnico_password
+        )
         usuario = Usuario(
             nombre=tecnico_name,
             email=tecnico_email,
@@ -227,10 +253,46 @@ def seed_tecnico_user(db: Session) -> tuple[str, bool]:
     else:
         usuario.nombre = tecnico_name
         usuario.rol = "tecnico"
+        usuario.is_demo = False
         if reset_tecnico_password:
-            usuario.password_hash = hash_password(tecnico_password)
+            usuario.password_hash = hash_password(
+                _require_seed_password("SEED_TECNICO_PASSWORD", tecnico_password)
+            )
 
     return tecnico_email, created
+
+
+def seed_demo_user(db: Session) -> tuple[str, bool]:
+    """Crea o actualiza la cuenta visualizadora de demo en modo solo lectura."""
+
+    demo_name = os.getenv("SEED_DEMO_NAME", "Demo ManttoAI")
+    demo_email = os.getenv("SEED_DEMO_EMAIL", "demo@manttoai.local")
+    demo_password = os.getenv("SEED_DEMO_PASSWORD", "")
+    reset_demo_password = _env_bool("SEED_RESET_DEMO_PASSWORD", default=False)
+
+    usuario = db.scalars(select(Usuario).where(Usuario.email == demo_email)).first()
+    created = usuario is None
+
+    if usuario is None:
+        demo_password = _require_seed_password("SEED_DEMO_PASSWORD", demo_password)
+        usuario = Usuario(
+            nombre=demo_name,
+            email=demo_email,
+            password_hash=hash_password(demo_password),
+            rol="visualizador",
+            is_demo=True,
+        )
+        db.add(usuario)
+    else:
+        usuario.nombre = demo_name
+        usuario.rol = "visualizador"
+        usuario.is_demo = True
+        if reset_demo_password:
+            usuario.password_hash = hash_password(
+                _require_seed_password("SEED_DEMO_PASSWORD", demo_password)
+            )
+
+    return demo_email, created
 
 
 def seed_equipos(db: Session) -> tuple[list[Equipo], int, int]:
@@ -252,6 +314,7 @@ def seed_equipos(db: Session) -> tuple[list[Equipo], int, int]:
                 tipo=equipo_seed.tipo,
                 rubro=equipo_seed.rubro,
                 estado=equipo_seed.estado,
+                mac_address=equipo_seed.mac_address,
             )
             db.add(equipo)
             db.flush()
@@ -261,6 +324,8 @@ def seed_equipos(db: Session) -> tuple[list[Equipo], int, int]:
             equipo.tipo = equipo_seed.tipo
             equipo.rubro = equipo_seed.rubro
             equipo.estado = equipo_seed.estado
+            if not equipo.mac_address:
+                equipo.mac_address = equipo_seed.mac_address
             updated_count += 1
 
         equipos.append(equipo)
@@ -682,6 +747,7 @@ def main() -> None:
         # 1. Usuario admin
         admin_email, admin_created = seed_admin_user(db)
         tecnico_email, tecnico_created = seed_tecnico_user(db)
+        demo_email, demo_created = seed_demo_user(db)
 
         # 2. Equipos
         equipos, equipos_creados, equipos_actualizados = seed_equipos(db)
@@ -716,6 +782,10 @@ def main() -> None:
     )
     print(
         f"  Usuario técnico: {tecnico_email} ({'creado' if tecnico_created else 'actualizado'})"
+    )
+    print(
+        f"  Usuario demo solo lectura: {demo_email} "
+        f"({'creado' if demo_created else 'actualizado'})"
     )
     print(f"  Equipos: {equipos_creados} creados, {equipos_actualizados} actualizados")
     print(

@@ -1,0 +1,6 @@
+# El build de Vite no debe recibir secretos ni artefactos locales.
+.env
+.env.*
+!.env.example
+node_modules
+dist

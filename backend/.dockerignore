@@ -1,0 +1,11 @@
+# El contexto de Compose es backend/; los secretos locales nunca deben entrar
+# en la imagen porque Dockerfile copia el directorio completo.
+.env
+.env.*
+
+# Artefactos y caches locales que no aportan al runtime.
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache

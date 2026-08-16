@@ -64,6 +64,11 @@ pr_*.diff
 pr_review_comment.md
 
 # === Other AI Tools ===
+.vercel/
 .factory/
 .kiro/
+.atl/
+.claude/settings.local.json
+.claude/worktrees/
 skills-lock.json
+.claude-rdd/

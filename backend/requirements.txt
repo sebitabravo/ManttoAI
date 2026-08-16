@@ -9,6 +9,7 @@ PyJWT==2.13.0
 passlib[bcrypt]==1.7.4
 pymysql==1.1.1
 cryptography==44.0.1
+psycopg2-binary==2.9.10
 paho-mqtt==2.1.0
 numpy==2.2.4
 pandas==2.2.3

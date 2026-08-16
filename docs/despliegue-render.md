@@ -2,8 +2,8 @@
 
 > **Estado:** desplegado y verificado el 16-08-2026. La API pública es
 > `https://manttoai-api.onrender.com` y la SPA pública es
-> `https://manttoai.vercel.app`. Railway se conserva sólo como rollback hasta
-> completar la validación final del cutover.
+> `https://manttoai.vercel.app`. El proyecto Railway histórico dejó de usarse y
+> su eliminación quedó programada para `2026-08-18T22:05:05.978Z`.
 
 ## Arquitectura pública
 
@@ -163,15 +163,19 @@ El estado de despliegue no se considera entregado si sólo pasan los tests
 locales: también se necesitan `/health`, `/ready`, login y smoke de navegador
 contra los dominios públicos.
 
-## Rollback y retiro de Railway
+## Cutover y retiro de Railway
 
-1. Mantener Railway intacto mientras se valida Render, Neon y Vercel.
-2. Si falla Render, restaurar temporalmente el rewrite de Vercel al API Railway
-   y revertir el commit de configuración, sin forzar historia Git.
-3. Cuando el smoke público pase y exista evidencia de que Vercel ya no usa
-   Railway, exportar cualquier dato que se quiera conservar.
-4. Sólo entonces eliminar el proyecto Railway desde su dashboard/CLI y volver a
-   comprobar que la SPA sigue usando Render.
+1. Render, Neon y Vercel pasaron health, readiness y smoke público antes de
+   solicitar el retiro de Railway.
+2. El proyecto Railway `manttoai-demo` ya no es parte del tráfico público. La
+   CLI aceptó la solicitud de eliminación y muestra el `deletedAt` indicado
+   arriba; Railway puede seguir apareciendo en la cuenta hasta que se cumpla la
+   fecha programada.
+3. La base de vitrina quedó disponible en Neon y el rewrite productivo apunta a
+   Render. No restaurar Railway como rollback sin revisar primero si la
+   eliminación programada sigue siendo cancelable.
+4. Después de `deletedAt`, comprobar una vez más la lista de proyectos Railway
+   y conservar Render + Neon como el único runtime público.
 
 ## Evidencia local relacionada
 

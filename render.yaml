@@ -13,6 +13,8 @@ services:
     envVars:
       - key: APP_ENV
         value: production
+      - key: PORT
+        value: "8000"
       - key: DATABASE_URL
         sync: false
       - key: DATABASE_AUTO_INIT

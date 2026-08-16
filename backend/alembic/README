@@ -1,1 +1,12 @@
-Generic single-database configuration.
+## ManttoAI
+
+`alembic upgrade head` tiene un bootstrap de compatibilidad para una base
+completamente vacía: importa el metadata vigente, crea el esquema y registra
+la revisión `head`. La cadena histórica se conserva para bases que ya tienen
+`alembic_version`.
+
+Una base existente creada con `create_all` pero sin `alembic_version` se
+estampa solo si sus tablas y columnas coinciden exactamente con el metadata
+vigente. Un esquema parcial se rechaza antes de ejecutar migraciones
+históricas. Respaldá e inspeccioná constraints y datos antes de retirar los
+flags runtime.

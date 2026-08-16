@@ -3,6 +3,7 @@
 import pytest
 from sqlalchemy.orm import Session
 
+from app import dependencies
 from app.models.api_key import APIKey
 from app.models.usuario import Usuario
 from app.services.api_key_service import (
@@ -23,7 +24,7 @@ def test_create_api_key(db: Session, admin_user: Usuario):
     assert api_key.id is not None
     assert api_key.device_id == "esp32_001"
     assert api_key.is_active is True
-    assert api_key.key_prefix == plain_key[-12:]  # Prefijo ampliado de 8 a 12 chars
+    assert api_key.key_prefix == plain_key[:12]
     assert plain_key.startswith("mttk_")
 
     # Verificar que se guardó en DB
@@ -94,3 +95,14 @@ def test_validate_api_key(db: Session, admin_user: Usuario):
     revoke_api_key(db, api_key.id)
     revoked = validate_api_key(db, plain_key)
     assert revoked is None
+
+
+def test_api_key_dependency_delegates_to_service_validator(db, monkeypatch):
+    """La dependencia HTTP debe reutilizar el validador único del servicio."""
+
+    sentinel = object()
+    monkeypatch.setattr(dependencies, "validate_api_key", lambda _db, _key: sentinel)
+
+    result = dependencies.get_api_key_user("mttk_test_key", db)
+
+    assert result is sentinel

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.ml.train import MODEL_PATH, load_model_artifact_cached, train_and_save_model
+from app.models.equipo import Equipo
 from app.models.prediccion import Prediccion
 from app.services.alerta_service import (
     create_prediction_failure_alert,
@@ -21,6 +22,11 @@ from app.services.alerta_service import (
 )
 from app.services.equipo_service import get_equipo_or_404
 from app.services.lectura_service import get_latest_lectura
+from app.services.tenant_scope import (
+    UNSCOPED,
+    add_organization_scope,
+    resolve_organization_id,
+)
 
 logger = logging.getLogger(__name__)
 _MODEL_BOOTSTRAP_LOCK = Lock()
@@ -233,6 +239,7 @@ def _persist_prediction_result(
     artifact: dict[str, object],
     background_tasks: BackgroundTasks | None = None,
     session_factory: Callable | None = None,
+    organization_id: int | None | object = UNSCOPED,
 ) -> Prediccion:
     """Persiste resultado de inferencia y coordina alerta posterior."""
 
@@ -241,6 +248,7 @@ def _persist_prediction_result(
         clasificacion=classification,
         probabilidad=probability,
         modelo_version=_resolve_model_version(artifact),
+        organizacion_id=None if organization_id is UNSCOPED else organization_id,
     )
     db.add(prediction)
 
@@ -251,6 +259,7 @@ def _persist_prediction_result(
             equipo_id=equipo_id,
             probabilidad=probability,
             auto_commit=False,
+            organization_id=organization_id,
         )
 
     try:
@@ -266,7 +275,7 @@ def _persist_prediction_result(
                 detail="Error de integridad al persistir predicción",
             ) from exc
 
-        if get_active_prediction_failure_alert(db, equipo_id) is None:
+        if get_active_prediction_failure_alert(db, equipo_id, organization_id) is None:
             logger.exception("Conflicto de integridad sin alerta activa detectable")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -281,6 +290,7 @@ def _persist_prediction_result(
             clasificacion=classification,
             probabilidad=probability,
             modelo_version=_resolve_model_version(artifact),
+            organizacion_id=None if organization_id is UNSCOPED else organization_id,
         )
         db.add(prediction)
 
@@ -321,6 +331,7 @@ def _persist_prediction_result(
                 dispatch_critical_email_notifications_bg,
                 [prediction_failure_alert.id],
                 session_factory,
+                run_inline=session_factory is not None,
             )
         else:
             dispatch_critical_email_notifications(db, [prediction_failure_alert])
@@ -328,31 +339,45 @@ def _persist_prediction_result(
     return prediction
 
 
-def get_latest_prediction(db: Session, equipo_id: int) -> Prediccion | None:
+def get_latest_prediction(
+    db: Session, equipo_id: int, organization_id: int | None | object = UNSCOPED
+) -> Prediccion | None:
     """Obtiene la última predicción persistida de un equipo."""
 
-    return db.scalars(
+    query = (
         select(Prediccion)
+        .join(Equipo, Equipo.id == Prediccion.equipo_id)
         .where(Prediccion.equipo_id == equipo_id)
         .order_by(Prediccion.created_at.desc(), Prediccion.id.desc())
         .limit(1)
+    )
+    return db.scalars(
+        add_organization_scope(query, Equipo.organizacion_id, db, organization_id)
     ).first()
 
 
-def get_latest_prediction_global(db: Session) -> Prediccion | None:
+def get_latest_prediction_global(
+    db: Session, organization_id: int | None | object = UNSCOPED
+) -> Prediccion | None:
     """Obtiene la última predicción persistida considerando todos los equipos."""
 
-    return db.scalars(
+    query = (
         select(Prediccion)
+        .join(Equipo, Equipo.id == Prediccion.equipo_id)
         .order_by(Prediccion.created_at.desc(), Prediccion.id.desc())
         .limit(1)
+    )
+    return db.scalars(
+        add_organization_scope(query, Equipo.organizacion_id, db, organization_id)
     ).first()
 
 
-def get_prediction(db: Session, equipo_id: int) -> Prediccion:
+def get_prediction(
+    db: Session, equipo_id: int, organization_id: int | None | object = UNSCOPED
+) -> Prediccion:
     """Entrega la última predicción persistida para un equipo."""
 
-    prediction = get_latest_prediction(db, equipo_id)
+    prediction = get_latest_prediction(db, equipo_id, organization_id)
     if prediction is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -366,11 +391,15 @@ def execute_prediction(
     equipo_id: int,
     background_tasks: BackgroundTasks | None = None,
     session_factory: Callable | None = None,
+    organization_id: int | None | object = UNSCOPED,
 ) -> Prediccion:
     """Ejecuta inferencia real para un equipo y persiste el resultado."""
 
-    get_equipo_or_404(db, equipo_id)
-    latest_reading = get_latest_lectura(db, equipo_id)
+    equipo = get_equipo_or_404(db, equipo_id, organization_id)
+    resolved_id = resolve_organization_id(db, organization_id)
+    if resolved_id is UNSCOPED:
+        resolved_id = equipo.organizacion_id
+    latest_reading = get_latest_lectura(db, equipo_id, resolved_id)
     logger.info(
         "[PREDICCION] Ejecutando: equipo_id=%d lectura_id=%d",
         equipo_id,
@@ -392,4 +421,5 @@ def execute_prediction(
         artifact=artifact,
         background_tasks=background_tasks,
         session_factory=session_factory,
+        organization_id=resolved_id,
     )

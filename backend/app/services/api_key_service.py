@@ -10,6 +10,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.api_key import APIKey
+from app.models.usuario import Usuario
+from app.services.tenant_scope import UNSCOPED, add_organization_scope
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +59,7 @@ def create_api_key(
     # Generar key y hash
     plain_key = generate_api_key()
     key_hash = hash_api_key(plain_key)
-    key_prefix = plain_key[-12:]  # Últimos 12 caracteres para UI (mayor entropía que 8)
+    key_prefix = plain_key[:12]  # Prefijo estable para búsqueda y UI
 
     # Crear API key
     api_key = APIKey(
@@ -75,20 +77,32 @@ def create_api_key(
     return api_key, plain_key
 
 
-def get_api_key_by_id(db: Session, api_key_id: int) -> APIKey | None:
+def get_api_key_by_id(
+    db: Session,
+    api_key_id: int,
+    organization_id: int | None | object = UNSCOPED,
+) -> APIKey | None:
     """Retorna una API Key por ID."""
 
-    return db.get(APIKey, api_key_id)
+    query = (
+        select(APIKey)
+        .join(Usuario, Usuario.id == APIKey.created_by_id)
+        .where(APIKey.id == api_key_id)
+    )
+    return db.scalars(
+        add_organization_scope(query, Usuario.organizacion_id, db, organization_id)
+    ).first()
 
 
 def list_api_keys(
     db: Session,
     include_inactive: bool = False,
     device_id: str | None = None,
+    organization_id: int | None | object = UNSCOPED,
 ) -> list[APIKey]:
     """Lista todas las API Keys con filtros opcionales."""
 
-    query = select(APIKey)
+    query = select(APIKey).join(Usuario, Usuario.id == APIKey.created_by_id)
 
     if not include_inactive:
         query = query.where(APIKey.is_active.is_(True))
@@ -96,13 +110,18 @@ def list_api_keys(
     if device_id:
         query = query.where(APIKey.device_id == device_id)
 
+    query = add_organization_scope(query, Usuario.organizacion_id, db, organization_id)
     return list(db.scalars(query.order_by(APIKey.created_at.desc())).all())
 
 
-def revoke_api_key(db: Session, api_key_id: int) -> APIKey:
+def revoke_api_key(
+    db: Session,
+    api_key_id: int,
+    organization_id: int | None | object = UNSCOPED,
+) -> APIKey:
     """Revoca (desactiva) una API Key."""
 
-    api_key = db.get(APIKey, api_key_id)
+    api_key = get_api_key_by_id(db, api_key_id, organization_id)
     if not api_key:
         raise ValueError(f"API Key con ID {api_key_id} no encontrada")
 
@@ -121,10 +140,10 @@ def validate_api_key(db: Session, plain_key: str) -> APIKey | None:
     Usado por el suscriptor MQTT para autenticar dispositivos.
     """
 
-    key_suffix = plain_key[-12:] if len(plain_key) >= 12 else plain_key
+    key_prefix = plain_key[:12]
     candidates = db.scalars(
         select(APIKey).where(
-            APIKey.key_prefix == key_suffix,
+            APIKey.key_prefix == key_prefix,
             APIKey.is_active.is_(True),
         )
     ).all()

@@ -22,8 +22,10 @@ Tamaño por defecto del dataset sintético: **12.000 filas**.
 - Algoritmo: `RandomForestClassifier`
 - Artefacto: `app/ml/modelo.joblib`
 - El artefacto queda fuera de git por `.gitignore`.
-- El build Docker omite entrenamiento por defecto (`SKIP_TRAIN=true`).
-- Si se necesita incluir artefacto en imagen: build con `--build-arg SKIP_TRAIN=false`.
+- El build local de Compose omite entrenamiento por defecto (`SKIP_TRAIN=true`).
+- `Dockerfile.render` genera el artefacto durante el build porque el `.joblib`
+  y su checksum están fuera de git.
+- Para incluirlo en una imagen local: build con `--build-arg SKIP_TRAIN=false`.
 
 ## Comandos
 

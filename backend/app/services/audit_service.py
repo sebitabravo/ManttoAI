@@ -6,6 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.audit_log import AuditLog
+from app.models.usuario import Usuario
+from app.services.tenant_scope import UNSCOPED, add_organization_scope
 
 
 def log_audit(
@@ -64,6 +66,7 @@ def get_audit_logs(
     action: str | None = None,
     limit: int = 100,
     offset: int = 0,
+    organization_id: int | None | object = UNSCOPED,
 ) -> tuple[list[AuditLog], int]:
     """
     Retorna logs de auditoría con filtros opcionales.
@@ -74,7 +77,7 @@ def get_audit_logs(
 
     from sqlalchemy import func
 
-    query = select(AuditLog)
+    query = select(AuditLog).outerjoin(Usuario, Usuario.id == AuditLog.usuario_id)
 
     if usuario_id:
         query = query.where(AuditLog.usuario_id == usuario_id)
@@ -87,6 +90,8 @@ def get_audit_logs(
 
     if action:
         query = query.where(AuditLog.action == action)
+
+    query = add_organization_scope(query, Usuario.organizacion_id, db, organization_id)
 
     # Contar total usando COUNT(*) - O(1) en la DB
     count_query = select(func.count()).select_from(query.subquery())
@@ -101,7 +106,18 @@ def get_audit_logs(
     return logs, total
 
 
-def get_audit_log_by_id(db: Session, log_id: int) -> AuditLog | None:
+def get_audit_log_by_id(
+    db: Session,
+    log_id: int,
+    organization_id: int | None | object = UNSCOPED,
+) -> AuditLog | None:
     """Retorna un log de auditoría por ID."""
 
-    return db.get(AuditLog, log_id)
+    query = (
+        select(AuditLog)
+        .outerjoin(Usuario, Usuario.id == AuditLog.usuario_id)
+        .where(AuditLog.id == log_id)
+    )
+    return db.scalars(
+        add_organization_scope(query, Usuario.organizacion_id, db, organization_id)
+    ).first()

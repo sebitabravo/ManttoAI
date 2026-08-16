@@ -2,12 +2,19 @@
 
 from sqlalchemy.orm import Session
 
+from app.middleware.audit import _get_entity_from_path
 from app.models.usuario import Usuario
 from app.services.audit_service import (
     get_audit_log_by_id,
     get_audit_logs,
     log_audit,
 )
+
+
+def test_get_entity_from_path_supports_versioned_iot_route() -> None:
+    """La ruta IoT versionada debe conservar su entidad de auditoría."""
+
+    assert _get_entity_from_path("/api/v1/iot/lecturas") == ("iot", None)
 
 
 def test_log_audit(db: Session, admin_user: Usuario):

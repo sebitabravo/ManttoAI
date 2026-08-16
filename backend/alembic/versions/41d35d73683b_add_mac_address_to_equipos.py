@@ -151,11 +151,66 @@ def downgrade() -> None:
     op.drop_column("usuarios", "telefono")
     op.drop_column("mantenciones", "fecha_ejecucion")
     op.drop_column("mantenciones", "fecha_programada")
+
+    bind = op.get_bind()
+    equipo_fks = sa.inspect(bind).get_foreign_keys("equipos")
+    organizacion_fks = [
+        fk
+        for fk in equipo_fks
+        if "organizacion_id" in (fk.get("constrained_columns") or [])
+        and fk.get("referred_table") == "organizaciones"
+    ]
+    organizacion_tiene_fk = bool(organizacion_fks)
+    organizacion_fk_name = organizacion_fks[0].get("name") if organizacion_fks else None
+
+    # MySQL no permite eliminar un índice que respalda una FK. La FK viene
+    # del metadata actual cuando Alembic parte desde un esquema creado con
+    # create_all; se retira temporalmente y se restaura al conservar la
+    # columna de tenant para no degradar ese esquema extendido.
+    if bind.dialect.name == "mysql" and organizacion_fk_name:
+        op.drop_constraint(
+            organizacion_fk_name,
+            "equipos",
+            type_="foreignkey",
+        )
+
     op.drop_index(op.f("ix_equipos_organizacion_id"), table_name="equipos")
     op.drop_index(op.f("ix_equipos_mac_address"), table_name="equipos")
-    op.drop_column("equipos", "organizacion_id")
+
+    if organizacion_tiene_fk:
+        op.create_index(
+            op.f("ix_equipos_organizacion_id"),
+            "equipos",
+            ["organizacion_id"],
+            unique=False,
+        )
+        if bind.dialect.name == "mysql" and organizacion_fk_name:
+            op.create_foreign_key(
+                organizacion_fk_name,
+                "equipos",
+                "organizaciones",
+                ["organizacion_id"],
+                ["id"],
+            )
+    else:
+        op.drop_column("equipos", "organizacion_id")
+
     op.drop_column("equipos", "mac_address")
     op.drop_column("equipos", "descripcion")
+
+    # En MySQL el índice de usuario respalda la FK de audit_logs. Retirar las
+    # constraints antes de soltar los índices evita el error 1553 durante el
+    # downgrade; la tabla se elimina inmediatamente después.
+    if bind.dialect.name == "mysql":
+        for foreign_key in sa.inspect(bind).get_foreign_keys("audit_logs"):
+            foreign_key_name = foreign_key.get("name")
+            if foreign_key_name:
+                op.drop_constraint(
+                    foreign_key_name,
+                    "audit_logs",
+                    type_="foreignkey",
+                )
+
     op.drop_index(op.f("ix_audit_logs_usuario_id"), table_name="audit_logs")
     op.drop_index(op.f("ix_audit_logs_entity_type"), table_name="audit_logs")
     op.drop_index(op.f("ix_audit_logs_entity_id"), table_name="audit_logs")

@@ -10,7 +10,9 @@ class ChatMessageRequest(BaseModel):
     mensaje: str = Field(
         ..., min_length=2, max_length=500, description="Pregunta del técnico"
     )
-    historial: list = Field(default=[], description="Historial de la conversación")
+    historial: list = Field(
+        default_factory=list, description="Historial de la conversación"
+    )
 
 
 class ChatMessageResponse(BaseModel):

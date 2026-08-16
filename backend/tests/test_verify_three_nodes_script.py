@@ -79,7 +79,7 @@ def test_build_dashboard_map_omite_entradas_invalidas(verify_module, monkeypatch
     """Valida que el mapa de dashboard solo conserve equipos válidos."""
 
     def fake_fetch_json(url, *, method="GET", payload=None, token="", ca_bundle=""):
-        assert url.endswith("/dashboard/resumen")
+        assert url.endswith("/api/v1/dashboard/resumen")
         assert method == "GET"
         assert token == "token-demo"
         assert payload is None
@@ -163,7 +163,7 @@ def test_resolve_auth_token_login_fallback_reutiliza_ca_bundle(
 
     assert token == "login.jwt.token"
     assert captured == {
-        "url": "https://api.manttoai.local/auth/login",
+        "url": "https://api.manttoai.local/api/v1/auth/login",
         "method": "POST",
         "password": "Admin123!",
         "ca_bundle": "/tmp/ca-bundle.pem",
@@ -177,7 +177,7 @@ def test_validate_equipo_ok_cuando_lectura_es_reciente(verify_module, monkeypatc
     reading_time = now - timedelta(minutes=1)
 
     def fake_fetch_json(url, *, method="GET", payload=None, token="", ca_bundle=""):
-        assert "/lecturas/latest/1" in url
+        assert "/api/v1/lecturas/latest/1" in url
         assert method == "GET"
         assert token == "token-demo"
         assert payload is None

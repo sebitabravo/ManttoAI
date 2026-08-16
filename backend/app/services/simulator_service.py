@@ -13,9 +13,12 @@ import threading
 from collections.abc import Callable
 from datetime import datetime, timezone
 
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.schemas.lectura import LecturaCreate
+from app.services.lectura_service import create_lectura, prune_old_lecturas
 
 try:
     import paho.mqtt.client as mqtt
@@ -104,15 +107,26 @@ def run_simulator_cycle(session_factory: SessionFactory | None = None) -> dict:
     settings = get_settings()
     resolved_factory = _resolve_session_factory(session_factory)
 
-    if mqtt is None:
+    if settings.mqtt_enabled and mqtt is None:
         logger.warning("paho-mqtt no disponible, simulador omitido")
         return {"status": "skipped", "reason": "mqtt_unavailable"}
 
     # Obtener equipos activos de la BD
     session = resolved_factory()
-    equipos_data: list[tuple[str, str | None]] = []
+    equipos_data: list[tuple[int, str, str | None]] = []
 
     try:
+        try:
+            purgadas = prune_old_lecturas(
+                session,
+                settings.telemetry_retention_days,
+            )
+            if purgadas:
+                logger.info("Simulador: lecturas antiguas purgadas=%d", purgadas)
+        except SQLAlchemyError:
+            session.rollback()
+            logger.exception("Simulador: no se pudo aplicar retención de lecturas")
+
         from app.services.equipo_service import list_equipos
 
         for equipo in list_equipos(session):
@@ -121,13 +135,62 @@ def run_simulator_cycle(session_factory: SessionFactory | None = None) -> dict:
                 mac = getattr(equipo, "mac_address", None)
                 if not mac:
                     mac = f"00:1A:2B:3C:{equipo.id:02X}:FF"
-                equipos_data.append((mac, getattr(equipo, "tipo", None)))
-    finally:
+                equipos_data.append((equipo.id, mac, getattr(equipo, "tipo", None)))
+    except Exception:
         session.close()
+        raise
 
     if not equipos_data:
         logger.debug("Simulador: no hay equipos activos")
+        session.close()
         return {"status": "ok", "equipos": 0, "publicados": 0}
+
+    rng = random.Random()  # Sin seed para variación real
+
+    if not settings.mqtt_enabled:
+        publicados = 0
+        errores = 0
+        try:
+            for equipo_id, _mac, tipo in equipos_data:
+                profile = _get_equipment_profile(tipo)
+                reading = _build_reading(rng, profile)
+                try:
+                    create_lectura(
+                        session,
+                        LecturaCreate(equipo_id=equipo_id, **reading),
+                    )
+                    publicados += 1
+                except Exception as exc:
+                    session.rollback()
+                    errores += 1
+                    logger.warning(
+                        "Simulador: error persistiendo equipo_id=%s: %s",
+                        equipo_id,
+                        exc,
+                    )
+        finally:
+            session.close()
+
+        logger.info(
+            "Simulador: ciclo database completado equipos=%d persistidos=%d errores=%d",
+            len(equipos_data),
+            publicados,
+            errores,
+        )
+        return {
+            "status": "ok" if errores == 0 else "degraded",
+            "modo": "database",
+            "equipos": len(equipos_data),
+            "publicados": publicados,
+            "errores": errores,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+    session.close()
+
+    if mqtt is None:
+        logger.warning("paho-mqtt no disponible, simulador omitido")
+        return {"status": "skipped", "reason": "mqtt_unavailable"}
 
     # Conectar MQTT
     try:
@@ -140,11 +203,10 @@ def run_simulator_cycle(session_factory: SessionFactory | None = None) -> dict:
         return {"status": "error", "reason": str(exc)}
 
     # Publicar lecturas
-    rng = random.Random()  # Sin seed para variación real
     publicados = 0
 
     try:
-        for mac, tipo in equipos_data:
+        for _equipo_id, mac, tipo in equipos_data:
             profile = _get_equipment_profile(tipo)
             reading = _build_reading(rng, profile)
             topic = f"{settings.mqtt_telemetry_topic.strip('/')}/{mac}"
@@ -201,8 +263,9 @@ def start_simulator(session_factory: SessionFactory | None = None) -> bool:
         return False
 
     if not settings.mqtt_enabled:
-        logger.info("Simulador IoT requiere MQTT habilitado")
-        return False
+        logger.info(
+            "Simulador IoT operará en modo persistencia directa (MQTT deshabilitado)"
+        )
 
     if settings.simulator_interval_seconds <= 0:
         logger.warning(

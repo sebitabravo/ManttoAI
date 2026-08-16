@@ -15,7 +15,7 @@ def _build_equipo_payload(nombre: str) -> dict[str, str]:
 def _create_equipo(client, nombre: str = "Equipo Base") -> int:
     """Crea un equipo auxiliar y retorna su id."""
 
-    response = client.post("/equipos", json=_build_equipo_payload(nombre))
+    response = client.post("/api/v1/equipos", json=_build_equipo_payload(nombre))
     assert response.status_code == 201
     return response.json()["id"]
 
@@ -41,15 +41,15 @@ def test_list_umbrales_returns_persisted_records(client):
 
     equipo_id = _create_equipo(client)
     client.post(
-        "/umbrales",
+        "/api/v1/umbrales",
         json=_build_umbral_payload(equipo_id=equipo_id, variable="temperatura"),
     )
     client.post(
-        "/umbrales",
+        "/api/v1/umbrales",
         json=_build_umbral_payload(equipo_id=equipo_id, variable="humedad"),
     )
 
-    response = client.get("/umbrales")
+    response = client.get("/api/v1/umbrales")
 
     assert response.status_code == 200
     umbrales = response.json()
@@ -65,16 +65,16 @@ def test_get_umbrales_by_equipo_filter_and_route(client):
     equipo_b = _create_equipo(client, "Equipo Umbral B")
 
     client.post(
-        "/umbrales",
+        "/api/v1/umbrales",
         json=_build_umbral_payload(equipo_id=equipo_a, variable="temperatura"),
     )
     client.post(
-        "/umbrales",
+        "/api/v1/umbrales",
         json=_build_umbral_payload(equipo_id=equipo_b, variable="vibracion"),
     )
 
-    filtered_query = client.get("/umbrales", params={"equipo_id": equipo_a})
-    filtered_route = client.get(f"/umbrales/equipo/{equipo_a}")
+    filtered_query = client.get("/api/v1/umbrales", params={"equipo_id": equipo_a})
+    filtered_route = client.get(f"/api/v1/umbrales/equipo/{equipo_a}")
 
     assert filtered_query.status_code == 200
     assert filtered_route.status_code == 200
@@ -86,7 +86,7 @@ def test_create_umbral_rejects_unknown_equipo(client):
     """Valida que no se creen umbrales con equipo inexistente."""
 
     payload = _build_umbral_payload(equipo_id=99999)
-    response = client.post("/umbrales", json=payload)
+    response = client.post("/api/v1/umbrales", json=payload)
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Equipo no encontrado"
@@ -98,7 +98,7 @@ def test_create_umbral_rejects_invalid_range(client):
     equipo_id = _create_equipo(client)
     payload = _build_umbral_payload(equipo_id=equipo_id, valor_min=70.0, valor_max=20.0)
 
-    response = client.post("/umbrales", json=payload)
+    response = client.post("/api/v1/umbrales", json=payload)
 
     assert response.status_code == 422
     assert response.json()["detail"] == "valor_min no puede ser mayor que valor_max"
@@ -110,14 +110,14 @@ def test_create_umbral_persists_and_can_be_retrieved(client):
     equipo_id = _create_equipo(client)
     payload = _build_umbral_payload(equipo_id=equipo_id, variable="vibracion")
 
-    create_response = client.post("/umbrales", json=payload)
+    create_response = client.post("/api/v1/umbrales", json=payload)
 
     assert create_response.status_code == 201
     created = create_response.json()
     assert created["equipo_id"] == equipo_id
     assert created["variable"] == "vibracion"
 
-    get_response = client.get(f"/umbrales/{created['id']}")
+    get_response = client.get(f"/api/v1/umbrales/{created['id']}")
 
     assert get_response.status_code == 200
     assert get_response.json()["id"] == created["id"]
@@ -131,7 +131,7 @@ def test_create_umbral_by_equipo_path_overrides_payload_equipo(client):
     equipo_b = _create_equipo(client, "Equipo Ruta B")
 
     response = client.post(
-        f"/umbrales/equipo/{equipo_a}",
+        f"/api/v1/umbrales/equipo/{equipo_a}",
         json=_build_umbral_payload(equipo_id=equipo_b, variable="temperatura"),
     )
 
@@ -144,19 +144,19 @@ def test_update_umbral_persists_changes(client):
 
     equipo_id = _create_equipo(client)
     create_response = client.post(
-        "/umbrales",
+        "/api/v1/umbrales",
         json=_build_umbral_payload(equipo_id=equipo_id),
     )
     umbral_id = create_response.json()["id"]
 
     update_payload = {"valor_min": 12.5, "valor_max": 48.0}
-    update_response = client.put(f"/umbrales/{umbral_id}", json=update_payload)
+    update_response = client.put(f"/api/v1/umbrales/{umbral_id}", json=update_payload)
 
     assert update_response.status_code == 200
     assert update_response.json()["valor_min"] == 12.5
     assert update_response.json()["valor_max"] == 48.0
 
-    get_response = client.get(f"/umbrales/{umbral_id}")
+    get_response = client.get(f"/api/v1/umbrales/{umbral_id}")
 
     assert get_response.status_code == 200
     assert get_response.json()["valor_min"] == 12.5
@@ -168,13 +168,13 @@ def test_update_umbral_rejects_invalid_range(client):
 
     equipo_id = _create_equipo(client)
     create_response = client.post(
-        "/umbrales",
+        "/api/v1/umbrales",
         json=_build_umbral_payload(equipo_id=equipo_id, valor_min=10.0, valor_max=50.0),
     )
     umbral_id = create_response.json()["id"]
 
     update_response = client.put(
-        f"/umbrales/{umbral_id}",
+        f"/api/v1/umbrales/{umbral_id}",
         json={"valor_min": 80.0, "valor_max": 10.0},
     )
 
@@ -183,7 +183,7 @@ def test_update_umbral_rejects_invalid_range(client):
         update_response.json()["detail"] == "valor_min no puede ser mayor que valor_max"
     )
 
-    get_response = client.get(f"/umbrales/{umbral_id}")
+    get_response = client.get(f"/api/v1/umbrales/{umbral_id}")
     assert get_response.status_code == 200
     assert get_response.json()["valor_min"] == 10.0
     assert get_response.json()["valor_max"] == 50.0
@@ -192,7 +192,7 @@ def test_update_umbral_rejects_invalid_range(client):
 def test_put_umbral_not_found_returns_404(client):
     """Valida que PUT /umbrales/{id} responda 404 cuando no existe."""
 
-    response = client.put("/umbrales/99999", json={"valor_min": 20.0})
+    response = client.put("/api/v1/umbrales/99999", json={"valor_min": 20.0})
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Umbral no encontrado"
@@ -203,23 +203,23 @@ def test_delete_umbral_removes_record(client):
 
     equipo_id = _create_equipo(client)
     create_response = client.post(
-        "/umbrales",
+        "/api/v1/umbrales",
         json=_build_umbral_payload(equipo_id=equipo_id),
     )
     umbral_id = create_response.json()["id"]
 
-    delete_response = client.delete(f"/umbrales/{umbral_id}")
+    delete_response = client.delete(f"/api/v1/umbrales/{umbral_id}")
 
     assert delete_response.status_code == 204
 
-    get_response = client.get(f"/umbrales/{umbral_id}")
+    get_response = client.get(f"/api/v1/umbrales/{umbral_id}")
     assert get_response.status_code == 404
 
 
 def test_delete_umbral_not_found_returns_404(client):
     """Valida que DELETE /umbrales/{id} responda 404 cuando no existe."""
 
-    response = client.delete("/umbrales/99999")
+    response = client.delete("/api/v1/umbrales/99999")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Umbral no encontrado"

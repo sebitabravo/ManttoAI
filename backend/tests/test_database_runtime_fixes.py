@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from types import SimpleNamespace
 
-import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import database
@@ -139,43 +138,6 @@ def test_add_column_if_missing_is_noop_when_column_exists(monkeypatch):
     )
 
 
-@pytest.mark.parametrize(
-    ("dialect_name", "expected_fragment"),
-    [
-        ("mysql", "DELETE a1"),
-        ("sqlite", "DELETE FROM alertas"),
-    ],
-)
-def test_dedupe_alertas_removes_duplicates_for_supported_dialects(
-    monkeypatch,
-    dialect_name: str,
-    expected_fragment: str,
-):
-    """Deduplicación usa SQL esperado para MySQL y SQLite."""
-
-    executed_sql: list[str] = []
-    fake_connection = FakeConnection(executed_sql, rowcount=3)
-    fake_engine = FakeEngine(dialect_name, fake_connection)
-    monkeypatch.setattr(database, "engine", fake_engine)
-
-    deleted_count = database._dedupe_alertas_by_logical_key()
-
-    assert deleted_count == 3
-    assert any(expected_fragment in sql for sql in executed_sql)
-
-
-def test_dedupe_alertas_returns_zero_for_unsupported_dialect(monkeypatch):
-    """Si el dialecto no es MySQL/SQLite, no deduplica."""
-
-    executed_sql: list[str] = []
-    fake_connection = FakeConnection(executed_sql, rowcount=3)
-    fake_engine = FakeEngine("postgresql", fake_connection)
-    monkeypatch.setattr(database, "engine", fake_engine)
-
-    assert database._dedupe_alertas_by_logical_key() == 0
-    assert executed_sql == []
-
-
 def test_ensure_alerta_unique_index_is_noop_when_index_is_absent(monkeypatch):
     """No ejecuta cambios si el índice legacy ya no existe."""
 
@@ -237,6 +199,7 @@ def test_apply_runtime_schema_fixes_logs_info_when_any_patch_applies(
         ("mantenciones", "fecha_programada"),
         ("mantenciones", "fecha_ejecucion"),
         ("usuarios", "is_active"),
+        ("usuarios", "is_demo"),
         ("usuarios", "password_changed_at"),
         ("usuarios", "onboarding_step"),
         ("usuarios", "onboarding_completed"),

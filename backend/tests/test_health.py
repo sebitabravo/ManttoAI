@@ -23,11 +23,46 @@ def test_health_endpoint_reports_database_down(client, monkeypatch):
     assert payload["status"] == "degraded"
 
 
+def test_readiness_authenticates_redis_with_separate_password(client, monkeypatch):
+    """Readiness debe usar REDIS_PASSWORD aunque REDIS_URL no tenga auth."""
+
+    import redis
+
+    calls = []
+
+    class FakeRedis:
+        def ping(self):
+            return True
+
+    def fake_from_url(url, **kwargs):
+        calls.append({"url": url, "kwargs": kwargs})
+        return FakeRedis()
+
+    monkeypatch.setattr(main, "check_database_connection", lambda: True)
+    monkeypatch.setattr(main.settings, "database_url", "sqlite:///:memory:")
+    monkeypatch.setattr(main.settings, "redis_url", "redis://redis:6379")
+    monkeypatch.setattr(main.settings, "redis_password", "redis-secret")
+    monkeypatch.setattr(main.settings, "mqtt_enabled", False)
+    monkeypatch.setattr(redis, "from_url", fake_from_url)
+
+    response = client.get("/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "components": {"db": True, "redis": True, "mqtt": True},
+    }
+    assert {
+        "url": "redis://redis:6379",
+        "kwargs": {"socket_connect_timeout": 2, "password": "redis-secret"},
+    } in calls
+
+
 def test_dashboard_summary(client):
     """Valida el resumen del dashboard con equipos persistidos."""
 
     client.post(
-        "/equipos",
+        "/api/v1/equipos",
         json={
             "nombre": "Compresor dashboard",
             "ubicacion": "Sala 1",
@@ -36,7 +71,7 @@ def test_dashboard_summary(client):
         },
     )
 
-    response = client.get("/dashboard/resumen")
+    response = client.get("/api/v1/dashboard/resumen")
     assert response.status_code == 200
     assert response.json()["total_equipos"] >= 1
 

@@ -11,9 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt && if [ "${INSTALL_DEV_REQS}"
 
 COPY . .
 
-# Por defecto se omite entrenamiento en build para mantener builds rápidos/reproducibles.
-# Si se requiere artefacto embebido en imagen: --build-arg SKIP_TRAIN=false
-ARG SKIP_TRAIN=true
+# Render necesita generar el artefacto porque `modelo.joblib` no se versiona.
+# Desarrollo/Compose puede omitirlo con `--build-arg SKIP_TRAIN=true`.
+ARG SKIP_TRAIN=false
 RUN if [ "${SKIP_TRAIN}" != "true" ]; then python /app/app/ml/generate_dataset.py && python /app/app/ml/train.py; fi
 
 RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app

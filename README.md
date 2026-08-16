@@ -119,7 +119,7 @@ pero **no se publica una URL hasta verificar el flujo externo completo**.
 
 ## Evidencia técnica
 
-- **Backend:** el runner raíz (`./test.sh`) recolecta 373 tests, con **370
+- **Backend:** el runner raíz (`./test.sh`) recolecta 375 tests, con **372
   passed y 3 skipped**; `make test` reporta **86%** de cobertura. Los skips son
   explícitos: SMTP real, concurrencia MySQL y el roundtrip MySQL de Alembic
   requieren habilitación/servicios locales. Esto no sustituye una integración

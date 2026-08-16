@@ -19,9 +19,6 @@ _SENSITIVE_GET_PREFIXES = {
     "/api/v1/usuarios",
     "/api/v1/api-keys",
     "/api/v1/reportes",
-    "/usuarios",
-    "/api-keys",
-    "/reportes",
 }
 
 
@@ -177,24 +174,14 @@ def _get_entity_from_path(path: str) -> tuple[str, int | None]:
     # Mapeo de rutas a entidades
     path_mapping = {
         "/api/v1/equipos": "equipo",
-        "/equipos": "equipo",
         "/api/v1/usuarios": "usuario",
-        "/usuarios": "usuario",
         "/api/v1/alertas": "alerta",
-        "/alertas": "alerta",
         "/api/v1/umbrales": "umbral",
-        "/umbrales": "umbral",
         "/api/v1/mantenciones": "mantencion",
-        "/mantenciones": "mantencion",
         "/api/v1/lecturas": "lectura",
-        "/lecturas": "lectura",
         "/api/v1/predicciones": "prediccion",
-        "/predicciones": "prediccion",
         "/api/v1/api-keys": "api_key",
-        "/api-keys": "api_key",
         "/api/v1/reportes": "reporte",
-        "/reportes": "reporte",
-        "/auth": "auth",
         "/api/v1/auth": "auth",
         "/api/v1/iot": "iot",
     }

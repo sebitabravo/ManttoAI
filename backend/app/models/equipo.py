@@ -17,10 +17,9 @@ class Equipo(Base):
     Representa un equipo monitoreado.
 
     Diseño multi-tenancy (RNF-28):
-    El campo `organizacion_id` es el punto de extensión para migración a
-    multi-tenant. En el MVP es nullable (single-tenant). Para habilitar
-    multi-tenancy completo, agregar FK a tabla `organizaciones` y filtrar
-    todos los queries por `organizacion_id` del usuario autenticado.
+    `organizacion_id` es nullable para conservar filas globales del prototipo.
+    Las peticiones autenticadas filtran por la organización guardada en la
+    sesión; los workers internos pueden solicitar explícitamente alcance global.
     """
 
     __tablename__ = "equipos"
@@ -49,8 +48,8 @@ class Equipo(Base):
     mac_address: Mapped[str | None] = mapped_column(
         String(17), unique=True, index=True, nullable=True
     )
-    # Punto de extensión para multi-tenancy (RNF-28).
-    # Nullable en MVP single-tenant. Para multi-tenant: agregar FK a organizaciones.
+    # Nullable para mantener compatibilidad con datos globales del prototipo.
+    # Las rutas autenticadas aplican el alcance desde db.info.
     organizacion_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("organizaciones.id"),

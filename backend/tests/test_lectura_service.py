@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 from fastapi import BackgroundTasks
+from sqlalchemy.exc import IntegrityError
 
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
@@ -52,6 +53,42 @@ def test_list_lecturas_returns_all_when_limit_is_none(db):
 
     assert len(resultado) == 3
     assert [item.temperatura for item in resultado] == [42.0, 41.0, 40.0]
+
+
+def test_prune_old_lecturas_deletes_only_readings_outside_retention(db):
+    """La retención elimina lecturas antiguas y conserva las recientes."""
+
+    equipo = _crear_equipo(db, nombre="Equipo Retención Telemetría")
+    now = datetime(2026, 8, 16, tzinfo=timezone.utc)
+    db.add_all(
+        [
+            Lectura(
+                equipo_id=equipo.id,
+                temperatura=40.0,
+                humedad=55.0,
+                vib_x=0.3,
+                vib_y=0.2,
+                vib_z=9.8,
+                timestamp=now - timedelta(days=31),
+            ),
+            Lectura(
+                equipo_id=equipo.id,
+                temperatura=41.0,
+                humedad=55.0,
+                vib_x=0.3,
+                vib_y=0.2,
+                vib_z=9.8,
+                timestamp=now - timedelta(days=29),
+            ),
+        ]
+    )
+    db.commit()
+
+    deleted = lectura_service.prune_old_lecturas(db, retention_days=30, now=now)
+
+    assert deleted == 1
+    remaining = lectura_service.list_lecturas(db, equipo_id=equipo.id, limit=None)
+    assert [item.temperatura for item in remaining] == [41.0]
 
 
 def test_create_lectura_enqueues_background_notification_for_critical_alerts(
@@ -131,6 +168,36 @@ def test_create_lectura_logs_error_when_sync_notification_dispatch_fails(
 
     assert lectura.id is not None
     assert any("No se pudo despachar notificación crítica" in msg for msg in log_calls)
+
+
+def test_create_lectura_reuses_threshold_evaluator_after_integrity_error(
+    db, monkeypatch
+):
+    """La recuperación de concurrencia debe reutilizar una sola regla de negocio."""
+
+    equipo = _crear_equipo(db, nombre="Equipo Recuperación Umbral")
+    payload = LecturaCreate(
+        equipo_id=equipo.id,
+        temperatura=62.0,
+        humedad=60.0,
+        vib_x=0.3,
+        vib_y=0.2,
+        vib_z=9.8,
+    )
+    calls: list[int] = []
+
+    def fake_evaluate(_db, _lectura, *_organization_id):
+        calls.append(1)
+        if len(calls) == 1:
+            raise IntegrityError("insert", {}, RuntimeError("duplicate"))
+        return []
+
+    monkeypatch.setattr(lectura_service, "evaluate_thresholds", fake_evaluate)
+
+    lectura = lectura_service.create_lectura(db, payload)
+
+    assert lectura.id is not None
+    assert len(calls) == 2
 
 
 def test_create_lectura_from_mqtt_payload_transforms_payload_before_persisting(

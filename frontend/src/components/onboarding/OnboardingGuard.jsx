@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { getOnboardingStatus } from "../../api/onboarding";
+import useAuth from "../../hooks/useAuth";
+import { canManageOnboarding } from "../../utils/onboardingAccess";
 
 /**
  * Componente que verifica si el usuario completó el onboarding.
  *
- * Si el usuario está autenticado pero no completó el onboarding,
- * redirige automáticamente a la página del wizard.
+ * Si un usuario con permisos de configuración no completó el onboarding,
+ * redirige automáticamente a la página del wizard. Las cuentas de solo
+ * lectura pasan directo al producto demo sin consultar endpoints protegidos.
  * Bloquea el render de hijos hasta resolver el primer chequeo
  * para evitar flash del dashboard antes del redirect.
  *
@@ -16,9 +19,16 @@ import { getOnboardingStatus } from "../../api/onboarding";
 export default function OnboardingGuard({ children }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { user } = useAuth();
   const [checking, setChecking] = useState(true);
+  const onboardingEnabled = canManageOnboarding(user);
 
   useEffect(() => {
+    if (!onboardingEnabled) {
+      setChecking(false);
+      return;
+    }
+
     async function checkOnboardingStatus() {
       try {
         const status = await getOnboardingStatus();
@@ -45,7 +55,7 @@ export default function OnboardingGuard({ children }) {
     }
 
     checkOnboardingStatus();
-  }, [pathname, navigate]);
+  }, [onboardingEnabled, pathname, navigate]);
 
   // Mostrar loading mientras resuelve el estado del onboarding
   // Nunca renderizar hijos hasta confirmar el estado

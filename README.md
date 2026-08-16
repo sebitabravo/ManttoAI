@@ -29,6 +29,7 @@ falla. No es un sistema industrial certificado ni reemplaza un SCADA.
 - **IoT y Mensajería:** ESP32 (Firmware), Eclipse Mosquitto (MQTT)
 - **Machine Learning:** Scikit-learn, Pandas, Numpy
 - **Infraestructura:** Docker, Docker Compose, Nginx (compatible con Dokploy)
+- **Demo pública:** Vercel (SPA) + Railway (API FastAPI y MySQL)
 
 ---
 
@@ -87,6 +88,19 @@ Para una demo sin broker MQTT, configurá `MQTT_ENABLED=false` y
 `SIMULATOR_ENABLED=true` en `backend/.env`; el simulador persiste lecturas
 directamente en la base de datos.
 
+## 🌐 Demo pública verificada
+
+- **Aplicación:** [manttoai.vercel.app](https://manttoai.vercel.app)
+- **API health:** [health](https://api-production-aa996.up.railway.app/health)
+- **API readiness:** [ready](https://api-production-aa996.up.railway.app/ready)
+- **Acceso demo:** abrí la aplicación y presioná **Usar cuenta demo**. La
+  cuenta es de solo lectura y no se publica su contraseña en el repositorio.
+
+La vitrina pública usa Vercel para servir la SPA y el rewrite same-origin de
+`/api/*`; Railway ejecuta FastAPI y MySQL con volumen persistente. El backend
+mantiene `MQTT_ENABLED=false` y `SIMULATOR_ENABLED=true`, por lo que el
+dashboard conserva datos vivos sin exigir hardware físico ni un broker público.
+
 ## Qué demuestra el prototipo
 
 ManttoAI conecta sensores IoT de bajo costo con una API operativa y una SPA
@@ -112,10 +126,10 @@ ESP32 / simulador ── MQTT ──▶ Mosquitto ──▶ FastAPI
 React + Vite + Tailwind ── /api/v1 ─────────┘
 ```
 
-En local todo corre con Docker Compose. El blueprint de vitrina separa la SPA
-en Vercel, el backend Docker en Render y la base MySQL en Aiven; Redis, Ollama
-y Mailpit quedan fuera del servicio público. La configuración está preparada,
-pero **no se publica una URL hasta verificar el flujo externo completo**.
+En local todo corre con Docker Compose. La vitrina pública separa la SPA en
+Vercel, el backend Docker en Railway y la base MySQL en Railway; Redis, Ollama
+y Mailpit quedan fuera del servicio público. El simulador integrado mantiene
+la telemetría de demo sin MQTT externo.
 
 ## Evidencia técnica
 
@@ -128,6 +142,8 @@ pero **no se publica una URL hasta verificar el flujo externo completo**.
   Chromium y Firefox.
 - **Runtime local:** smoke MQTT/SMTP con lecturas persistidas, alertas,
   predicción y dashboard operativo.
+- **Runtime público:** API y base Railway online; smoke real desde navegador
+  verificado con login demo, dashboard, alertas y logout en Vercel.
 - **Render dry-run:** `backend/Dockerfile.render` fue construido para
   `linux/amd64` y arrancó bajo un límite de `512 MiB`; `/health` y `/ready`
   respondieron `200` con aproximadamente `204 MiB` reportados por Docker.
@@ -156,18 +172,20 @@ Las capturas de portfolio viven en una sola ruta canónica:
 
 Más detalle operativo en [`docs/manual-usuario.md`](docs/manual-usuario.md).
 
-## 🌐 Blueprint de despliegue
+## 🚀 Configuración de despliegue
 
 La configuración preparada para portfolio está separada del stack local:
 
-- `render.yaml` + `backend/Dockerfile.render`: backend FastAPI en Render y
-  seed protegido por secretos.
-- `frontend/vercel.json`: SPA en Vercel con rewrite same-origin de `/api/*`.
-- `docs/despliegue-render.md`: variables, verificaciones y límites del flujo.
+- `backend/Dockerfile.render`: imagen del backend FastAPI usada por Railway,
+  con seed idempotente y artefacto ML generado durante el build.
+- `frontend/vercel.json`: SPA en Vercel con rewrite same-origin de `/api/*`
+  hacia el API Railway.
+- `render.yaml` y `docs/despliegue-render.md`: blueprint histórico del
+  proveedor anterior; no son necesarios para la demo pública actual.
 
-Estos archivos no prueban que exista una URL pública. Hay que configurar los
-secretos de Render/Vercel y verificar `/health`, `/ready`, login y dashboard
-desde el navegador antes de publicar el enlace.
+Los secretos permanecen configurados en los dashboards de Railway y Vercel,
+fuera del repositorio. Las URLs anteriores corresponden al despliegue real y
+fueron verificadas con `/health`, `/ready`, login, dashboard, alertas y logout.
 
 ---
 

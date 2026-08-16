@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://manttoai-api.onrender.com/api/:path*"
+      "destination": "https://api-production-aa996.up.railway.app/api/:path*"
     },
     {
       "source": "/(.*)",

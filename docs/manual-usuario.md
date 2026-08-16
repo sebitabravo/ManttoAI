@@ -35,7 +35,7 @@ Si alguno falla, ver `README.md` de la raíz del repositorio.
 
 **Captura — pantalla de login**
 
-![Pantalla de login](./screenshots/login-page.png)
+![Pantalla de login](../screenshots/01-login-page.png)
 
 ### 1.2 Cerrar sesión
 1. Click en el avatar (esquina superior derecha).
@@ -61,7 +61,7 @@ Si alguno falla, ver `README.md` de la raíz del repositorio.
 
 **Captura — dashboard principal**
 
-![Dashboard principal](./screenshots/dashboard-page.png)
+![Dashboard principal](../screenshots/02-dashboard.png)
 
 ---
 
@@ -74,7 +74,7 @@ Si alguno falla, ver `README.md` de la raíz del repositorio.
 
 **Captura — listado de equipos**
 
-![Listado de equipos](./screenshots/equipos-page.png)
+![Listado de equipos](../screenshots/03-equipos.png)
 
 ### 3.2 Detalle de un equipo
 1. Click en la fila del equipo de interés.
@@ -98,7 +98,7 @@ Si alguno falla, ver `README.md` de la raíz del repositorio.
 
 **Captura — panel de alertas**
 
-![Panel de alertas](./screenshots/alertas-page.png)
+![Panel de alertas](../screenshots/04-alertas.png)
 
 ### 4.2 Procedimiento de atención (paso a paso)
 
@@ -145,13 +145,13 @@ Si alguno falla, ver `README.md` de la raíz del repositorio.
 1. Identificar el `equipo_id` desde el listado.
 2. Desde terminal o cliente HTTP, ejecutar:
    ```bash
-   curl -X POST http://localhost:8000/predicciones/ejecutar/{equipo_id} \
+   curl -X POST http://localhost:8000/api/v1/predicciones/ejecutar/{equipo_id} \
      -H "Authorization: Bearer <token>"
    ```
 3. Refrescar la pestaña **Predicciones** del equipo.
 4. La nueva predicción aparece con timestamp actual.
 
-> En entorno demo, el token se obtiene del request de login (DevTools → Network → `/auth/login`).
+> En entorno demo, el token se obtiene del request de login (DevTools → Network → `/api/v1/auth/login`).
 
 ---
 

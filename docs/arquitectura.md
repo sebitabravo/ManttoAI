@@ -27,13 +27,13 @@ flowchart LR
 3. `alerta_service` evalúa umbrales y crea alertas deduplicadas.
 4. `prediccion_scheduler_service` y/o endpoint manual ejecutan inferencia ML.
 5. `email_service` dispara notificaciones críticas vía SMTP.
-6. Frontend consume `/dashboard/resumen`, `/lecturas`, `/alertas`, `/predicciones` vía polling.
+6. Frontend consume `/api/v1/dashboard/resumen`, `/api/v1/lecturas`, `/api/v1/alertas`, `/api/v1/predicciones` vía polling.
 
 ## Contratos clave
 
 - Topic MQTT: `manttoai/telemetria/{mac_address}`
 - Payload telemetría: temperatura, humedad, vib_x, vib_y, vib_z, timestamp opcional
-- Endpoint agregador: `GET /dashboard/resumen`
+- Endpoint agregador: `GET /api/v1/dashboard/resumen`
 
 ## Alcance y límites (MVP académico)
 

@@ -1,7 +1,8 @@
 # API Endpoints — ManttoAI
 
-Todos los endpoints (excepto `/health` y `/legal/*`) están bajo el prefijo `/api/v1/`.
-Los paths legacy sin prefijo también funcionan pero están ocultos del schema OpenAPI.
+Todos los endpoints operativos están bajo el prefijo `/api/v1/`.
+Las probes `/health` y `/ready`, junto con `/legal/*`, quedan fuera del prefijo.
+Los paths legacy sin prefijo no están expuestos y responden `404`.
 
 **Autenticación:** Los endpoints marcados con 🔒 requieren header `Authorization: Bearer <JWT>`.
 Los marcados con 🔑 requieren header `X-API-Key`.
@@ -14,6 +15,7 @@ Los marcados con 👑 requieren rol `admin`.
 | Método | Path | Descripción | Auth |
 |--------|------|-------------|------|
 | GET | `/health` | Estado de API y conectividad de base de datos | No |
+| GET | `/ready` | Readiness de DB y dependencias configuradas | No |
 
 ---
 
@@ -24,7 +26,7 @@ Los marcados con 👑 requieren rol `admin`.
 | POST | `/api/v1/auth/register` | Registra un usuario persistido | No |
 | POST | `/api/v1/auth/login` | Retorna token JWT + cookies httpOnly + CSRF | No |
 | GET | `/api/v1/auth/me` | Retorna el usuario autenticado | 🔒 |
-| POST | `/api/v1/auth/logout` | Limpia cookies y revoca JWT en blacklist | No |
+| POST | `/api/v1/auth/logout` | Limpia cookies y revoca JWT de forma persistente; Redis queda como caché opcional | No |
 | POST | `/api/v1/auth/change-password` | Cambia la contraseña del usuario autenticado | 🔒 |
 | PUT | `/api/v1/auth/profile` | Actualiza nombre y avatar del usuario | 🔒 |
 
@@ -35,7 +37,7 @@ Los marcados con 👑 requieren rol `admin`.
 | Método | Path | Descripción | Auth |
 |--------|------|-------------|------|
 | GET | `/api/v1/equipos` | Lista equipos disponibles | 🔒 |
-| GET | `/api/v1/equipos/provisioning-token` | Genera JWT para provisionamiento ESP32 | 🔒 admin/técnico |
+| GET | `/api/v1/equipos/provisioning-token?mac_address=AA:BB:CC:DD:EE:FF` | Genera JWT ligado a la MAC del ESP32 | 🔒 admin/técnico |
 | GET | `/api/v1/equipos/{equipo_id}` | Obtiene un equipo por ID | 🔒 |
 | POST | `/api/v1/equipos` | Crea un equipo | 🔒 admin/técnico |
 | POST | `/api/v1/equipos/full-setup` | Crea equipo + umbrales en transacción atómica | 🔒 admin/técnico |

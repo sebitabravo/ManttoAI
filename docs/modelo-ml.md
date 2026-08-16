@@ -27,8 +27,9 @@ para cumplir el mínimo configurado.
 - Artefacto: `backend/app/ml/modelo.joblib` (ignorado por git)
 - Checksum sidecar: `backend/app/ml/modelo.joblib.sha256`
 
-> En Docker, el build del backend **omite** entrenamiento por defecto (`SKIP_TRAIN=true`) para mantener builds rápidos.
-> Si necesitás artefacto embebido en imagen, build con `--build-arg SKIP_TRAIN=false`.
+> En el stack local, Compose **omite** entrenamiento por defecto (`SKIP_TRAIN=true`) para mantener builds rápidos.
+> `backend/Dockerfile.render` genera el artefacto durante el build de Render porque el `.joblib` y su checksum están fuera de git.
+> Para una imagen local con artefacto, usar `--build-arg SKIP_TRAIN=false`.
 > En runtime, si el artefacto falta y `ML_AUTO_TRAIN_ON_MISSING=true`, se reentrena automáticamente.
 
 Comando:

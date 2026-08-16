@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import logging
+from queue import Full, Empty, Queue
 import time
 from collections.abc import Callable
 from socket import gaierror
+from threading import Event, Thread
 
 from fastapi import HTTPException
 from pydantic import ValidationError
@@ -33,6 +35,9 @@ logger = logging.getLogger(__name__)
 SessionFactory = Callable[[], Session]
 
 _mqtt_client = None
+_mqtt_worker_thread: Thread | None = None
+_mqtt_worker_stop = Event()
+_mqtt_message_queue: Queue[tuple[str, bytes, SessionFactory]] = Queue(maxsize=1000)
 
 
 def _normalize_base_topic(raw: str) -> str:
@@ -232,13 +237,73 @@ def _on_disconnect(_client, _userdata, reason_code, _properties) -> None:
 
 
 def _on_message(_client, userdata, msg) -> None:
-    """Callback de mensaje MQTT que delega en el procesador de lectura."""
+    """Encola un mensaje sin bloquear el loop de red de paho."""
 
     session_factory = SessionLocal
     if isinstance(userdata, dict) and "session_factory" in userdata:
         session_factory = userdata["session_factory"]
 
-    process_mqtt_message(msg.topic, msg.payload, session_factory=session_factory)
+    if _mqtt_worker_thread is None:
+        # Compatibilidad defensiva si el callback se invoca sin subscriber activo.
+        process_mqtt_message(msg.topic, msg.payload, session_factory=session_factory)
+        return
+
+    try:
+        _mqtt_message_queue.put_nowait((msg.topic, msg.payload, session_factory))
+    except Full:
+        logger.error(
+            "Cola MQTT llena; se descarta mensaje topic=%s para proteger el loop",
+            msg.topic,
+        )
+
+
+def _mqtt_worker() -> None:
+    """Persiste mensajes MQTT fuera del hilo de callbacks de paho."""
+
+    while not _mqtt_worker_stop.is_set():
+        try:
+            topic, payload, session_factory = _mqtt_message_queue.get(timeout=0.2)
+        except Empty:
+            continue
+
+        try:
+            process_mqtt_message(topic, payload, session_factory=session_factory)
+        except Exception:
+            logger.exception("Error inesperado en worker MQTT topic=%s", topic)
+        finally:
+            _mqtt_message_queue.task_done()
+
+
+def _start_mqtt_worker() -> None:
+    """Inicia el worker único y acotado de persistencia MQTT."""
+
+    global _mqtt_worker_thread
+    if _mqtt_worker_thread is not None and _mqtt_worker_thread.is_alive():
+        return
+
+    _mqtt_worker_stop.clear()
+    _mqtt_worker_thread = Thread(
+        target=_mqtt_worker,
+        daemon=True,
+        name="mqtt-persistence-worker",
+    )
+    _mqtt_worker_thread.start()
+
+
+def _stop_mqtt_worker() -> None:
+    """Detiene el worker MQTT sin bloquear el cierre de la aplicación."""
+
+    global _mqtt_worker_thread
+    _mqtt_worker_stop.set()
+    if _mqtt_worker_thread is not None:
+        _mqtt_worker_thread.join(timeout=2)
+    _mqtt_worker_thread = None
+    while True:
+        try:
+            _mqtt_message_queue.get_nowait()
+            _mqtt_message_queue.task_done()
+        except Empty:
+            break
 
 
 def start_mqtt_subscriber(session_factory: SessionFactory = SessionLocal) -> bool:
@@ -275,6 +340,7 @@ def start_mqtt_subscriber(session_factory: SessionFactory = SessionLocal) -> boo
 
     try:
         client.connect(settings.mqtt_broker_host, settings.mqtt_broker_port)
+        _start_mqtt_worker()
         client.loop_start()
     except (OSError, ValueError, gaierror) as exc:
         logger.warning(
@@ -284,6 +350,7 @@ def start_mqtt_subscriber(session_factory: SessionFactory = SessionLocal) -> boo
             type(exc).__name__,
             str(exc),
         )
+        _stop_mqtt_worker()
         return False
 
     _mqtt_client = client
@@ -308,3 +375,4 @@ def stop_mqtt_subscriber() -> None:
         _mqtt_client.disconnect()
     finally:
         _mqtt_client = None
+        _stop_mqtt_worker()

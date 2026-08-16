@@ -30,7 +30,6 @@ MQTT_HOST
 MQTT_PORT
 MQTT_USERNAME
 MQTT_PASSWORD
-EQUIPO_ID
 MQTT_PUBLISH_INTERVAL_MS
 ```
 
@@ -102,13 +101,12 @@ Checklist rápido:
 
 Para la defensa/demo oficial se espera validar 3 nodos en paralelo.
 
-### 1) Configurar cada nodo con `EQUIPO_ID` distinto
+### 1) Configurar cada nodo con una MAC registrada
 
-Usar el mismo broker/credenciales y cambiar solo `EQUIPO_ID` en cada placa:
-
-- Nodo A -> `EQUIPO_ID=1`
-- Nodo B -> `EQUIPO_ID=2`
-- Nodo C -> `EQUIPO_ID=3`
+El backend enruta por la MAC real publicada en el topic. Registrá primero la
+MAC de cada ESP32 mediante provisioning/full-setup y usá el mismo broker y
+credenciales en los tres nodos. No existe un `EQUIPO_ID` configurable en el
+firmware: `WiFi.macAddress()` es la identidad del dispositivo.
 
 ### 2) Verificar publicación simultánea en broker
 
@@ -116,7 +114,8 @@ Usar el mismo broker/credenciales y cambiar solo `EQUIPO_ID` en cada placa:
 mosquitto_sub -h <broker> -u <mqtt_user> -P <mqtt_pass> -t "manttoai/#" -v
 ```
 
-Resultado esperado: mensajes intercalados para `.../1/lecturas`, `.../2/lecturas`, `.../3/lecturas`.
+Resultado esperado: mensajes intercalados para los tres topics
+`manttoai/telemetria/{MAC_ADDRESS}` registrados.
 
 ### 3) Verificar persistencia y dashboard para los 3 equipos
 
@@ -207,10 +206,11 @@ python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <
 python iot/simulator/mqtt_simulator.py --host localhost --port 1883 --username <mqtt_user> --password <mqtt_pass> --devices 2 --start-id 10 --count 3
 ```
 
-Publica en:
+El ID solo selecciona el nodo demo y se convierte a una MAC determinista
+`02:00:00:00:{byte_alto}:{byte_bajo}`. Publica en:
 
-- `manttoai/telemetria/AA:BB:CC:DD:EE:10`
-- `manttoai/telemetria/AA:BB:CC:DD:EE:11`
+- `manttoai/telemetria/02:00:00:00:00:0A`
+- `manttoai/telemetria/02:00:00:00:00:0B`
 
 ## Escuchar mensajes publicados
 

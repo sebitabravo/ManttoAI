@@ -26,7 +26,7 @@ def _create_equipo(client, nombre: str = "Equipo IoT") -> int:
     """Crea un equipo auxiliar para pruebas del endpoint IoT."""
 
     response = client.post(
-        "/equipos",
+        "/api/v1/equipos",
         json={
             "nombre": nombre,
             "ubicacion": "Laboratorio",
@@ -114,3 +114,28 @@ def test_post_lectura_iot_persists_reading_when_api_key_matches_device(client):
     data = response.json()
     assert data["equipo_id"] == equipo_id
     assert data["temperatura"] == 48.5
+
+
+def test_post_lectura_iot_versioned_route_is_audited(client):
+    """La ruta IoT versionada conserva la trazabilidad de auditoría."""
+
+    equipo_id = _create_equipo(client, "IoT ruta legacy")
+    app.dependency_overrides[get_api_key_user] = lambda: SimpleNamespace(
+        device_id=str(equipo_id)
+    )
+    try:
+        response = client.post(
+            "/api/v1/iot/lecturas",
+            json=_build_lectura_payload(equipo_id),
+        )
+    finally:
+        app.dependency_overrides.pop(get_api_key_user, None)
+
+    assert response.status_code == 201
+
+    logs_response = client.get("/api/v1/audit-logs?entity_type=iot")
+    assert logs_response.status_code == 200
+    assert any(
+        log["new_values"]["request_path"] == "/api/v1/iot/lecturas"
+        for log in logs_response.json()["logs"]
+    )

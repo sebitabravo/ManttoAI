@@ -5,22 +5,32 @@ import secrets
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from jose import jwt
+import jwt
+from jwt import InvalidTokenError as JWTError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
-from app.dependencies import get_current_user
-from app.dependencies import get_db
+from app.config import NON_DEV_ENVS, get_settings
+from app.dependencies import (
+    get_current_user,
+    get_db,
+    get_revocation_redis_client,
+)
 from app.middleware.rate_limit import limiter
 from app.schemas.usuario import (
     ChangePasswordRequest,
     LoginRequest,
     ProfileUpdate,
     Token,
-    UsuarioCreate,
     UsuarioResponse,
+    UsuarioSelfRegister,
 )
-from app.services.auth_service import change_password, login_user, register_user
+from app.services.auth_service import (
+    change_password,
+    login_user,
+    register_user,
+    revoke_access_token,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
@@ -32,7 +42,7 @@ logger = logging.getLogger(__name__)
 )
 @limiter.limit("5/minute")
 def register(
-    payload: UsuarioCreate,
+    payload: UsuarioSelfRegister,
     request: Request,
     db: Session = Depends(get_db),
 ) -> UsuarioResponse:
@@ -58,8 +68,7 @@ def login(
         value=token.access_token,
         httponly=True,
         samesite="lax",
-        secure=settings.app_env.strip().lower()
-        in {"staging", "stage", "production", "prod"},
+        secure=settings.app_env.strip().lower() in NON_DEV_ENVS,
         max_age=60 * 60 * 4,
     )
     response.set_cookie(
@@ -67,8 +76,7 @@ def login(
         value=csrf_token,
         httponly=False,
         samesite="lax",
-        secure=settings.app_env.strip().lower()
-        in {"staging", "stage", "production", "prod"},
+        secure=settings.app_env.strip().lower() in NON_DEV_ENVS,
         max_age=60 * 60 * 4,
     )
     return token
@@ -82,15 +90,28 @@ def get_me(current_user=Depends(get_current_user)) -> UsuarioResponse:
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(request: Request, response: Response) -> Response:
-    """Limpia cookie de autenticación y revoca el JWT en blacklist Redis."""
+def logout(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> Response:
+    """Limpia cookies y revoca el JWT de forma persistente."""
 
-    # Intentar revocar el token actual en Redis
     token = (
         request.cookies.get(settings.auth_cookie_name)
         or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
     )
     if token:
+        try:
+            revoke_access_token(db, token)
+        except SQLAlchemyError as exc:
+            logger.exception("No se pudo persistir la revocación del JWT")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="No se pudo revocar la sesión",
+            ) from exc
+
+        # Redis se mantiene como caché opcional para despliegues que ya lo usan.
         try:
             payload = jwt.decode(
                 token,
@@ -101,21 +122,14 @@ def logout(request: Request, response: Response) -> Response:
             jti = payload.get("jti", "")
             exp = payload.get("exp", 0)
             if jti and exp:
-                try:
-                    import redis as redis_lib
-                except ImportError:
-                    redis_lib = None
-                if redis_lib is not None:
+                redis_client = get_revocation_redis_client()
+                if redis_client is not None:
                     ttl = max(int(exp - datetime.now(timezone.utc).timestamp()), 1)
-                    r = redis_lib.Redis(
-                        host=settings.redis_host,
-                        port=settings.redis_port,
-                        password=settings.redis_password or None,
-                        socket_connect_timeout=1,
-                    )
-                    r.setex(f"blacklist:{jti}", ttl, "1")
-        except Exception:
-            pass  # Degradación elegante: el token expira naturalmente
+                    redis_client.setex(f"blacklist:{jti}", ttl, "1")
+        except JWTError:
+            pass  # Un token inválido no necesita entrar a la blacklist.
+        except Exception as exc:
+            logger.warning("No se pudo actualizar la blacklist Redis: %s", exc)
 
     response.delete_cookie(
         key=settings.auth_cookie_name,
@@ -165,6 +179,12 @@ def update_profile(
     # Usar el usuario proporcionado por la dependencia (ya está autenticado y verificado)
     # No necesitamos recargar - current_user es el usuario correcto
     usuario = current_user
+
+    if getattr(usuario, "is_demo", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="La cuenta demo es de solo lectura",
+        )
 
     # Solo nombre y avatar son editables por el usuario
     if payload.nombre is not None:

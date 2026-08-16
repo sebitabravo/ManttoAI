@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.config import Settings
+from app.config import Settings, get_redis_connection_kwargs
 
 
 def test_settings_rejects_default_secret_key_outside_development():
@@ -153,3 +153,65 @@ def test_settings_allows_defaults_in_development():
     )
 
     assert settings.app_env == "development"
+
+
+def test_settings_rejects_unknown_environment_instead_of_assuming_development():
+    """Un entorno desconocido no debe desactivar las guardas de producción."""
+
+    with pytest.raises(ValueError, match="APP_ENV.*no soportado"):
+        Settings(_env_file=None, app_env="render", secret_key="secret")
+
+
+def test_settings_treats_stage_as_non_development():
+    """El alias stage debe exigir una clave explícita."""
+
+    with pytest.raises(ValueError, match="SECRET_KEY.*vacío"):
+        Settings(
+            _env_file=None,
+            app_env="stage",
+            secret_key="",
+            database_url="mysql+pymysql://root:strong-pass@mysql:3306/manttoai_db",
+            mqtt_enabled=False,
+        )
+
+
+def test_settings_rejects_wildcard_cors_outside_development():
+    """CORS con credenciales no puede aceptar cualquier origen en producción."""
+
+    with pytest.raises(ValueError, match="CORS_ALLOWED_ORIGINS.*wildcard"):
+        Settings(
+            _env_file=None,
+            app_env="production",
+            secret_key="super-secret-key",
+            database_url="mysql+pymysql://root:strong-pass@mysql:3306/manttoai_db",
+            mqtt_enabled=False,
+            cors_allowed_origins="*",
+        )
+
+
+def test_redis_password_is_passed_when_url_has_no_credentials():
+    """Redis Compose puede entregar la contraseña fuera de REDIS_URL."""
+
+    settings = Settings(
+        _env_file=None,
+        app_env="development",
+        secret_key="secret",
+        redis_url="redis://redis:6379",
+        redis_password="redis-secret",
+    )
+
+    assert get_redis_connection_kwargs(settings) == {"password": "redis-secret"}
+
+
+def test_redis_url_credentials_take_precedence_over_separate_password():
+    """No se debe reemplazar una credencial explícita incluida en la URL."""
+
+    settings = Settings(
+        _env_file=None,
+        app_env="development",
+        secret_key="secret",
+        redis_url="redis://:url-secret@redis:6379",
+        redis_password="env-secret",
+    )
+
+    assert get_redis_connection_kwargs(settings) == {}

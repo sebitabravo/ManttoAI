@@ -13,7 +13,9 @@ Cache strategy:
 
 import logging
 import os
+from ipaddress import ip_address, ip_network
 from collections.abc import Callable
+from urllib.parse import quote, urlparse, urlunparse
 
 from fastapi import Request
 from fastapi.responses import Response
@@ -28,12 +30,42 @@ logger = logging.getLogger(__name__)
 
 
 def get_real_ip(request: Request) -> str:
-    """Resolves real IP considering X-Forwarded-For for load balancers."""
+    """Resuelve la IP sin confiar en headers enviados por clientes arbitrarios."""
 
+    peer = get_remote_address(request)
     forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return get_remote_address(request)
+    if not forwarded:
+        return peer
+
+    trusted_networks = []
+    for raw_network in get_settings().trusted_proxy_ips.split(","):
+        raw_network = raw_network.strip()
+        if not raw_network:
+            continue
+        try:
+            trusted_networks.append(ip_network(raw_network, strict=False))
+        except ValueError:
+            logger.warning("Red de proxy confiable inválida: %s", raw_network)
+
+    try:
+        peer_ip = ip_address(peer)
+    except ValueError:
+        return peer
+
+    if not any(peer_ip in network for network in trusted_networks):
+        return peer
+
+    # X-Forwarded-For se ordena cliente -> proxy más cercano. Recorremos desde
+    # el proxy conocido hacia atrás y tomamos el primer salto no confiable.
+    for raw_hop in reversed(forwarded.split(",")):
+        try:
+            candidate = ip_address(raw_hop.strip())
+        except ValueError:
+            continue
+        if not any(candidate in network for network in trusted_networks):
+            return str(candidate)
+
+    return peer
 
 
 def resolve_api_limit() -> str:
@@ -62,43 +94,48 @@ def _resolve_default_limits() -> list[str]:
 
 
 def _resolve_storage_uri() -> str:
-    """Resolves storage URI for Redis with auth.
+    """Retorna el backend de almacenamiento sin hacer I/O durante el import."""
 
-    Falls back to memory only in dev.
-    """
-    redis_url = os.getenv("REDIS_URL", "redis://redis:6379")
-    redis_password = os.getenv("REDIS_PASSWORD")
-
-    from urllib.parse import urlparse
+    settings = get_settings()
+    redis_url = settings.redis_url.strip()
+    if not redis_url:
+        logger.info("REDIS_URL no configurado; rate limiting usará memoria local.")
+        return "memory://"
 
     parsed = urlparse(redis_url)
-    redis_host = parsed.hostname or "redis"
-    redis_port = parsed.port or 6379
-
-    if not redis_password and parsed.password:
-        redis_password = parsed.password
-
-    try:
-        import redis
-
-        r = redis.Redis(
-            host=redis_host,
-            port=redis_port,
-            password=redis_password,
-            socket_connect_timeout=2,
-        )
-        r.ping()
-        logger.info("Redis connected for rate limiting: %s:%s", redis_host, redis_port)
-        if redis_password:
-            return f"redis://:{redis_password}@{redis_host}:{redis_port}"
-        return f"redis://{redis_host}:{redis_port}"
-    except Exception as e:
-        logger.warning("Redis not available (%s). Using in-memory rate limiting.", e)
+    if parsed.scheme not in {"redis", "rediss"} or not parsed.hostname:
+        logger.warning("REDIS_URL inválido; rate limiting usará memoria local.")
         return "memory://"
+
+    # REDIS_PASSWORD puede venir separado en Compose. Construimos una URI
+    # válida sin probar la red: RedisStorage resolverá la conexión al usarla.
+    password = settings.redis_password or parsed.password
+    if settings.redis_password and not parsed.password:
+        username = quote(parsed.username or "", safe="")
+        host = parsed.hostname
+        port = f":{parsed.port}" if parsed.port else ""
+        auth = (
+            f"{username}:{quote(password, safe='')}@"
+            if username
+            else f":{quote(password, safe='')}@"
+        )
+        redis_url = urlunparse(
+            (
+                parsed.scheme,
+                f"{auth}{host}{port}",
+                parsed.path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment,
+            )
+        )
+
+    logger.info("Rate limiting configurado con almacenamiento Redis.")
+    return redis_url
 
 
 _global_limiter = Limiter(
-    key_func=get_real_ip,  # use X-Forwarded-For for load balancers
+    key_func=get_real_ip,
     default_limits=_resolve_default_limits(),
     storage_uri=_resolve_storage_uri(),
     headers_enabled=False,

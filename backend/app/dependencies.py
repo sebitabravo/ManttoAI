@@ -4,30 +4,85 @@ from collections.abc import Callable, Generator
 from datetime import datetime, timezone
 import logging
 
-import bcrypt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError as JWTError
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
+from app.config import get_redis_connection_kwargs, get_settings
 from app.database import SessionLocal
 from app.models.api_key import APIKey
+from app.models.revoked_token import RevokedToken
 from app.models.usuario import Usuario
+from app.services.api_key_service import validate_api_key
+from app.services.tenant_scope import UNSCOPED
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 settings = get_settings()
 JWT_ALGORITHM = "HS256"
 logger = logging.getLogger(__name__)
+_api_prefix = settings.api_prefix.strip().strip("/")
+API_ROUTE_PREFIX = f"/{_api_prefix}" if _api_prefix else "/api/v1"
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{API_ROUTE_PREFIX}/auth/login", auto_error=False
+)
+
+# Redis es una caché opcional: la fuente autoritativa de revocación permanece
+# en MySQL. Se conserva un cliente compartido para reutilizar su pool de
+# conexiones y no crear un objeto Redis nuevo en cada request autenticado.
+_revocation_redis_client = None
+_revocation_redis_config: tuple[str, str] | None = None
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_revocation_redis_client():
+    """Retorna un cliente Redis compartido para la caché de revocación."""
+
+    global _revocation_redis_client, _revocation_redis_config
+
+    redis_url = settings.redis_url.strip()
+    redis_password = settings.redis_password.strip()
+    config_key = (redis_url, redis_password)
+
+    if not redis_url:
+        _revocation_redis_client = None
+        _revocation_redis_config = None
+        return None
+
+    if _revocation_redis_client is not None and _revocation_redis_config == config_key:
+        return _revocation_redis_client
+
+    try:
+        import redis as redis_lib
+
+        _revocation_redis_client = redis_lib.from_url(
+            redis_url,
+            socket_connect_timeout=1,
+            **get_redis_connection_kwargs(settings),
+        )
+        _revocation_redis_config = config_key
+        return _revocation_redis_client
+    except ImportError:
+        logger.warning("Redis no disponible para verificar tokens revocados.")
+    except Exception as exc:
+        logger.warning("No se pudo preparar la caché Redis de revocación: %s", exc)
+
+    _revocation_redis_client = None
+    _revocation_redis_config = None
+    return None
+
+
+def get_db(request: Request) -> Generator[Session, None, None]:
     """Entrega una sesión de base de datos por request."""
 
     db = SessionLocal()
+    # La dependencia de autenticación reutiliza esta misma sesión y escribe el
+    # tenant validado después de resolver el JWT. Los servicios consumen db.info
+    # para no depender de un header controlable por el cliente.
+    db.info["organizacion_id"] = UNSCOPED
+    request.state.db_session = db
     try:
         yield db
     finally:
@@ -91,36 +146,32 @@ def get_current_user(
     except JWTError as exc:
         raise credentials_exception from exc
 
-    # Verificar blacklist de tokens revocados (logout / cambio de contraseña)
+    # La base es la fuente persistente de revocación; Redis queda como caché
+    # opcional para mantener compatibilidad con el despliegue Compose.
     jti = payload.get("jti")
-    if jti:
-        _redis_client = None
-        _redis_lib_imported = False
+    if isinstance(jti, str) and jti:
         try:
-            import redis as _redis_lib
+            if (
+                db.scalar(select(RevokedToken.id).where(RevokedToken.jti == jti))
+                is not None
+            ):
+                raise credentials_exception
+        except HTTPException:
+            raise
+        except SQLAlchemyError as exc:
+            logger.exception("No se pudo verificar la revocación persistente del JWT")
+            raise credentials_exception from exc
 
-            _redis_lib_imported = True
-            _redis_client = _redis_lib.Redis(
-                host=settings.redis_host,
-                port=settings.redis_port,
-                password=settings.redis_password or None,
-                socket_connect_timeout=1,
-            )
-        except ImportError:
-            logger.warning("Redis no disponible para verificar tokens revocados.")
-            pass  # Degradación elegante si Redis no está disponible
-        except Exception as e:  # Catch any other error during Redis connection
-            logger.error(
-                "Error conectando a Redis para verificar tokens revocados: %s", e
-            )
-            pass  # Degradación elegante
-
-        if _redis_client:
+    if jti and settings.redis_url.strip():
+        redis_client = get_revocation_redis_client()
+        if redis_client:
             try:
-                if _redis_client.exists(f"blacklist:{jti}"):
+                if redis_client.exists(f"blacklist:{jti}"):
                     raise credentials_exception
-            except Exception as e:
-                logger.error("Error al verificar blacklist de Redis: %s", e)
+            except HTTPException:
+                raise
+            except Exception as exc:
+                logger.error("Error al verificar blacklist de Redis: %s", exc)
                 pass  # Degradación elegante si hay un error de comunicación con Redis
 
     try:
@@ -131,6 +182,9 @@ def get_current_user(
     usuario = db.scalars(select(Usuario).where(Usuario.id == user_id)).first()
     if usuario is None or not usuario.is_active:
         raise credentials_exception
+
+    db.info["organizacion_id"] = usuario.organizacion_id
+    request.state.authenticated_organization_id = usuario.organizacion_id
 
     # Tenant isolation: si el middleware detectó X-Tenant-ID, verificar membresía
     tenant_id = getattr(request.state, "tenant_id", None)
@@ -203,40 +257,4 @@ def get_api_key_user(
     if not api_key:
         return None
 
-    key_suffix = api_key[-12:] if len(api_key) >= 12 else api_key
-    candidates = db.scalars(
-        select(APIKey).where(
-            APIKey.key_prefix == key_suffix,
-            APIKey.is_active.is_(True),
-        )
-    ).all()
-
-    for api_key_obj in candidates:
-        try:
-            is_valid = bcrypt.checkpw(
-                api_key.encode("utf-8"), api_key_obj.key_hash.encode("utf-8")
-            )
-        except (AttributeError, TypeError, ValueError) as exc:
-            logger.warning(
-                "No se pudo verificar candidate API key id=%s: %s: %s",
-                getattr(api_key_obj, "id", "n/a"),
-                type(exc).__name__,
-                str(exc),
-            )
-            continue
-
-        if not is_valid:
-            continue
-
-        api_key_obj.last_used_at = datetime.now(timezone.utc)
-        try:
-            db.commit()
-        except SQLAlchemyError:
-            db.rollback()
-            logger.exception(
-                "No se pudo persistir last_used_at para API key id=%s",
-                api_key_obj.id,
-            )
-        return api_key_obj
-
-    return None
+    return validate_api_key(db, api_key)

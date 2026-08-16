@@ -1,13 +1,17 @@
 """Endpoints de gestión de usuarios (solo admin)."""
 
+import secrets
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
+from app.models.api_key import APIKey
 from app.models.audit_log import AuditLog
+from app.models.chat import MensajeChat
 from app.models.usuario import Usuario
 from app.schemas.usuario import (
     UsuarioCreate,
@@ -15,7 +19,8 @@ from app.schemas.usuario import (
     UsuarioResponse,
     UsuarioUpdate,
 )
-from app.services.auth_service import register_user
+from app.services.auth_service import hash_password, register_user
+from app.services.tenant_scope import add_organization_scope
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
@@ -32,7 +37,7 @@ def list_usuarios(
 ) -> UsuarioListResponse:
     """Lista todos los usuarios con filtros opcionales (solo admin)."""
 
-    query = select(Usuario)
+    query = add_organization_scope(select(Usuario), Usuario.organizacion_id, db)
 
     if rol:
         query = query.where(Usuario.rol == rol)
@@ -67,7 +72,13 @@ def get_usuario(
 ) -> UsuarioResponse:
     """Retorna un usuario por ID (solo admin)."""
 
-    usuario = db.get(Usuario, usuario_id)
+    usuario = db.scalars(
+        add_organization_scope(
+            select(Usuario).where(Usuario.id == usuario_id),
+            Usuario.organizacion_id,
+            db,
+        )
+    ).first()
     if not usuario:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
@@ -86,7 +97,11 @@ def create_usuario(
     """Crea un nuevo usuario (solo admin)."""
 
     try:
-        return register_user(db, payload)
+        return register_user(
+            db,
+            payload,
+            organization_id=current_user.organizacion_id,
+        )
     except HTTPException as e:
         if e.status_code == status.HTTP_409_CONFLICT:
             raise HTTPException(
@@ -110,7 +125,13 @@ def update_usuario(
 ) -> UsuarioResponse:
     """Actualiza un usuario (solo admin)."""
 
-    usuario = db.get(Usuario, usuario_id)
+    usuario = db.scalars(
+        add_organization_scope(
+            select(Usuario).where(Usuario.id == usuario_id),
+            Usuario.organizacion_id,
+            db,
+        )
+    ).first()
     if not usuario:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
@@ -122,8 +143,12 @@ def update_usuario(
     if payload.email is not None:
         # Verificar que email no exista
         existing = db.scalars(
-            select(Usuario).where(
-                Usuario.email == payload.email, Usuario.id != usuario_id
+            add_organization_scope(
+                select(Usuario).where(
+                    Usuario.email == payload.email, Usuario.id != usuario_id
+                ),
+                Usuario.organizacion_id,
+                db,
             )
         ).first()
         if existing:
@@ -153,7 +178,13 @@ def delete_usuario(
 ) -> None:
     """Elimina un usuario (solo admin)."""
 
-    usuario = db.get(Usuario, usuario_id)
+    usuario = db.scalars(
+        add_organization_scope(
+            select(Usuario).where(Usuario.id == usuario_id),
+            Usuario.organizacion_id,
+            db,
+        )
+    ).first()
     if not usuario:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
@@ -166,8 +197,27 @@ def delete_usuario(
             detail="No puedes eliminar tu propio usuario",
         )
 
-    db.delete(usuario)
-    db.commit()
+    try:
+        # Estas referencias no deben impedir el borrado ni conservar secretos
+        # operativos del usuario eliminado.
+        db.execute(delete(APIKey).where(APIKey.created_by_id == usuario_id))
+        db.execute(delete(MensajeChat).where(MensajeChat.usuario_id == usuario_id))
+        db.execute(
+            update(AuditLog)
+            .where(AuditLog.usuario_id == usuario_id)
+            .values(usuario_id=None)
+        )
+        db.delete(usuario)
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "No se puede eliminar el usuario porque todavía tiene "
+                "datos relacionados. Use la anonimización RGPD primero."
+            ),
+        ) from exc
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -188,7 +238,13 @@ def exportar_datos_usuario(
     Incluye: datos de cuenta, equipos asociados, audit logs.
     Permite al usuario ejercer su derecho de portabilidad de datos.
     """
-    usuario = db.get(Usuario, usuario_id)
+    usuario = db.scalars(
+        add_organization_scope(
+            select(Usuario).where(Usuario.id == usuario_id),
+            Usuario.organizacion_id,
+            db,
+        )
+    ).first()
     if not usuario:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
@@ -255,7 +311,13 @@ def eliminar_datos_personales(
     Los datos de telemetría (lecturas, alertas, predicciones) se mantienen
     porque son datos industriales del equipo, no datos personales del usuario.
     """
-    usuario = db.get(Usuario, usuario_id)
+    usuario = db.scalars(
+        add_organization_scope(
+            select(Usuario).where(Usuario.id == usuario_id),
+            Usuario.organizacion_id,
+            db,
+        )
+    ).first()
     if not usuario:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
@@ -272,7 +334,7 @@ def eliminar_datos_personales(
     email_anonimizado = f"eliminado_{usuario_id}@anonimizado.manttoai"
     usuario.nombre = f"Usuario Eliminado #{usuario_id}"
     usuario.email = email_anonimizado
-    usuario.password_hash = "ELIMINADO"
+    usuario.password_hash = hash_password(secrets.token_urlsafe(32))
     usuario.is_active = False
 
     # Eliminar audit logs del usuario (datos de comportamiento personal)

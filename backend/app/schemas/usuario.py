@@ -22,18 +22,23 @@ def _normalize_and_validate_email(value: str) -> str:
     return normalized
 
 
-class UsuarioBase(BaseModel):
-    """Campos base de usuario."""
+class UsuarioIdentity(BaseModel):
+    """Campos de identidad compartidos por los payloads de usuario."""
 
     nombre: str
     email: str
-    rol: Literal["admin", "tecnico", "visualizador"] = "visualizador"
 
     @field_validator("email")
     def validate_email(cls, value: str) -> str:
         """Valida formato de email para registro de usuario."""
 
         return _normalize_and_validate_email(value)
+
+
+class UsuarioBase(UsuarioIdentity):
+    """Campos base de usuario, incluyendo el rol administrativo."""
+
+    rol: Literal["admin", "tecnico", "visualizador"] = "visualizador"
 
 
 _SPECIAL_CHARS_RE = re.compile(r'[!@#$%^&*(),.?":{}|<>_\-+=;\[\]\\/`~]')
@@ -70,6 +75,17 @@ class UsuarioCreate(UsuarioBase):
         return _validate_password_complexity(v)
 
 
+class UsuarioSelfRegister(UsuarioIdentity):
+    """Payload público de registro, sin capacidad para elegir el rol."""
+
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        return _validate_password_complexity(v)
+
+
 class UsuarioResponse(UsuarioBase):
     """Representación pública de usuario."""
 
@@ -77,6 +93,7 @@ class UsuarioResponse(UsuarioBase):
     created_at: datetime | None = None
     telefono: str | None = None
     avatar: str | None = None
+    is_demo: bool = False
 
     model_config = {"from_attributes": True}
 

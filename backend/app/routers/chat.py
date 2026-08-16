@@ -3,17 +3,20 @@
 import json
 
 from fastapi import APIRouter, Depends, Query, Response
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
 from app.dependencies import get_current_user, get_db, require_role
 from app.models.chat import MensajeChat
+from app.models.usuario import Usuario
 from app.schemas.chat import (
     ChatHistoryResponse,
     ChatMessageRequest,
     ChatMessageResponse,
 )
 from app.services.chat_service import procesar_mensaje
+from app.services.tenant_scope import add_organization_scope
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -41,14 +44,17 @@ def _persist_chat_message(
 def _build_dataset_export(db: Session) -> str:
     """Construye el JSONL acotado fuera del event loop."""
 
-    mensajes = (
-        db.query(MensajeChat)
+    mensajes = db.scalars(
+        add_organization_scope(
+            select(MensajeChat).join(Usuario, Usuario.id == MensajeChat.usuario_id),
+            Usuario.organizacion_id,
+            db,
+        )
         .order_by(MensajeChat.id.asc())
         .limit(10_000)
-        .yield_per(100)
     )
     lines = []
-    for msg in mensajes:
+    for msg in mensajes.yield_per(100):
         conversation = {
             "messages": [
                 {
@@ -67,12 +73,15 @@ def _build_dataset_export(db: Session) -> str:
 def _list_chat_history(db: Session, skip: int, limit: int) -> list[MensajeChat]:
     """Lista historial administrativo fuera del event loop."""
 
-    return (
-        db.query(MensajeChat)
-        .order_by(MensajeChat.fecha_creacion.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
+    query = add_organization_scope(
+        select(MensajeChat).join(Usuario, Usuario.id == MensajeChat.usuario_id),
+        Usuario.organizacion_id,
+        db,
+    )
+    return list(
+        db.scalars(
+            query.order_by(MensajeChat.fecha_creacion.desc()).offset(skip).limit(limit)
+        ).all()
     )
 
 

@@ -19,6 +19,7 @@ from app.models.alerta import Alerta
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.usuario import Usuario
+from app.services.tenant_scope import add_organization_scope
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 logger = logging.getLogger(__name__)
@@ -174,16 +175,36 @@ async def get_metrics_summary(
     """Retorna un resumen de métricas del sistema."""
 
     # Métricas de base de datos
-    total_equipos = db.scalar(select(func.count(Equipo.id)))
-    total_alertas_activas = db.scalar(
-        select(func.count(Alerta.id)).where(Alerta.leida.is_(False))
-    )
-    total_lecturas_24h = db.scalar(
-        select(func.count(Lectura.id)).where(
-            Lectura.timestamp >= datetime.now(timezone.utc) - timedelta(hours=24)
+    total_equipos = db.scalar(
+        add_organization_scope(
+            select(func.count(Equipo.id)), Equipo.organizacion_id, db
         )
     )
-    total_usuarios = db.scalar(select(func.count(Usuario.id)))
+    total_alertas_activas = db.scalar(
+        add_organization_scope(
+            select(func.count(Alerta.id))
+            .join(Equipo, Equipo.id == Alerta.equipo_id)
+            .where(Alerta.leida.is_(False)),
+            Equipo.organizacion_id,
+            db,
+        )
+    )
+    total_lecturas_24h = db.scalar(
+        add_organization_scope(
+            select(func.count(Lectura.id))
+            .join(Equipo, Equipo.id == Lectura.equipo_id)
+            .where(
+                Lectura.timestamp >= datetime.now(timezone.utc) - timedelta(hours=24)
+            ),
+            Equipo.organizacion_id,
+            db,
+        )
+    )
+    total_usuarios = db.scalar(
+        add_organization_scope(
+            select(func.count(Usuario.id)), Usuario.organizacion_id, db
+        )
+    )
 
     request_count_snapshot = _get_all_counts()
 

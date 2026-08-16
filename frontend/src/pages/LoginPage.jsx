@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -7,7 +7,14 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Logo from "../components/ui/Logo";
 import useAuth from "../hooks/useAuth";
-import { getApiErrorMessage } from "../utils/errorHandling";
+import { getApiErrorMessage, isApiUnavailableError } from "../utils/errorHandling";
+
+function getConfiguredDemoCredentials() {
+  const email = String(import.meta.env.VITE_DEMO_EMAIL || "").trim();
+  const password = String(import.meta.env.VITE_DEMO_PASSWORD || "");
+
+  return email && password ? { email, password } : null;
+}
 
 /**
  * Página de login — Estilo Apple.
@@ -24,9 +31,26 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWakingServer, setIsWakingServer] = useState(false);
+  const demoCredentials = getConfiguredDemoCredentials();
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      setIsWakingServer(false);
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setIsWakingServer(true), 5000);
+    return () => window.clearTimeout(timer);
+  }, [isSubmitting]);
 
   function handleChange(event) {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+  }
+
+  function handleUseDemo() {
+    setErrorMessage("");
+    setForm(demoCredentials);
   }
 
   async function handleSubmit(event) {
@@ -49,8 +73,13 @@ export default function LoginPage() {
       await login(currentUser);
       navigate("/dashboard", { replace: true });
     } catch (error) {
+      const fallbackMessage = isApiUnavailableError(error)
+        ? "El backend está despertando y puede tardar hasta un minuto. Reintentá en unos segundos."
+        : "No pudimos iniciar sesión. Revisá tus credenciales y el backend.";
       setErrorMessage(
-        getApiErrorMessage(error, "No pudimos iniciar sesión. Revisá tus credenciales y el backend.")
+        isApiUnavailableError(error)
+          ? fallbackMessage
+          : getApiErrorMessage(error, fallbackMessage)
       );
     } finally {
       setIsSubmitting(false);
@@ -102,6 +131,26 @@ export default function LoginPage() {
               autoComplete="current-password"
               required
             />
+
+            {demoCredentials && (
+              <div className="rounded-xl border border-primary-100 bg-primary-50 px-4 py-4">
+                <p className="text-sm font-medium text-primary-900">
+                  ¿Querés ver la demo?
+                </p>
+                <p className="mt-1 text-xs text-primary-800">
+                  Usa una cuenta de solo lectura configurada por el despliegue.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-3 w-full"
+                  onClick={handleUseDemo}
+                  disabled={isSubmitting}
+                >
+                  Usar cuenta demo
+                </Button>
+              </div>
+            )}
             
             {/* Error message */}
             {errorMessage && (
@@ -128,6 +177,12 @@ export default function LoginPage() {
                 "Continuar"
               )}
             </Button>
+            {isWakingServer && (
+              <p className="text-center text-sm text-primary-700" role="status">
+                El backend gratuito se está iniciando. No cierres esta ventana;
+                puede tardar hasta un minuto.
+              </p>
+            )}
           </form>
         </div>
 

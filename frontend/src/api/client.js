@@ -20,7 +20,8 @@ const RETRY_CONFIG = {
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL || defaultBaseURL,
-  timeout: 5000,
+  // Render free puede tardar al despertar; no convertir cold start en falso error de login.
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS || 60000),
   withCredentials: true,
 });
 

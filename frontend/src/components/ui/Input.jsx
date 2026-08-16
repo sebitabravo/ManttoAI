@@ -32,7 +32,7 @@ export default function Input({ label, error, className = "", ...props }) {
         aria-invalid={Boolean(error)}
         aria-describedby={errorId}
         className={`
-          w-full px-3 py-2 min-h-[38px]
+          w-full px-3 py-2.5 min-h-[44px]
           rounded-md
           bg-[#f5f5f7]
           text-sm text-neutral-800

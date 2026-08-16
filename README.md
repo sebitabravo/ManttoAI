@@ -29,7 +29,7 @@ falla. No es un sistema industrial certificado ni reemplaza un SCADA.
 - **IoT y Mensajería:** ESP32 (Firmware), Eclipse Mosquitto (MQTT)
 - **Machine Learning:** Scikit-learn, Pandas, Numpy
 - **Infraestructura:** Docker, Docker Compose, Nginx (compatible con Dokploy)
-- **Demo pública:** Vercel (SPA) + Railway (API FastAPI y MySQL)
+- **Demo pública:** Vercel (SPA) + Render Free (API FastAPI) + Neon Free (PostgreSQL)
 
 ---
 
@@ -91,15 +91,16 @@ directamente en la base de datos.
 ## 🌐 Demo pública verificada
 
 - **Aplicación:** [manttoai.vercel.app](https://manttoai.vercel.app)
-- **API health:** [health](https://api-production-aa996.up.railway.app/health)
-- **API readiness:** [ready](https://api-production-aa996.up.railway.app/ready)
+- **API health:** [health](https://manttoai-api.onrender.com/health)
+- **API readiness:** [ready](https://manttoai-api.onrender.com/ready)
 - **Acceso demo:** abrí la aplicación y presioná **Usar cuenta demo**. La
   cuenta es de solo lectura y no se publica su contraseña en el repositorio.
 
 La vitrina pública usa Vercel para servir la SPA y el rewrite same-origin de
-`/api/*`; Railway ejecuta FastAPI y MySQL con volumen persistente. El backend
-mantiene `MQTT_ENABLED=false` y `SIMULATOR_ENABLED=true`, por lo que el
-dashboard conserva datos vivos sin exigir hardware físico ni un broker público.
+`/api/*`; Render ejecuta FastAPI en un Web Service Free y Neon mantiene la base
+PostgreSQL persistente. El backend mantiene `MQTT_ENABLED=false` y
+`SIMULATOR_ENABLED=true`, por lo que el dashboard conserva datos vivos sin
+exigir hardware físico ni un broker público.
 
 ## Qué demuestra el prototipo
 
@@ -126,10 +127,10 @@ ESP32 / simulador ── MQTT ──▶ Mosquitto ──▶ FastAPI
 React + Vite + Tailwind ── /api/v1 ─────────┘
 ```
 
-En local todo corre con Docker Compose. La vitrina pública separa la SPA en
-Vercel, el backend Docker en Railway y la base MySQL en Railway; Redis, Ollama
-y Mailpit quedan fuera del servicio público. El simulador integrado mantiene
-la telemetría de demo sin MQTT externo.
+En local todo corre con Docker Compose y MySQL. La vitrina pública separa la
+SPA en Vercel, el backend Docker en Render y la base PostgreSQL en Neon; Redis,
+Ollama, Mailpit y MQTT quedan fuera del servicio público. El simulador integrado
+mantiene la telemetría de demo sin hardware ni broker MQTT externo.
 
 ## Evidencia técnica
 
@@ -142,12 +143,13 @@ la telemetría de demo sin MQTT externo.
   Chromium y Firefox.
 - **Runtime local:** smoke MQTT/SMTP con lecturas persistidas, alertas,
   predicción y dashboard operativo.
-- **Runtime público:** API y base Railway online; smoke real desde navegador
-  verificado con login demo, dashboard, alertas y logout en Vercel.
-- **Render dry-run:** `backend/Dockerfile.render` fue construido para
-  `linux/amd64` y arrancó bajo un límite de `512 MiB`; `/health` y `/ready`
-  respondieron `200` con aproximadamente `204 MiB` reportados por Docker.
-  La prueba usó SQLite aislado y no representa todavía una conexión Aiven.
+- **Runtime público:** Render API y Neon PostgreSQL online; `/health`, `/ready`,
+  login demo, equipos, alertas, dashboard y mantenciones verificados contra la
+  URL pública. El smoke de navegador en Vercel se repite después de cada cambio
+  de rewrite o variables de producción.
+- **Render:** el servicio Free se construye desde `backend/Dockerfile`, arranca
+  en `0.0.0.0:8000` y usa Neon como base remota. La imagen `linux/amd64` fue
+  construida localmente y la API respondió `200` en `/health` y `/ready`.
 - **ML:** 94,13% de accuracy y 93,04% de F1 en la evaluación reproducible del
   dataset sintético; ver [`backend/reports/ml-evaluation-latest.md`](backend/reports/ml-evaluation-latest.md).
 
@@ -176,16 +178,18 @@ Más detalle operativo en [`docs/manual-usuario.md`](docs/manual-usuario.md).
 
 La configuración preparada para portfolio está separada del stack local:
 
-- `backend/Dockerfile.render`: imagen del backend FastAPI usada por Railway,
-  con seed idempotente y artefacto ML generado durante el build.
+- `backend/Dockerfile.render`: imagen del backend FastAPI para el Blueprint de
+  Render, con seed idempotente y artefacto ML generado durante el build.
+- `Dockerfile`: variante de contexto raíz para crear el Web Service desde
+  Render CLI sin depender de la importación interactiva del Blueprint.
 - `frontend/vercel.json`: SPA en Vercel con rewrite same-origin de `/api/*`
-  hacia el API Railway.
-- `render.yaml` y `docs/despliegue-render.md`: blueprint histórico del
-  proveedor anterior; no son necesarios para la demo pública actual.
+  hacia `https://manttoai-api.onrender.com`.
+- `render.yaml` y `docs/despliegue-render.md`: configuración reproducible del
+  backend Render y la base Neon usada por la demo pública.
 
-Los secretos permanecen configurados en los dashboards de Railway y Vercel,
-fuera del repositorio. Las URLs anteriores corresponden al despliegue real y
-fueron verificadas con `/health`, `/ready`, login, dashboard, alertas y logout.
+Los secretos permanecen configurados en Render y Vercel, fuera del repositorio.
+La contraseña de la cuenta demo es pública por diseño a través del bundle
+Vite, pero corresponde únicamente a un usuario `visualizador` de solo lectura.
 
 ---
 

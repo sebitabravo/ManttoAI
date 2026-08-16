@@ -1,10 +1,16 @@
 """Endpoints de equipos."""
 
-from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
+import secrets
+from datetime import datetime, timedelta, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
+from app.middleware.rate_limit import limiter
 from app.models.usuario import Usuario
+from app.models.provisioning_token import ProvisioningToken
 from app.schemas.equipo import (
     EquipoCreate,
     EquipoFullSetupRequest,
@@ -14,15 +20,16 @@ from app.schemas.equipo import (
 )
 from app.services.equipo_service import (
     create_equipo,
+    create_equipo_with_umbrales as create_equipo_with_umbrales_service,
     delete_equipo,
     get_equipo_or_404,
     list_equipos,
     update_equipo,
 )
-from app.schemas.equipo import AutoRegisterRequest
+from app.schemas.equipo import AutoRegisterRequest, validate_mac_address
 from app.config import get_settings
-from jose import JWTError, jwt
-from datetime import datetime, timedelta, timezone
+import jwt
+from jwt import InvalidTokenError as JWTError
 from sqlalchemy.exc import IntegrityError
 
 settings = get_settings()
@@ -47,9 +54,19 @@ def get_equipos(
 
 @router.get(
     "/provisioning-token",
-    dependencies=[Depends(require_role("admin", "tecnico"))],
 )
-def get_provisioning_token(request: Request) -> dict:
+def get_provisioning_token(
+    request: Request,
+    mac_address: str = Query(
+        ...,
+        min_length=17,
+        max_length=17,
+        pattern=r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$",
+        description="MAC exacta del ESP32 que se va a provisionar",
+    ),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_role("admin", "tecnico")),
+) -> dict:
     """Genera un token seguro para provisionamiento (SoftAP + QR).
 
     Implementación simple: JWT firmado con SECRET_KEY y propósito 'provision'.
@@ -57,13 +74,35 @@ def get_provisioning_token(request: Request) -> dict:
     Solo accesible por admin/tecnico.
     """
 
+    validated_mac = validate_mac_address(mac_address)
+    if validated_mac is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="mac_address es requerida para generar el provisioning token",
+        )
+
+    normalized_mac = validated_mac.replace("-", ":").upper()
     now = datetime.now(timezone.utc)
     exp = now + timedelta(hours=1)
+    jti = secrets.token_urlsafe(16)
     payload = {
         "purpose": "provision",
+        "expected_mac": normalized_mac,
+        "organizacion_id": current_user.organizacion_id,
+        "jti": jti,
         "iat": int(now.timestamp()),
         "exp": int(exp.timestamp()),
     }
+
+    db.add(
+        ProvisioningToken(
+            jti=jti,
+            expected_mac=normalized_mac,
+            organizacion_id=current_user.organizacion_id,
+            expires_at=exp,
+        )
+    )
+    db.commit()
 
     token = jwt.encode(payload, settings.secret_key, algorithm=JWT_ALGORITHM)
     return {"token": token, "expires_at": exp.isoformat()}
@@ -140,7 +179,6 @@ def delete_equipo_by_id(
 @router.post(
     "/full-setup",
     response_model=EquipoFullSetupResponse,
-    dependencies=[Depends(require_role("admin", "tecnico"))],
 )
 def create_equipo_with_umbrales(
     payload: EquipoFullSetupRequest,
@@ -150,47 +188,13 @@ def create_equipo_with_umbrales(
 ) -> EquipoFullSetupResponse:
     """Crea equipo con umbrales en una sola transacción atómica.
 
-    Se realiza commit al final si todo sale bien y rollback ante cualquier error.
+    La transacción completa vive en el servicio de equipos.
     """
-    from app.models.equipo import Equipo
-    from app.models.umbral import Umbral
-
-    try:
-        # 1. Crear equipo
-        equipo = Equipo(
-            nombre=payload.nombre,
-            ubicacion=payload.ubicacion or "Laboratorio",
-            tipo=payload.tipo or "Motor",
-            rubro=payload.rubro,
-            descripcion=payload.descripcion or "Equipo monitoreado por ManttoAI",
-            estado="operativo",
-        )
-        db.add(equipo)
-        db.flush()  # Obtener ID
-
-        # 2. Crear umbral de temperatura
-        umbral_temp = Umbral(
-            equipo_id=equipo.id,
-            variable="temperatura",
-            valor_min=0,
-            valor_max=payload.temperatura_max,
-        )
-        db.add(umbral_temp)
-        db.flush()
-
-        # 3. Crear umbral de vibración
-        umbral_vib = Umbral(
-            equipo_id=equipo.id,
-            variable="vibracion",
-            valor_min=0,
-            valor_max=payload.vibracion_max,
-        )
-        db.add(umbral_vib)
-        db.flush()
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise
+    equipo, umbral_temp, umbral_vib = create_equipo_with_umbrales_service(
+        db,
+        payload,
+        organization_id=current_user.organizacion_id,
+    )
 
     return EquipoFullSetupResponse(
         equipo=equipo,
@@ -200,7 +204,12 @@ def create_equipo_with_umbrales(
 
 
 @router.post("/auto-register", status_code=status.HTTP_201_CREATED)
-def auto_register(payload: AutoRegisterRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/hour")
+def auto_register(
+    payload: AutoRegisterRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     """Endpoint público para que un dispositivo (ESP32) se registre usando el token.
 
     Se valida el JWT y se crea un Equipo con la mac_address proporcionada.
@@ -228,15 +237,74 @@ def auto_register(payload: AutoRegisterRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST, detail="mac_address es requerido"
         )
 
+    expected_mac = claims.get("expected_mac")
+    if not isinstance(expected_mac, str):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de provisioning sin MAC asociada",
+        )
+
+    normalized_mac = mac.replace("-", ":").upper()
+    if normalized_mac != expected_mac.replace("-", ":").upper():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="La MAC no coincide con el token de provisioning",
+        )
+
+    organization_id = claims.get("organizacion_id")
+    if organization_id is not None and not isinstance(organization_id, int):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de provisioning inválido",
+        )
+
+    jti = claims.get("jti")
+    if not isinstance(jti, str) or not jti:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de provisioning sin identificador",
+        )
+
+    # El JWT firmado no basta para impedir replay después de borrar el equipo.
+    # Bloquear la fila mantiene el consumo one-shot incluso ante dos requests
+    # concurrentes para el mismo dispositivo.
+    provisioning_token = db.scalars(
+        select(ProvisioningToken).where(ProvisioningToken.jti == jti).with_for_update()
+    ).first()
+    if (
+        provisioning_token is None
+        or provisioning_token.expected_mac != normalized_mac
+        or provisioning_token.organizacion_id != organization_id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de provisioning no registrado",
+        )
+
+    if provisioning_token.used_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Token de provisioning ya utilizado",
+        )
+
     # Crear equipo mínimo usando nombre por defecto
     from app.schemas.equipo import EquipoCreate
 
-    nombre = f"Equipo {mac[-5:]}"
-    equipo_payload = EquipoCreate(nombre=nombre, mac_address=mac)
+    nombre = f"Equipo {normalized_mac[-5:]}"
+    equipo_payload = EquipoCreate(nombre=nombre, mac_address=normalized_mac)
 
     try:
-        equipo = create_equipo(db, equipo_payload)
+        equipo = create_equipo(
+            db,
+            equipo_payload,
+            organization_id=organization_id,
+            commit=False,
+        )
+        provisioning_token.used_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(equipo)
     except IntegrityError:
+        db.rollback()
         # Probablemente mac_address duplicada
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Equipo con esa MAC ya existe"

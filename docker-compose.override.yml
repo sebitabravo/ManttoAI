@@ -18,9 +18,13 @@ services:
       SECRET_KEY: ${SECRET_KEY:-manttoai-dev-key-change-me-in-prod}
       MQTT_USERNAME: ${MQTT_USERNAME:-manttoai_mqtt}
       MQTT_PASSWORD: ${MQTT_PASSWORD:-manttoai_mqtt_dev}
+      MQTT_ENABLED: ${MQTT_ENABLED:-true}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-manttoai_dev}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-manttoai_redis_dev}
-      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://root:manttoai_dev@mysql:3306/manttoai_db}
+      ENABLE_API_DOCS: ${ENABLE_API_DOCS:-true}
+      SIMULATOR_ENABLED: ${SIMULATOR_ENABLED:-false}
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-manttoai_dev}@mysql:3306/manttoai_db}
+      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-}
     volumes:
       - ./backend:/app
       - ./scripts:/scripts:ro

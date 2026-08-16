@@ -97,8 +97,8 @@ test.describe("Onboarding Wizard", () => {
           contentType: "application/json",
           body: JSON.stringify({
             id: 1,
-            key: "mantto_test_api_key_1234567890",
-            key_prefix: "mantto_test",
+            key: "test-fixture-value",
+            key_prefix: "test-fixture",
             device_id: "equipo_1",
             is_active: true,
             created_at: new Date().toISOString(),
@@ -175,7 +175,7 @@ test.describe("Onboarding Wizard", () => {
 
       // Verificar que se muestra la API Key
       await expect(page.getByText("API Key generada exitosamente")).toBeVisible();
-      await expect(page.locator(".font-mono")).toContainText("mantto_test_api_key_");
+      await expect(page.locator(".font-mono")).toContainText("test-fixture-value");
 
       // Avanzar al paso 5
       await page.getByRole("button", { name: "Siguiente" }).click();

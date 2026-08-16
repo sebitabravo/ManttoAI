@@ -141,6 +141,59 @@ class TestSimulatorService:
         mock_session.close.assert_called_once()
         mock_mqtt_client.assert_not_called()
 
+    @patch("app.services.simulator_service.prune_old_lecturas")
+    @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.equipo_service.list_equipos")
+    def test_run_simulator_cycle_applies_configured_retention(
+        self, mock_list_equipos, mock_get_settings, mock_prune_old_lecturas
+    ):
+        """El simulador aplica retención aun cuando no haya equipos activos."""
+
+        mock_get_settings.return_value = Settings(
+            mqtt_enabled=False,
+            telemetry_retention_days=30,
+        )
+        mock_list_equipos.return_value = []
+        mock_session = MagicMock(spec=Session)
+        mock_session_factory = MagicMock(return_value=mock_session)
+
+        result = run_simulator_cycle(session_factory=mock_session_factory)
+
+        assert result == {"status": "ok", "equipos": 0, "publicados": 0}
+        mock_prune_old_lecturas.assert_called_once_with(mock_session, 30)
+        mock_session.close.assert_called_once()
+
+    @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.simulator_service.create_lectura")
+    @patch("app.services.equipo_service.list_equipos")
+    def test_run_simulator_cycle_persists_directly_without_mqtt(
+        self, mock_list_equipos, mock_create_lectura, mock_get_settings
+    ):
+        """Render/free-tier puede simular telemetría sin disponer de un broker."""
+
+        mock_get_settings.return_value = Settings(
+            mqtt_enabled=False,
+            mqtt_telemetry_topic="manttoai/telemetria",
+        )
+        mock_list_equipos.return_value = [
+            self.MockEquipo(1, "mac1", "motor", "operativo"),
+            self.MockEquipo(2, "mac2", "bomba", "activo"),
+        ]
+        mock_session = MagicMock(spec=Session)
+        mock_session_factory = MagicMock(return_value=mock_session)
+
+        result = run_simulator_cycle(session_factory=mock_session_factory)
+
+        assert result["status"] == "ok"
+        assert result["modo"] == "database"
+        assert result["equipos"] == 2
+        assert result["publicados"] == 2
+        assert mock_create_lectura.call_count == 2
+        assert all(
+            call.args[0] is mock_session for call in mock_create_lectura.call_args_list
+        )
+        mock_session.close.assert_called_once()
+
     class MockEquipo:
         def __init__(self, id, mac_address, tipo, estado):
             self.id = id
@@ -347,14 +400,21 @@ class TestSimulatorService:
         )
 
     @patch("app.services.simulator_service.get_settings")
+    @patch("app.services.simulator_service.BackgroundScheduler")
     @patch("app.services.simulator_service.logger")
-    def test_start_simulator_mqtt_disabled(self, mock_logger, mock_get_settings):
-        """Verifica que el simulador no inicia si MQTT está deshabilitado."""
+    def test_start_simulator_mqtt_disabled(
+        self, mock_logger, mock_background_scheduler, mock_get_settings
+    ):
+        """Verifica que el simulador usa persistencia directa sin MQTT."""
         mock_get_settings.return_value = Settings(
-            simulator_enabled=True, mqtt_enabled=False
+            simulator_enabled=True, mqtt_enabled=False, simulator_interval_seconds=10
         )
-        assert start_simulator() is False
-        mock_logger.info.assert_called_with("Simulador IoT requiere MQTT habilitado")
+        mock_background_scheduler.return_value = MagicMock()
+
+        assert start_simulator(session_factory=MagicMock()) is True
+        mock_logger.info.assert_any_call(
+            "Simulador IoT operará en modo persistencia directa (MQTT deshabilitado)"
+        )
 
     @patch("app.services.simulator_service.get_settings")
     @patch("app.services.simulator_service.logger")

@@ -1,3 +1,12 @@
+export function isApiUnavailableError(error) {
+  return Boolean(
+    error?.code === "ECONNABORTED" ||
+      error?.code === "ETIMEDOUT" ||
+      error?.code === "ERR_NETWORK" ||
+      (!error?.response && (error?.request || error?.message === "Network Error"))
+  );
+}
+
 export function getApiErrorMessage(error, fallbackMessage) {
   const backendDetail = error?.response?.data?.detail;
 

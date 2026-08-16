@@ -1,8 +1,11 @@
 """Tests de integración para validación de SMTP real."""
 
+import os
+
 import pytest
-from app.services.email_service import send_alert_email, can_send_email
+
 from app.config import get_settings
+from app.services.email_service import can_send_email, send_alert_email
 
 
 @pytest.mark.integration
@@ -11,6 +14,13 @@ def test_real_smtp_integration():
     Prueba el envío real de email usando la configuración de .env.
     Este test solo se ejecuta si se especifica explícitamente y hay configuración.
     """
+
+    if os.getenv("RUN_REAL_SMTP_TEST", "").strip().lower() not in {
+        "1",
+        "true",
+        "yes",
+    }:
+        pytest.skip("Definí RUN_REAL_SMTP_TEST=true para ejecutar SMTP real")
 
     if not can_send_email():
         pytest.skip("Configuración SMTP incompleta en .env para test de integración")

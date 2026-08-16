@@ -37,13 +37,6 @@ jobs:
             echo "has_compose=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Debug secrets (dry run)
-        if: false
-        run: |
-          echo "VPS_HOST: ${{ secrets.VPS_HOST }}"
-          echo "VPS_USER: ${{ secrets.VPS_USER }}"
-          echo "VPS_PROJECT_PATH: ${{ secrets.VPS_PROJECT_PATH }}"
-
       - name: Deploy to VPS via SSH
         if: steps.project_check.outputs.has_compose == 'true'
         uses: appleboy/ssh-action@v1.2.0
@@ -56,16 +49,23 @@ jobs:
             # Navigate to project directory
             cd ${{ secrets.VPS_PROJECT_PATH }}
             
-            # Pull latest changes
+            # Pull latest changes without overwriting local state silently
             echo "📦 Pulling latest changes..."
             git fetch origin main
-            git reset --hard origin/main
-            
-            # Create .env if it doesn't exist (for production)
-            if [ ! -f .env ]; then
-              echo "⚠️ .env not found, creating from template..."
-              cp .env.example .env || true
+            git checkout main
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "❌ Remote worktree has uncommitted changes; aborting deploy." >&2
+              exit 1
             fi
+            git pull --ff-only origin main
+            
+            # Production secrets must exist outside Git; never create them from a template.
+            if [ ! -f .env ]; then
+              echo "❌ .env not found on the deployment host; configure secrets before deploy." >&2
+              exit 1
+            fi
+
+            docker compose config --quiet
             
             # Pull latest images
             echo "🐳 Pulling latest Docker images..."
@@ -75,20 +75,37 @@ jobs:
             echo "🚀 Restarting services..."
             docker compose up -d --build
             
-            # Wait for services to be healthy
-            echo "⏳ Waiting for services..."
-            sleep 30
+            # Wait for a real backend liveness response, not only container state.
+            echo "⏳ Waiting for backend health..."
+            for attempt in $(seq 1 30); do
+              if curl --fail --silent --show-error http://127.0.0.1:8000/health >/dev/null; then
+                break
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                echo "❌ Backend health check failed after restart." >&2
+                docker compose ps
+                docker compose logs --tail 50 backend
+                exit 1
+              fi
+              sleep 2
+            done
+
+            if ! curl --fail --silent --show-error http://127.0.0.1:8000/ready >/dev/null; then
+              echo "❌ Backend readiness check failed after restart." >&2
+              docker compose ps
+              docker compose logs --tail 50 backend
+              exit 1
+            fi
             
             # Check service status
             echo "📊 Service status:"
             docker compose ps
             
-            # Show logs (last 20 lines)
+            # Show only recent service state after the verified checks.
             echo "📝 Recent logs:"
-            docker compose logs --tail 20
+            docker compose logs --tail 20 backend
 
       - name: Verify deployment
         if: steps.project_check.outputs.has_compose == 'true'
         run: |
-          echo "✅ Deployment completed"
-          echo "🌐 Application should be available at: http://${{ secrets.VPS_HOST }}"
+          echo "✅ Deployment completed and remote /health + /ready checks passed"

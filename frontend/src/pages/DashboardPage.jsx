@@ -9,6 +9,7 @@ import Button from "../components/ui/Button";
 import { getDashboardData } from "../api/dashboard";
 import usePolling from "../hooks/usePolling";
 import { DASHBOARD_POLLING_INTERVAL_MS } from "../utils/constants";
+import { isApiUnavailableError } from "../utils/errorHandling";
 import { RUBRO_OPTIONS, getRubroLabel, normalizeRubro } from "../utils/rubro";
 
 const resumenInicial = {
@@ -47,6 +48,7 @@ export default function DashboardPage() {
   );
 
   const isInitialLoading = loading && !data;
+  const isInitialError = Boolean(error && !data);
 
   useEffect(() => {
     if (data) {
@@ -181,9 +183,34 @@ export default function DashboardPage() {
 
       {/* Tabpanel que contiene todo el contenido filtrado */}
       <div id={tabPanelId} role="tabpanel" aria-labelledby={`tab-rubro-${selectedRubro}`}>
-
-        {/* Resumen operativo */}
-        <section data-tour="dashboard-resumen" aria-label="Resumen operativo">
+        {isInitialError ? (
+          <section
+            className="rounded-2xl border border-warning-200 bg-warning-50 px-6 py-8"
+            role="alert"
+            aria-label="Dashboard no disponible"
+          >
+            <h2 className="text-xl font-semibold text-warning-800">
+              No pudimos cargar el dashboard
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-warning-700">
+              {isApiUnavailableError(error)
+                ? "El backend puede estar despertando. Esperá unos segundos y reintentá."
+                : "El backend devolvió un error. No mostramos métricas en cero para evitar interpretar datos falsos."}
+            </p>
+            <Button
+              className="mt-5"
+              variant="outline"
+              size="sm"
+              onClick={refresh}
+              disabled={loading}
+            >
+              {loading ? "Reintentando..." : "Reintentar"}
+            </Button>
+          </section>
+        ) : (
+          <>
+            {/* Resumen operativo */}
+            <section data-tour="dashboard-resumen" aria-label="Resumen operativo">
           {isInitialLoading ? (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
               <SkeletonMetric className="lg:col-span-4" />
@@ -195,13 +222,13 @@ export default function DashboardPage() {
           ) : (
             <ResumenCards resumen={resumenFiltrado} />
           )}
-        </section>
+            </section>
 
-        {/* Error banner */}
-        {error && (
+            {/* Error banner */}
+            {error && data && (
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-warning-50 px-5 py-4">
             <p className="text-sm text-warning-700">
-              No se pudo conectar con el backend. Se muestran los últimos datos válidos.
+              No se pudo actualizar el backend. Se muestran los últimos datos válidos.
             </p>
             <Button 
               variant="outline" 
@@ -212,10 +239,10 @@ export default function DashboardPage() {
               {loading ? "Reintentando..." : "Reintentar"}
             </Button>
           </div>
-        )}
+            )}
 
-        {/* Graficos de tendencias */}
-        <section data-tour="dashboard-graficos" aria-label="Tendencias de sensores">
+            {/* Graficos de tendencias */}
+            <section data-tour="dashboard-graficos" aria-label="Tendencias de sensores">
           <h2 className="mb-6 text-xl font-semibold text-neutral-600 tracking-tight">
             Tendencias
           </h2>
@@ -232,10 +259,10 @@ export default function DashboardPage() {
               </>
             )}
           </div>
-        </section>
+            </section>
 
-        {/* Estado de equipos */}
-        <section aria-label="Estado de equipos">
+            {/* Estado de equipos */}
+            <section aria-label="Estado de equipos">
           <h2 className="mb-6 text-xl font-semibold text-neutral-600 tracking-tight">
             Estado de equipos
           </h2>
@@ -244,8 +271,9 @@ export default function DashboardPage() {
           ) : (
             <TablaEstadoEquipos equipos={resumenFiltrado.equipos || []} />
           )}
-        </section>
-
+            </section>
+          </>
+        )}
       </div>
     </div>
   );

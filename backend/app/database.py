@@ -106,45 +106,6 @@ def _add_column_if_missing(table_name: str, column_name: str, ddl: str) -> bool:
     return True
 
 
-def _dedupe_alertas_by_logical_key() -> int:
-    """Elimina alertas duplicadas por (equipo_id, tipo, mensaje)."""
-
-    dialect = engine.dialect.name
-    with engine.begin() as connection:
-        if dialect == "mysql":
-            result = connection.execute(
-                text(
-                    """
-                    DELETE a1
-                    FROM alertas a1
-                    INNER JOIN alertas a2
-                        ON a1.equipo_id = a2.equipo_id
-                        AND a1.tipo = a2.tipo
-                        AND a1.mensaje = a2.mensaje
-                        AND a1.id > a2.id
-                    """
-                )
-            )
-            return int(getattr(result, "rowcount", 0) or 0)
-
-        if dialect == "sqlite":
-            result = connection.execute(
-                text(
-                    """
-                    DELETE FROM alertas
-                    WHERE id NOT IN (
-                        SELECT MIN(id)
-                        FROM alertas
-                        GROUP BY equipo_id, tipo, mensaje
-                    )
-                    """
-                )
-            )
-            return int(getattr(result, "rowcount", 0) or 0)
-
-        return 0
-
-
 def _alter_column_type_if_needed(
     table_name: str, column_name: str, new_type: str
 ) -> bool:
@@ -243,6 +204,11 @@ def apply_runtime_schema_fixes() -> None:
             "is_active",
             "is_active BOOLEAN NOT NULL DEFAULT 1",
         )
+        usuario_demo_changed = _add_column_if_missing(
+            "usuarios",
+            "is_demo",
+            "is_demo BOOLEAN NOT NULL DEFAULT 0",
+        )
         usuario_password_changed_changed = _add_column_if_missing(
             "usuarios",
             "password_changed_at",
@@ -283,6 +249,7 @@ def apply_runtime_schema_fixes() -> None:
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
                 usuario_active_changed,
+                usuario_demo_changed,
                 usuario_password_changed_changed,
                 usuario_onboarding_step_changed,
                 usuario_onboarding_completed_changed,
@@ -298,6 +265,7 @@ def apply_runtime_schema_fixes() -> None:
                 "equipos.rubro=%s, "
                 "mantenciones.fecha_programada=%s, "
                 "mantenciones.fecha_ejecucion=%s, usuarios.is_active=%s, "
+                "usuarios.is_demo=%s, "
                 "usuarios.password_changed_at=%s, usuarios.onboarding_step=%s, "
                 "usuarios.onboarding_completed=%s, usuarios.telefono=%s, usuarios.avatar=%s, "
                 "alerta_unique_index_removed=%s, "
@@ -308,6 +276,7 @@ def apply_runtime_schema_fixes() -> None:
                 mantencion_programada_changed,
                 mantencion_ejecucion_changed,
                 usuario_active_changed,
+                usuario_demo_changed,
                 usuario_password_changed_changed,
                 usuario_onboarding_step_changed,
                 usuario_onboarding_completed_changed,

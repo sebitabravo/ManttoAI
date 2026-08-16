@@ -8,6 +8,8 @@ y mide el tiempo de respuesta, errores, y degradación de performance.
 
 import asyncio
 import json
+import os
+import random
 import statistics
 import time
 from dataclasses import dataclass
@@ -87,7 +89,7 @@ async def simulate_concurrent_users(
 
     # Definir endpoints a probar
     endpoints_to_test = [
-        ("GET", "/api/v1/health", None, 20),  # Endpoint público, más requests
+        ("GET", "/health", None, 20),  # Endpoint público, más requests
         ("GET", "/api/v1/dashboard/resumen", None, 15),
         ("GET", "/api/v1/equipos", None, 10),
         ("GET", "/api/v1/alertas", None, 10),
@@ -99,17 +101,25 @@ async def simulate_concurrent_users(
         f"{method} {path}": [] for method, path, _, _ in endpoints_to_test
     }
 
+    if num_users < 1 or requests_per_user < 1:
+        raise ValueError("num_users y requests_per_user deben ser mayores que cero")
+
+    endpoint_weights = [weight for _, _, _, weight in endpoints_to_test]
+    rng = random.Random(42)
+
     async with aiohttp.ClientSession() as session:
         tasks = []
+        task_keys = []
 
-        # Crear tasks para cada usuario
-        for user_id in range(num_users):
-            for method, path, token, weight in endpoints_to_test:
+        # Cada usuario realiza exactamente requests_per_user requests, respetando
+        # la distribución relativa de pesos de los endpoints.
+        for _ in range(num_users):
+            for method, path, token, _ in rng.choices(
+                endpoints_to_test, weights=endpoint_weights, k=requests_per_user
+            ):
                 url = f"{base_url}{path}"
-                # Cada usuario hace weighted requests por endpoint
-                for _ in range(weight):
-                    task = make_request(session, method, url, token)
-                    tasks.append((f"{method} {path}", task))
+                task_keys.append(f"{method} {path}")
+                tasks.append(make_request(session, method, url, token))
 
         # Ejecutar todos los requests concurrentemente
         print(f"\n⏱️  Ejecutando {len(tasks)} requests concurrentes...")
@@ -119,17 +129,13 @@ async def simulate_concurrent_users(
         start_time = time.time()
 
         # Ejecutar tasks y recolectar resultados
-        task_results = await asyncio.gather(*[task for _, task in tasks])
+        task_results = await asyncio.gather(*tasks)
 
         total_time = time.time() - start_time
 
-        # Organizar resultados por endpoint
-        task_index = 0
-        for endpoint_key, _ in endpoints_to_test:
-            for _ in range(weight * num_users):
-                result = task_results[task_index]
-                results[endpoint_key].append(result)
-                task_index += 1
+        # Organizar resultados por endpoint conservando el orden real de ejecución.
+        for endpoint_key, result in zip(task_keys, task_results):
+            results[endpoint_key].append(result)
 
     # Calcular métricas por endpoint
     final_results: Dict[str, LoadTestResult] = {}
@@ -315,9 +321,11 @@ async def main():
     """Función principal."""
 
     # Configuración
-    BASE_URL = "http://localhost:8000"
-    NUM_USERS = 50
-    REQUESTS_PER_USER = 10
+    BASE_URL = os.getenv("LOAD_TEST_BASE_URL", "http://localhost:8000")
+    NUM_USERS = int(os.getenv("LOAD_TEST_USERS", "50"))
+    REQUESTS_PER_USER = int(os.getenv("LOAD_TEST_REQUESTS_PER_USER", "10"))
+    auth_email = os.getenv("LOAD_TEST_AUTH_EMAIL", "admin@manttoai.local")
+    auth_password = os.getenv("LOAD_TEST_AUTH_PASSWORD", "")
 
     print("🚀 Iniciando pruebas de carga para ManttoAI")
     print(f"📍 URL base: {BASE_URL}")
@@ -327,10 +335,14 @@ async def main():
     # Intentar obtener token admin
     admin_token = None
     try:
+        if not auth_password:
+            raise RuntimeError(
+                "Definí LOAD_TEST_AUTH_PASSWORD para probar endpoints autenticados"
+            )
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f"{BASE_URL}/api/v1/auth/login",
-                json={"email": "admin@manttoai.local", "password": "admin123"},
+                json={"email": auth_email, "password": auth_password},
             ) as response:
                 if response.status == 200:
                     data = await response.json()

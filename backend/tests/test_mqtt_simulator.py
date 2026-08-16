@@ -26,10 +26,11 @@ mqtt_simulator = _load_mqtt_simulator_module()
 
 
 def test_build_topic_supports_prefix_with_trailing_slash():
-    """Valida construcción estable del topic por equipo."""
+    """Valida que el simulador use la MAC en el topic MQTT."""
 
     assert (
-        mqtt_simulator.build_topic("manttoai/telemetria", 7) == "manttoai/telemetria/7"
+        mqtt_simulator.build_topic("manttoai/telemetria", 7)
+        == "manttoai/telemetria/02:00:00:00:00:07"
     )
 
 
@@ -103,8 +104,8 @@ def test_main_publishes_expected_messages_with_mocked_client(monkeypatch):
     assert result == 0
     assert len(published_messages) == 4
     assert {topic for topic, _payload in published_messages} == {
-        "manttoai/telemetria/10",
-        "manttoai/telemetria/11",
+        "manttoai/telemetria/02:00:00:00:00:0A",
+        "manttoai/telemetria/02:00:00:00:00:0B",
     }
     assert all(
         payload["timestamp"].endswith("Z") for _topic, payload in published_messages

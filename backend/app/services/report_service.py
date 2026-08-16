@@ -15,6 +15,7 @@ from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.mantencion import Mantencion
 from app.services.dashboard_service import get_dashboard_summary
+from app.services.tenant_scope import UNSCOPED, add_organization_scope
 
 _INVISIBLE_CHARS_RE = re.compile(r"^[\u200E\u200F\u202A-\u202E\s\t]+")
 _PDF_MAX_LINES = 45
@@ -147,6 +148,7 @@ def export_lecturas_csv(
     limit: int | None = 5000,
     desde: datetime | None = None,
     hasta: datetime | None = None,
+    organization_id: int | None | object = UNSCOPED,
 ) -> tuple[str, str]:
     """Genera exportable CSV de lecturas para análisis técnico."""
 
@@ -168,6 +170,7 @@ def export_lecturas_csv(
 
     if equipo_id is not None:
         query = query.where(Lectura.equipo_id == equipo_id)
+    query = add_organization_scope(query, Equipo.organizacion_id, db, organization_id)
     if desde is not None:
         query = query.where(Lectura.timestamp >= desde)
     if hasta is not None:
@@ -213,6 +216,7 @@ def export_alertas_csv(
     limit: int | None = 5000,
     desde: datetime | None = None,
     hasta: datetime | None = None,
+    organization_id: int | None | object = UNSCOPED,
 ) -> tuple[str, str]:
     """Genera exportable CSV de alertas para auditoría operativa."""
 
@@ -236,6 +240,7 @@ def export_alertas_csv(
         query = query.where(Alerta.equipo_id == equipo_id)
     if solo_no_leidas:
         query = query.where(Alerta.leida.is_(False))
+    query = add_organization_scope(query, Equipo.organizacion_id, db, organization_id)
     if desde is not None:
         query = query.where(Alerta.created_at >= desde)
     if hasta is not None:
@@ -281,6 +286,7 @@ def export_mantenciones_csv(
     order: str = "desc",
     desde: datetime | None = None,
     hasta: datetime | None = None,
+    organization_id: int | None | object = UNSCOPED,
 ) -> tuple[str, str]:
     """Genera exportable CSV de mantenciones para trazabilidad."""
 
@@ -298,6 +304,7 @@ def export_mantenciones_csv(
 
     if equipo_id is not None:
         query = query.where(Mantencion.equipo_id == equipo_id)
+    query = add_organization_scope(query, Equipo.organizacion_id, db, organization_id)
     if desde is not None:
         query = query.where(Mantencion.created_at >= desde)
     if hasta is not None:
@@ -346,15 +353,32 @@ def export_informe_ejecutivo_pdf(
     db: Session,
     desde: datetime | None = None,
     hasta: datetime | None = None,
+    organization_id: int | None | object = UNSCOPED,
 ) -> tuple[str, bytes]:
     """Genera informe ejecutivo PDF para stakeholders no técnicos."""
 
-    summary = get_dashboard_summary(db)
+    summary = get_dashboard_summary(db, organization_id)
     now = datetime.now(timezone.utc)
 
-    lecturas_count_query = select(func.count(Lectura.id))
-    alertas_count_query = select(func.count(Alerta.id))
-    mantenciones_count_query = select(func.count(Mantencion.id))
+    lecturas_count_query = select(func.count(Lectura.id)).join(
+        Equipo, Equipo.id == Lectura.equipo_id
+    )
+    alertas_count_query = select(func.count(Alerta.id)).join(
+        Equipo, Equipo.id == Alerta.equipo_id
+    )
+    mantenciones_count_query = select(func.count(Mantencion.id)).join(
+        Equipo, Equipo.id == Mantencion.equipo_id
+    )
+
+    lecturas_count_query = add_organization_scope(
+        lecturas_count_query, Equipo.organizacion_id, db, organization_id
+    )
+    alertas_count_query = add_organization_scope(
+        alertas_count_query, Equipo.organizacion_id, db, organization_id
+    )
+    mantenciones_count_query = add_organization_scope(
+        mantenciones_count_query, Equipo.organizacion_id, db, organization_id
+    )
 
     if desde is not None:
         lecturas_count_query = lecturas_count_query.where(Lectura.timestamp >= desde)

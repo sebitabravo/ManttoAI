@@ -63,10 +63,19 @@ def build_payload(rng: random.Random) -> dict[str, float | str]:
     }
 
 
-def build_topic(topic_prefix: str, equipo_id: int) -> str:
-    """Construye el topic MQTT para un equipo."""
+def build_mac_address(equipo_id: int) -> str:
+    """Construye la MAC determinista usada por los equipos demo."""
 
-    return f"{topic_prefix.rstrip('/')}/{equipo_id}"
+    if equipo_id <= 0 or equipo_id > 0xFFFF:
+        raise ValueError("equipo_id debe estar entre 1 y 65535")
+
+    return f"02:00:00:00:{equipo_id // 256:02X}:{equipo_id % 256:02X}"
+
+
+def build_topic(topic_prefix: str, equipo_id: int) -> str:
+    """Construye el topic MQTT por MAC para un equipo demo."""
+
+    return f"{topic_prefix.rstrip('/')}/{build_mac_address(equipo_id)}"
 
 
 def publish_reading(

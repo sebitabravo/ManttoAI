@@ -34,4 +34,21 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_index(op.f("ix_equipos_rubro"), table_name="equipos")
+    bind = op.get_bind()
+    check_name = "ck_equipos_rubro_valido"
+    check_exists = any(
+        constraint.get("name") == check_name
+        for constraint in sa.inspect(bind).get_check_constraints("equipos")
+    )
+
+    if check_exists and bind.dialect.name == "sqlite":
+        # SQLite recrea la tabla al quitar columnas y no permite conservar un
+        # CHECK que referencia la columna eliminada.
+        with op.batch_alter_table("equipos", recreate="always") as batch_op:
+            batch_op.drop_constraint(check_name, type_="check")
+            batch_op.drop_column("rubro")
+        return
+
+    if check_exists:
+        op.drop_constraint(check_name, "equipos", type_="check")
     op.drop_column("equipos", "rubro")

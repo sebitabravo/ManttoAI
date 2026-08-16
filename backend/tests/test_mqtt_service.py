@@ -1,6 +1,7 @@
 """Tests de parsing y persistencia del servicio MQTT."""
 
 import json
+from threading import Event
 from types import SimpleNamespace
 from collections.abc import Generator
 
@@ -141,6 +142,33 @@ def test_process_mqtt_message_invalid_payload_does_not_break_loop(
         assert total_lecturas == 0
     finally:
         db.close()
+
+
+def test_on_message_encola_persistencia_fuera_del_callback(monkeypatch):
+    """El callback MQTT no debe ejecutar la persistencia en el loop de paho."""
+
+    import app.services.mqtt_service as mqtt_service
+
+    persisted = Event()
+
+    def fake_process(topic, payload, session_factory):
+        assert topic == "manttoai/telemetria/AA:BB:CC:DD:EE:05"
+        assert payload == b"{}"
+        persisted.set()
+        return True
+
+    stop_mqtt_subscriber()
+    monkeypatch.setattr(mqtt_service, "process_mqtt_message", fake_process)
+    mqtt_service._start_mqtt_worker()
+
+    mqtt_service._on_message(
+        None,
+        {"session_factory": lambda: None},
+        SimpleNamespace(topic="manttoai/telemetria/AA:BB:CC:DD:EE:05", payload=b"{}"),
+    )
+
+    assert persisted.wait(timeout=1)
+    mqtt_service._stop_mqtt_worker()
 
 
 class _DummyMqttClient:

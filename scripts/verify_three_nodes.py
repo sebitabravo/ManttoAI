@@ -15,6 +15,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
+API_PREFIX = "/api/v1"
+
 
 @dataclass
 class EquipoCheck:
@@ -26,6 +28,12 @@ class EquipoCheck:
     timestamp: datetime | None
     temperatura: float | None
     detalle: str
+
+
+def api_endpoint(api_url: str, path: str) -> str:
+    """Construye una URL del contrato HTTP versionado."""
+
+    return f"{api_url.rstrip('/')}{API_PREFIX}/{path.lstrip('/')}"
 
 
 def parse_args() -> argparse.Namespace:
@@ -170,7 +178,7 @@ def resolve_auth_password() -> str:
         return env_password
 
     try:
-        prompt = "Password de admin para /auth/login (input oculto): "
+        prompt = "Password de admin para /api/v1/auth/login (input oculto): "
         password = getpass.getpass(prompt=prompt).strip()
     except (EOFError, KeyboardInterrupt) as exc:
         raise ValueError(
@@ -204,7 +212,7 @@ def build_dashboard_map(
     """Construye mapa de resumen por equipo para validación rápida."""
 
     dashboard_payload = fetch_json(
-        f"{api_url.rstrip('/')}/dashboard/resumen",
+        api_endpoint(api_url, "/dashboard/resumen"),
         token=token,
         ca_bundle=ca_bundle,
     )
@@ -239,7 +247,7 @@ def validate_equipo(
 
     try:
         lectura_payload = fetch_json(
-            f"{api_url.rstrip('/')}/lecturas/latest/{equipo_id}",
+            api_endpoint(api_url, f"/lecturas/latest/{equipo_id}"),
             token=token,
             ca_bundle=ca_bundle,
         )
@@ -394,18 +402,18 @@ def resolve_auth_token(api_url: str, token: str, email: str, ca_bundle: str) -> 
     password = resolve_auth_password()
 
     login_payload = fetch_json(
-        f"{api_url.rstrip('/')}/auth/login",
+        api_endpoint(api_url, "/auth/login"),
         method="POST",
         payload={"email": email, "password": password},
         ca_bundle=ca_bundle,
     )
 
     if not isinstance(login_payload, dict):
-        raise ValueError("Respuesta inválida de /auth/login")
+        raise ValueError("Respuesta inválida de /api/v1/auth/login")
 
     access_token = str(login_payload.get("access_token") or "").strip()
     if not access_token:
-        raise ValueError("No se recibió access_token desde /auth/login")
+        raise ValueError("No se recibió access_token desde /api/v1/auth/login")
 
     return access_token
 
@@ -437,7 +445,9 @@ def main() -> int:
             ca_bundle=ca_bundle,
         )
     except HTTPError as exc:
-        print(format_http_error("No se pudo obtener token desde /auth/login", exc))
+        print(
+            format_http_error("No se pudo obtener token desde /api/v1/auth/login", exc)
+        )
         print("Verificá --api-url, --auth-email y credenciales de autenticación.")
         return 1
     except URLError as exc:
@@ -452,10 +462,13 @@ def main() -> int:
             args.api_url, auth_token, ca_bundle=ca_bundle
         )
     except HTTPError as exc:
-        print(format_http_error("No se pudo leer /dashboard/resumen", exc))
+        print(format_http_error("No se pudo leer /api/v1/dashboard/resumen", exc))
         return 1
     except URLError as exc:
-        print(f"No se pudo conectar al API para leer /dashboard/resumen: {exc.reason}")
+        print(
+            "No se pudo conectar al API para leer /api/v1/dashboard/resumen: "
+            f"{exc.reason}"
+        )
         return 1
 
     checks = [

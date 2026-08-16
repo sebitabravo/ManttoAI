@@ -59,7 +59,11 @@ def get_api_keys(
 ) -> list[APIKeyResponse]:
     """Lista todas las API Keys (solo admin)."""
 
-    api_keys = list_api_keys(db, include_inactive=include_inactive, device_id=device_id)
+    api_keys = list_api_keys(
+        db,
+        include_inactive=include_inactive,
+        device_id=device_id,
+    )
     return [APIKeyResponse.model_validate(key) for key in api_keys]
 
 

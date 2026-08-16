@@ -1,9 +1,12 @@
 """Tests para el router de usuarios."""
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.main import app
+from app.models.api_key import APIKey
+from app.models.audit_log import AuditLog
 from app.models.usuario import Usuario
 
 client = TestClient(app)
@@ -161,6 +164,44 @@ def test_delete_usuario_as_admin(db: Session, tecnico_user: Usuario, admin_token
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 404
+
+
+def test_delete_usuario_cleans_dependent_credentials_and_audit_logs(
+    db: Session, tecnico_user: Usuario, admin_token: str
+):
+    """El borrado de usuario no debe fallar por referencias dependientes."""
+
+    target_id = tecnico_user.id
+    audit_log = AuditLog(
+        usuario_id=target_id,
+        action="login",
+        entity_type="usuario",
+        entity_id=target_id,
+    )
+    api_key = APIKey(
+        key_hash="hash-de-prueba",
+        key_prefix="mttk_test",
+        device_id="device-delete-test",
+        created_by_id=target_id,
+    )
+    db.add_all([audit_log, api_key])
+    db.commit()
+
+    response = client.delete(
+        f"/api/v1/usuarios/{target_id}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == 204
+    db.expire_all()
+    assert db.scalars(select(Usuario).where(Usuario.id == target_id)).first() is None
+    assert (
+        db.scalars(
+            select(APIKey).where(APIKey.device_id == "device-delete-test")
+        ).first()
+        is None
+    )
+    assert db.get(AuditLog, audit_log.id).usuario_id is None
 
 
 def test_delete_self_as_admin(db: Session, admin_user: Usuario, admin_token: str):

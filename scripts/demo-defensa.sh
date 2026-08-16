@@ -13,6 +13,17 @@
 set -e  # Salir si algún comando falla
 set -u  # Error si se usa variable sin definir
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+read_env_value() {
+    local file_path="$1"
+    local key="$2"
+
+    if [ -f "$file_path" ]; then
+        awk -F= -v wanted_key="$key" '$1 == wanted_key {sub(/^[^=]*=/, ""); print; exit}' "$file_path"
+    fi
+}
+
 # Colores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -28,6 +39,19 @@ BACKEND_URL="${BACKEND_URL:-http://localhost:8000}"
 FRONTEND_URL="${FRONTEND_URL:-http://localhost:5173}"
 MQTT_BROKER="${MQTT_BROKER:-localhost}"
 MQTT_PORT="${MQTT_PORT:-1883}"
+LOCAL_SEED_ADMIN_EMAIL="$(read_env_value "$ROOT_DIR/backend/.env" "SEED_ADMIN_EMAIL")"
+LOCAL_SEED_ADMIN_PASSWORD="$(read_env_value "$ROOT_DIR/backend/.env" "SEED_ADMIN_PASSWORD")"
+LOCAL_MQTT_USERNAME="$(read_env_value "$ROOT_DIR/backend/.env" "MQTT_USERNAME")"
+LOCAL_MQTT_PASSWORD="$(read_env_value "$ROOT_DIR/backend/.env" "MQTT_PASSWORD")"
+DEMO_AUTH_EMAIL="${DEMO_AUTH_EMAIL:-${SEED_ADMIN_EMAIL:-${LOCAL_SEED_ADMIN_EMAIL:-admin@manttoai.local}}}"
+DEMO_AUTH_PASSWORD="${DEMO_AUTH_PASSWORD:-${SEED_ADMIN_PASSWORD:-${LOCAL_SEED_ADMIN_PASSWORD:-}}}"
+MQTT_USERNAME="${MQTT_USERNAME:-${LOCAL_MQTT_USERNAME:-}}"
+MQTT_PASSWORD="${MQTT_PASSWORD:-${LOCAL_MQTT_PASSWORD:-}}"
+MQTT_DEMO_MAC="${MQTT_DEMO_MAC:-02:00:00:00:00:01}"
+MQTT_AUTH_ARGS=()
+if [ -n "$MQTT_USERNAME" ]; then
+    MQTT_AUTH_ARGS=(-u "$MQTT_USERNAME" -P "$MQTT_PASSWORD")
+fi
 
 # Función para imprimir encabezado de sección
 print_section() {
@@ -124,26 +148,40 @@ demo_step_3_auth() {
     print_section "PASO 3: Autenticación JWT"
     
     print_subsection "3.1 Login con credenciales admin"
-    print_info "Usuario: admin@manttoai.local"
+    print_info "Usuario: ${DEMO_AUTH_EMAIL}"
     print_info "Endpoint: POST ${BACKEND_URL}/api/v1/auth/login"
-    
-    local login_response=$(curl -s -X POST "${BACKEND_URL}/api/v1/auth/login" \
+
+    if [ -z "$DEMO_AUTH_PASSWORD" ]; then
+        print_error "Falta DEMO_AUTH_PASSWORD o SEED_ADMIN_PASSWORD; no se usan credenciales hardcodeadas"
+        return 1
+    fi
+
+    local login_payload
+    login_payload=$(jq -n \
+        --arg email "$DEMO_AUTH_EMAIL" \
+        --arg password "$DEMO_AUTH_PASSWORD" \
+        '{email: $email, password: $password}')
+
+    local login_response
+    if ! login_response=$(curl --silent --show-error --fail \
+        -X POST "${BACKEND_URL}/api/v1/auth/login" \
         -H "Content-Type: application/json" \
-        -d '{"email":"admin@manttoai.local","password":"admin123"}')
-    
-    echo "$login_response" | jq '.' 2>/dev/null || echo "$login_response"
-    
-    # Extraer token
+        -d "$login_payload"); then
+        print_error "El login de la demo falló; revisá el endpoint y las credenciales configuradas"
+        return 1
+    fi
+
+    # Extraer el token sin imprimir la respuesta, que contiene credenciales de sesión.
     JWT_TOKEN=$(echo "$login_response" | jq -r '.access_token' 2>/dev/null)
-    
+
     if [ -n "$JWT_TOKEN" ] && [ "$JWT_TOKEN" != "null" ]; then
         print_success "Token JWT obtenido correctamente"
-        print_info "Token: ${JWT_TOKEN:0:40}..."
+        print_info "Token JWT recibido (omitido de la salida por seguridad)"
     else
         print_error "No se pudo obtener el token JWT"
         return 1
     fi
-    
+
     pause_demo
 }
 
@@ -216,7 +254,7 @@ demo_step_6_iot_mqtt() {
     
     print_subsection "6.1 Publicar lectura simulada via MQTT"
     print_info "Broker: mqtt://${MQTT_BROKER}:${MQTT_PORT}"
-    print_info "Topic: manttoai/telemetria/AA:BB:CC:DD:EE:FF"
+    print_info "Topic: manttoai/telemetria/${MQTT_DEMO_MAC}"
 
     # Verificar si mosquitto_pub está disponible
     if ! command -v mosquitto_pub &> /dev/null; then
@@ -241,7 +279,8 @@ EOF
     echo "$test_payload" | jq '.'
 
     mosquitto_pub -h "${MQTT_BROKER}" -p "${MQTT_PORT}" \
-        -t "manttoai/telemetria/AA:BB:CC:DD:EE:FF" \
+        "${MQTT_AUTH_ARGS[@]}" \
+        -t "manttoai/telemetria/${MQTT_DEMO_MAC}" \
         -m "$test_payload"
     
     print_success "Mensaje MQTT publicado correctamente"

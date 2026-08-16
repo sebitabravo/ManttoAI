@@ -8,6 +8,7 @@ import { AVATARES } from "../utils/constants";
 
 export default function ProfilePage() {
   const { user, login } = useAuth();
+  const isDemo = Boolean(user?.is_demo);
   const [form, setForm] = useState({ nombre: user?.nombre || "", avatar: user?.avatar || "user" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,6 +27,11 @@ export default function ProfilePage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (isDemo) {
+      setError("La cuenta demo es de solo lectura");
+      return;
+    }
 
     if (!form.nombre || form.nombre.trim().length < 2) {
       setError("Nombre debe tener al menos 2 caracteres");
@@ -48,7 +54,15 @@ export default function ProfilePage() {
     // Comentario: Ajustes visuales al estilo Apple — eliminar bordes visibles en contenedores
     <div className="p-6">
       <h1 className="mb-2 text-2xl font-semibold text-neutral-800">Mi Perfil</h1>
-      <p className="mb-6 text-sm text-neutral-600">Actualiza tu información personal.</p>
+      <p className="mb-6 text-sm text-neutral-600">
+        {isDemo ? "La cuenta demo es de solo lectura." : "Actualiza tu información personal."}
+      </p>
+
+      {isDemo ? (
+        <div className="mb-6 max-w-md rounded-2xl bg-warning-50 px-3 py-2 text-sm text-warning-800" role="status">
+          Para mantener disponible la demo, el perfil y la contraseña no se pueden modificar.
+        </div>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="max-w-md">
         {error ? <div className="mb-4 rounded-2xl bg-danger-50 px-3 py-2 text-sm text-danger-700">{error}</div> : null}
@@ -63,6 +77,7 @@ export default function ProfilePage() {
                 key={av.id}
                 type="button"
                 onClick={() => handleAvatarSelect(av.id)}
+                disabled={isDemo}
                 className={`flex h-12 w-12 items-center justify-center rounded-full text-xl transition-all ${
                   form.avatar === av.id
                     ? "ring-2 ring-primary-500 ring-offset-2 bg-primary-50"
@@ -76,7 +91,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <Input label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} />
+        <Input label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} disabled={isDemo} />
         
         {/* Teléfono: solo lectura, se configura desde admin */}
         <div className="mt-4">
@@ -88,7 +103,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-6">
-          <Button type="submit" disabled={loading}>{loading ? "Guardando..." : "Guardar"}</Button>
+          <Button type="submit" disabled={loading || isDemo}>{loading ? "Guardando..." : "Guardar"}</Button>
         </div>
       </form>
     </div>

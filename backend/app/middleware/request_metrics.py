@@ -23,6 +23,15 @@ class RequestMetricsMiddleware(BaseHTTPMiddleware):
         elapsed_ms = (time.perf_counter() - start_time) * 1000
         correlation_id = getattr(request.state, "correlation_id", "-")
 
+        # Import lazy para evitar el ciclo middleware -> router -> app. Las
+        # métricas son observabilidad auxiliar: nunca deben romper el request.
+        try:
+            from app.routers.metrics import _record_metrics
+
+            _record_metrics(request.url.path, elapsed_ms / 1000)
+        except Exception:
+            logger.debug("No se pudo registrar métrica de request", exc_info=True)
+
         logger.info(
             "metric=%s method=%s path=%s status=%s duration_ms=%.2f corr=%s",
             "request_duration",

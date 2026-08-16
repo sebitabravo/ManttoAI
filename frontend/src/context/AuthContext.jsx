@@ -19,6 +19,7 @@ function sanitizeUserForStorage(user) {
     email: user.email,
     // avatar se incluye para mostrar en el UserMenu
     avatar: user.avatar,
+    is_demo: Boolean(user.is_demo),
   };
 }
 

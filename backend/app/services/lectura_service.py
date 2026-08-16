@@ -2,13 +2,15 @@
 
 import logging
 from collections.abc import Callable
+from datetime import datetime, timedelta, timezone
 from smtplib import SMTPException
 
 from fastapi import BackgroundTasks, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.schemas.lectura import LecturaCreate, LecturaMqttPayload
 from app.services.alerta_service import (
@@ -17,6 +19,11 @@ from app.services.alerta_service import (
     evaluate_thresholds,
 )
 from app.services.equipo_service import get_equipo_or_404
+from app.services.tenant_scope import (
+    UNSCOPED,
+    add_organization_scope,
+    resolve_organization_id,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +33,14 @@ def list_lecturas(
     equipo_id: int | None = None,
     limit: int | None = 100,
     offset: int | None = None,
+    organization_id: int | None | object = UNSCOPED,
 ) -> list[Lectura]:
     """Lista lecturas persistidas con orden descendente, límite y offset opcionales."""
 
-    query = select(Lectura)
+    query = select(Lectura).join(Equipo, Equipo.id == Lectura.equipo_id)
     if equipo_id is not None:
         query = query.where(Lectura.equipo_id == equipo_id)
+    query = add_organization_scope(query, Equipo.organizacion_id, db, organization_id)
 
     query = query.order_by(Lectura.timestamp.desc(), Lectura.id.desc())
     if offset is not None:
@@ -42,14 +51,42 @@ def list_lecturas(
     return list(db.scalars(query))
 
 
-def get_latest_lectura(db: Session, equipo_id: int) -> Lectura:
+def prune_old_lecturas(
+    db: Session,
+    retention_days: int,
+    now: datetime | None = None,
+) -> int:
+    """Elimina lecturas anteriores a la ventana de retención configurada."""
+
+    if retention_days <= 0:
+        return 0
+
+    reference_time = now or datetime.now(timezone.utc)
+    cutoff = reference_time - timedelta(days=retention_days)
+    try:
+        result = db.execute(delete(Lectura).where(Lectura.timestamp < cutoff))
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise
+
+    return int(result.rowcount or 0)
+
+
+def get_latest_lectura(
+    db: Session, equipo_id: int, organization_id: int | None | object = UNSCOPED
+) -> Lectura:
     """Obtiene la última lectura persistida de un equipo."""
 
-    lectura = db.scalars(
+    query = (
         select(Lectura)
+        .join(Equipo, Equipo.id == Lectura.equipo_id)
         .where(Lectura.equipo_id == equipo_id)
         .order_by(Lectura.timestamp.desc(), Lectura.id.desc())
         .limit(1)
+    )
+    lectura = db.scalars(
+        add_organization_scope(query, Equipo.organizacion_id, db, organization_id)
     ).first()
 
     if lectura is None:
@@ -66,16 +103,29 @@ def create_lectura(
     payload: LecturaCreate,
     background_tasks: BackgroundTasks | None = None,
     session_factory: Callable | None = None,
+    organization_id: int | None | object = UNSCOPED,
 ) -> Lectura:
     """Crea y persiste una lectura asociada a un equipo existente."""
 
-    get_equipo_or_404(db, payload.equipo_id)
-    lectura = Lectura(**payload.model_dump(exclude_none=True))
+    equipo = get_equipo_or_404(db, payload.equipo_id, organization_id)
+    values = payload.model_dump(exclude_none=True)
+    resolved_id = resolve_organization_id(db, organization_id)
+    if resolved_id is UNSCOPED:
+        resolved_id = equipo.organizacion_id
+    if resolved_id is not UNSCOPED:
+        values["organizacion_id"] = resolved_id
+    lectura = Lectura(**values)
     db.add(lectura)
 
     try:
         db.flush()
-        alertas_creadas = evaluate_thresholds(db, lectura)
+        if resolved_id is None:
+            # Mantiene compatibilidad con workers/tests que operan sobre equipos globales.
+            alertas_creadas = evaluate_thresholds(db, lectura)
+        else:
+            alertas_creadas = evaluate_thresholds(db, lectura, resolved_id)
+        db.flush()
+        alerta_ids = [a.id for a in alertas_creadas if a.nivel == "alto"]
         db.commit()
     except IntegrityError:
         # Race condition: otra lectura concurrente ya creó la misma alerta.
@@ -83,47 +133,14 @@ def create_lectura(
         db.rollback()
         db.add(lectura)
         db.flush()
-        # Re-evaluar sin crear duplicados: verificar alertas existentes
-        from app.models.alerta import Alerta
-        from app.models.umbral import Umbral
-        from app.services.alerta_service import (
-            _is_out_of_range,
-            _resolve_alert_type,
-            _resolve_threshold_target,
-        )
-
-        alertas_creadas = []
-        umbrales = list(
-            db.scalars(select(Umbral).where(Umbral.equipo_id == lectura.equipo_id))
-        )
-        for umbral in umbrales:
-            target = _resolve_threshold_target(lectura, umbral.variable)
-            if target is None:
-                continue
-            valor, mensaje_alerta = target
-            if not _is_out_of_range(valor, umbral.valor_min, umbral.valor_max):
-                continue
-            tipo_alerta = _resolve_alert_type(umbral.variable)
-            # Verificar si ya existe cualquier alerta con esta clave
-            existente = db.scalars(
-                select(Alerta)
-                .where(Alerta.equipo_id == lectura.equipo_id)
-                .where(Alerta.tipo == tipo_alerta)
-                .where(Alerta.mensaje == mensaje_alerta)
-                .where(Alerta.leida.is_(False))
-                .limit(1)
-            ).first()
-            if existente is None:
-                alerta = Alerta(
-                    equipo_id=lectura.equipo_id,
-                    tipo=tipo_alerta,
-                    mensaje=mensaje_alerta,
-                    nivel="alto",
-                    email_enviado=False,
-                    leida=False,
-                )
-                db.add(alerta)
-                alertas_creadas.append(alerta)
+        # Re-evaluar usando la misma regla pública; el evaluador ya evita
+        # alertas activas equivalentes bajo el lock del equipo.
+        if resolved_id is None:
+            alertas_creadas = evaluate_thresholds(db, lectura)
+        else:
+            alertas_creadas = evaluate_thresholds(db, lectura, resolved_id)
+        db.flush()
+        alerta_ids = [a.id for a in alertas_creadas if a.nivel == "alto"]
         db.commit()
     except Exception:
         db.rollback()
@@ -134,7 +151,6 @@ def create_lectura(
     if not alertas_creadas:
         return lectura
 
-    alerta_ids = [a.id for a in alertas_creadas if a.nivel == "alto"]
     if not alerta_ids:
         return lectura
 
@@ -143,6 +159,7 @@ def create_lectura(
             dispatch_critical_email_notifications_bg,
             alerta_ids,
             session_factory,
+            run_inline=session_factory is not None,
         )
     else:
         try:
@@ -162,6 +179,7 @@ def create_lectura_from_mqtt_payload(
     payload: LecturaMqttPayload,
     background_tasks: BackgroundTasks | None = None,
     session_factory: Callable | None = None,
+    organization_id: int | None | object = UNSCOPED,
 ) -> Lectura:
     """Persiste una lectura MQTT transformándola al schema de creación."""
 
@@ -169,9 +187,10 @@ def create_lectura_from_mqtt_payload(
         equipo_id=equipo_id,
         **payload.model_dump(exclude_none=True),
     )
-    return create_lectura(
-        db,
-        lectura_create,
-        background_tasks=background_tasks,
-        session_factory=session_factory,
-    )
+    kwargs = {
+        "background_tasks": background_tasks,
+        "session_factory": session_factory,
+    }
+    if organization_id is not UNSCOPED:
+        kwargs["organization_id"] = organization_id
+    return create_lectura(db, lectura_create, **kwargs)

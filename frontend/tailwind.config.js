@@ -51,8 +51,8 @@ export default {
           100: "#f5f5f7",   // Apple gray
           200: "#e8e8ed",
           300: "#d2d2d7",
-          400: "#86868b",   // Secondary text
-          500: "#6e6e73",
+          400: "#6e6e73",   // Secondary text con contraste AA
+          500: "#4f4f54",
           600: "#1d1d1f",   // Primary text
           700: "#1d1d1f",
           800: "#000000",

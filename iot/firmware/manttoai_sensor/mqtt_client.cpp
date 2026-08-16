@@ -80,7 +80,7 @@ void connectMqttIfNeeded() {
   last_mqtt_retry_ms = now;
 
   char client_id[48] = {0};
-  std::snprintf(client_id, sizeof(client_id), "manttoai-esp32-%d", WiFi.macAddress().c_str());
+  std::snprintf(client_id, sizeof(client_id), "manttoai-esp32-%s", WiFi.macAddress().c_str());
 
   Serial.print("[mqtt] Conectando broker ");
   Serial.print(MQTT_HOST);

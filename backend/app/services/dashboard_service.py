@@ -1,7 +1,5 @@
 """Servicios agregados para el dashboard."""
 
-import time
-
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -10,11 +8,7 @@ from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.prediccion import Prediccion
 from app.services import prediccion_service
-
-# Cache en memoria para dashboard summary (TTL 5 segundos)
-_cache_timestamp: float = 0.0
-_cached_summary: dict | None = None
-_CACHE_TTL = 5.0
+from app.services.tenant_scope import UNSCOPED, add_organization_scope
 
 DashboardEquipoItem = dict[str, int | str | float | None]
 DashboardSummaryPayload = dict[str, int | float | str | list[DashboardEquipoItem]]
@@ -32,7 +26,9 @@ def _to_float_or_none(value: object) -> float | None:
         return None
 
 
-def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
+def _build_dashboard_equipo_items(
+    db: Session, organization_id: int | None | object = UNSCOPED
+) -> list[DashboardEquipoItem]:
     """Construye payload compacto por equipo para polling del dashboard."""
 
     lecturas_rankeadas = select(
@@ -87,7 +83,7 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
         .subquery()
     )
 
-    rows = db.execute(
+    query = (
         select(
             Equipo.id,
             Equipo.nombre,
@@ -106,7 +102,9 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
             alertas_activas_por_equipo.c.equipo_id == Equipo.id,
         )
         .order_by(Equipo.id)
-    ).all()
+    )
+    query = add_organization_scope(query, Equipo.organizacion_id, db, organization_id)
+    rows = db.execute(query).all()
 
     equipos: list[DashboardEquipoItem] = []
     for row in rows:
@@ -128,16 +126,13 @@ def _build_dashboard_equipo_items(db: Session) -> list[DashboardEquipoItem]:
     return equipos
 
 
-def get_dashboard_summary(db: Session) -> DashboardSummaryPayload:
+def get_dashboard_summary(
+    db: Session, organization_id: int | None | object = UNSCOPED
+) -> DashboardSummaryPayload:
     """Retorna un resumen agregado para la vista principal."""
 
-    global _cache_timestamp, _cached_summary
-    now = time.time()
-    if _cached_summary is not None and (now - _cache_timestamp) < _CACHE_TTL:
-        return _cached_summary
-
-    equipos = _build_dashboard_equipo_items(db)
-    prediccion = prediccion_service.get_latest_prediction_global(db)
+    equipos = _build_dashboard_equipo_items(db, organization_id)
+    prediccion = prediccion_service.get_latest_prediction_global(db, organization_id)
     if prediccion is not None:
         clasificacion = prediccion.clasificacion
         probabilidad = float(prediccion.probabilidad)
@@ -161,6 +156,4 @@ def get_dashboard_summary(db: Session) -> DashboardSummaryPayload:
         "equipos": equipos,
     }
 
-    _cache_timestamp = time.time()
-    _cached_summary = result
     return result

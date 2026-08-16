@@ -28,13 +28,15 @@ class Usuario(Base):
     # Avatar seleccionado por el usuario (nombre del icono/emoji)
     avatar: Mapped[str | None] = mapped_column(String(50), nullable=True, default=None)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    # Las cuentas demo compartidas no pueden cambiar credenciales ni perfil.
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     password_changed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
     # Campos para el wizard de onboarding (RNF-26)
     # onboarding_step: paso actual del wizard (1-5), null si completado
-    # Constraint a nivel DB para garantizar integridad (nullable permite null cuando已完成)
+    # Constraint a nivel DB para garantizar integridad (nullable permite null al completar)
     onboarding_step: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,

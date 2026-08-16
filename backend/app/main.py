@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.config import get_settings
+from app.config import NON_DEV_ENVS, get_redis_connection_kwargs, get_settings
 from app.utils.logging_config import setup_logging
 from app.database import check_database_connection, initialize_database_schema
 from app.dependencies import get_current_user, require_role
@@ -48,7 +48,6 @@ from app.services.simulator_service import start_simulator, stop_simulator
 settings = get_settings()
 setup_logging(app_name=settings.app_name, level="INFO")
 logger = logging.getLogger(__name__)
-ORIGINAL_CHECK_DATABASE_CONNECTION = check_database_connection
 
 
 async def initialize_schema_with_retry(
@@ -78,9 +77,7 @@ async def initialize_schema_with_retry(
 async def lifespan(app_instance: FastAPI):
     """Inicializa recursos de aplicación en el arranque."""
 
-    if settings.database_auto_init and not hasattr(
-        app_instance.state, "testing_session_local"
-    ):
+    if settings.database_auto_init:
         await initialize_schema_with_retry()
 
     if settings.mqtt_enabled:
@@ -105,8 +102,9 @@ async def lifespan(app_instance: FastAPI):
             stop_mqtt_subscriber()
 
 
-# Ocultar documentación OpenAPI en producción (VULN-01)
-_docs_enabled = settings.app_env not in {"production", "staging", "prod"}
+# Ocultar documentación OpenAPI fuera de desarrollo por defecto. Se puede
+# habilitar explícitamente para una demo pública sin cambiar APP_ENV.
+_docs_enabled = settings.enable_api_docs or settings.app_env not in NON_DEV_ENVS
 
 app = FastAPI(
     title=settings.app_name,
@@ -115,7 +113,9 @@ app = FastAPI(
     redoc_url="/redoc" if _docs_enabled else None,
     openapi_url="/openapi.json" if _docs_enabled else None,
 )
-API_V1_PREFIX = "/api/v1"
+API_V1_PREFIX = settings.api_prefix.strip() or "/api/v1"
+if not API_V1_PREFIX.startswith("/"):
+    API_V1_PREFIX = f"/{API_V1_PREFIX}"
 
 
 app.add_middleware(
@@ -151,8 +151,7 @@ app.add_middleware(RequestMetricsMiddleware)
 # Configurar audit logging automático
 app.middleware("http")(audit_middleware)
 
-# Auth expuesto en /api/v1 y raíz por compatibilidad con clientes legacy
-app.include_router(auth.router)
+# API operativa versionada; las rutas de salud y legales quedan fuera de /api/v1.
 app.include_router(auth.router, prefix=API_V1_PREFIX)
 
 # Documentación legal pública
@@ -161,11 +160,7 @@ app.include_router(legal.router)
 # Router IoT (público pero con API key authentication)
 app.include_router(iot.router, prefix=API_V1_PREFIX)
 
-# Admin-only routers — dual-mounted (raíz + /api/v1) para backward compatibility
-app.include_router(
-    usuarios.router,
-    dependencies=[Depends(require_role("admin"))],
-)
+# Admin-only routers bajo el prefijo versionado.
 app.include_router(
     usuarios.router,
     dependencies=[Depends(require_role("admin"))],
@@ -174,15 +169,7 @@ app.include_router(
 app.include_router(
     api_keys.router,
     dependencies=[Depends(require_role("admin"))],
-)
-app.include_router(
-    api_keys.router,
-    dependencies=[Depends(require_role("admin"))],
     prefix=API_V1_PREFIX,
-)
-app.include_router(
-    audit_logs.router,
-    dependencies=[Depends(require_role("admin"))],
 )
 app.include_router(
     audit_logs.router,
@@ -190,37 +177,19 @@ app.include_router(
     prefix=API_V1_PREFIX,
 )
 
-# Domain routers — dual-mounted (raíz + /api/v1) para backward compatibility con tests
-app.include_router(onboarding.router)
+# Domain routers bajo el prefijo versionado.
 app.include_router(onboarding.router, prefix=API_V1_PREFIX)
-app.include_router(equipos.router)
 app.include_router(equipos.router, prefix=API_V1_PREFIX)
-app.include_router(lecturas.router)
 app.include_router(lecturas.router, prefix=API_V1_PREFIX)
-app.include_router(alertas.router)
 app.include_router(alertas.router, prefix=API_V1_PREFIX)
-app.include_router(predicciones.router)
 app.include_router(predicciones.router, prefix=API_V1_PREFIX)
-app.include_router(mantenciones.router)
 app.include_router(mantenciones.router, prefix=API_V1_PREFIX)
-app.include_router(umbrales.router)
 app.include_router(umbrales.router, prefix=API_V1_PREFIX)
-app.include_router(dashboard.router)
 app.include_router(dashboard.router, prefix=API_V1_PREFIX)
-app.include_router(reportes.router)
 app.include_router(reportes.router, prefix=API_V1_PREFIX)
-app.include_router(chat.router)
 app.include_router(chat.router, prefix=API_V1_PREFIX)
 
-# IoT router — dual-mounted
-app.include_router(iot.router)
-app.include_router(iot.router, prefix=API_V1_PREFIX)
-
-# Métricas (requiere auth) — dual-mounted
-app.include_router(
-    metrics.router,
-    dependencies=[Depends(get_current_user)],
-)
+# Métricas (requiere auth) bajo el prefijo versionado.
 app.include_router(
     metrics.router,
     dependencies=[Depends(get_current_user)],
@@ -238,29 +207,26 @@ async def health_check() -> JSONResponse:
 async def readiness_check() -> JSONResponse:
     """Readiness probe: verifica DB, Redis y MQTT. 503 cuando está degradado."""
 
-    import os
-
     components = {"db": False, "redis": False, "mqtt": False}
 
     # Verificar base de datos
     try:
-        db_connected = (
-            check_database_connection()
-            if check_database_connection is not ORIGINAL_CHECK_DATABASE_CONNECTION
-            or not hasattr(app.state, "testing_session_local")
-            else True
-        )
+        db_connected = check_database_connection()
         components["db"] = True if db_connected else False
     except Exception:
         components["db"] = False
 
     # Verificar Redis si está configurado
-    redis_url = os.getenv("REDIS_URL", "")
+    redis_url = settings.redis_url.strip()
     if redis_url:
         try:
             import redis
 
-            r = redis.from_url(redis_url, socket_connect_timeout=2)
+            r = redis.from_url(
+                redis_url,
+                socket_connect_timeout=2,
+                **get_redis_connection_kwargs(settings),
+            )
             r.ping()
             components["redis"] = True
         except Exception:
@@ -273,8 +239,8 @@ async def readiness_check() -> JSONResponse:
         try:
             import socket
 
-            mqtt_host = os.getenv("MQTT_BROKER_HOST", "mosquitto")
-            mqtt_port = int(os.getenv("MQTT_BROKER_PORT", "1883"))
+            mqtt_host = settings.mqtt_broker_host
+            mqtt_port = settings.mqtt_broker_port
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(2)
             result = sock.connect_ex((mqtt_host, mqtt_port))

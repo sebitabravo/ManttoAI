@@ -48,10 +48,12 @@ destructivos no intencionales en bases productivas.
 
 ## Modelo ML en runtime
 
-- Por defecto el build Docker instala solo dependencias runtime (`INSTALL_DEV_REQS=false`) y
-  no entrena modelo (`SKIP_TRAIN=true`) para mantener imágenes livianas y builds reproducibles.
+- El Dockerfile local instala solo dependencias runtime (`INSTALL_DEV_REQS=false`) y
+  omite entrenamiento por defecto (`SKIP_TRAIN=true` vía Compose) para builds rápidos.
+- El Dockerfile de Render (`Dockerfile.render`) genera el artefacto porque
+  `modelo.joblib` está fuera de git.
 - En desarrollo local, `docker-compose.override.yml` activa `INSTALL_DEV_REQS=true`.
-- Si se requiere artefacto embebido en imagen: `docker compose build --build-arg SKIP_TRAIN=false backend`.
+- Si se requiere artefacto embebido en la imagen local: `docker compose build --build-arg SKIP_TRAIN=false backend`.
 - Si falta en runtime y `ML_AUTO_TRAIN_ON_MISSING=true`, el backend auto-entrena y continúa.
 
 ## SMTP de demo
@@ -59,11 +61,29 @@ destructivos no intencionales en bases productivas.
 - El stack local incluye Mailpit (`mailpit:1025` SMTP, `http://localhost:8025` UI).
 - Permite validar alertas email sin depender de un proveedor externo.
 
-> **Nota MVP**: el bootstrap automático de esquema (`create_all`) es suficiente para el prototipo. En un entorno productivo se reemplazaría por migraciones explícitas con Alembic.
+> **Nota MVP**: el prototipo todavía usa `create_all` y runtime fixes de forma
+> explícita. Alembic tiene un bootstrap compatible para una base completamente
+> vacía, pero una base existente creada sin `alembic_version` requiere una
+> transición respaldada e inspeccionada antes de retirar esos flags.
 
 ## Tests
 
 Los tests usan SQLite en memoria por defecto. Solo los tests de integración requieren MySQL.
+
+### Recuperar un entorno virtual roto
+
+Si `.venv/bin/python` apunta a una versión de Python que ya no existe (por
+ejemplo, después de cambiar la versión activa de `uv` o `pyenv`), recreá el
+entorno con una versión soportada y reinstalá las dependencias:
+
+```bash
+rm -rf .venv
+uv venv --python 3.11 .venv
+uv pip install --python .venv/bin/python -r requirements.txt -r requirements-dev.txt
+```
+
+No borres la base de datos ni los archivos `.env` para resolver este problema:
+el venv es un artefacto local ignorado por Git.
 
 ### Tests unitarios (no requiere MySQL)
 
@@ -95,6 +115,21 @@ docker compose up -d mysql
 # Desde backend/, ejecutar solo tests de integración
 pytest tests/ -v -m "integration"
 ```
+
+### Roundtrip de Alembic en MySQL
+
+`tests/test_alembic_bootstrap.py` incluye un caso destructivo opt-in para una
+base MySQL efímera. Ejecutalo solo contra una base descartable, nunca contra
+Compose compartido ni Aiven con datos:
+
+```bash
+RUN_MYSQL_ALEMBIC_TESTS=1 \
+DATABASE_URL='mysql+pymysql://usuario:password@localhost:3306/base' \
+pytest tests/test_alembic_bootstrap.py -v
+```
+
+El caso verifica `upgrade head` y `downgrade base`, incluyendo las FKs e
+índices que MySQL exige retirar temporalmente durante el downgrade.
 
 ### Dependencias de test
 

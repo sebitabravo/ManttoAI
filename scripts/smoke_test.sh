@@ -2,6 +2,7 @@
 set -euo pipefail
 
 API_URL="${API_URL:-http://localhost:8000}"
+API_BASE="${API_URL%/}/api/v1"
 FRONTEND_URL="${FRONTEND_URL:-http://localhost:5173}"
 EQUIPO_ID="${EQUIPO_ID:-1}"
 SMOKE_WAIT_SECONDS="${SMOKE_WAIT_SECONDS:-90}"
@@ -90,6 +91,20 @@ wait_for_backend() {
   done
 }
 
+wait_for_frontend() {
+  local elapsed
+  elapsed=0
+
+  until curl --silent --show-error --fail "${FRONTEND_URL}" >/dev/null 2>&1; do
+    if [ "$elapsed" -ge "$SMOKE_WAIT_SECONDS" ]; then
+      error "Frontend no disponible en ${FRONTEND_URL} después de ${SMOKE_WAIT_SECONDS}s"
+    fi
+
+    sleep 2
+    elapsed=$((elapsed + 2))
+  done
+}
+
 login_backend() {
   local response_file
   local status_code
@@ -108,7 +123,7 @@ login_backend() {
       --output "$response_file" \
       --write-out "%{http_code}" \
       --cookie-jar "$AUTH_COOKIE_FILE" \
-      -X POST "${API_URL}/auth/login" \
+      -X POST "${API_BASE}/auth/login" \
       -H "Content-Type: application/json" \
       -d "{\"email\":\"${SMOKE_AUTH_EMAIL}\",\"password\":\"${SMOKE_AUTH_PASSWORD}\"}"
   })"
@@ -156,7 +171,7 @@ execute_prediction() {
       --write-out "%{http_code}" \
       --cookie "$AUTH_COOKIE_FILE" \
       -H "X-CSRF-Token: ${SMOKE_CSRF_TOKEN}" \
-      -X POST "${API_URL}/predicciones/ejecutar/${EQUIPO_ID}"
+      -X POST "${API_BASE}/predicciones/ejecutar/${EQUIPO_ID}"
   })"
 
   if [ "$status_code" = "503" ]; then
@@ -174,7 +189,7 @@ execute_prediction() {
         --write-out "%{http_code}" \
         --cookie "$AUTH_COOKIE_FILE" \
         -H "X-CSRF-Token: ${SMOKE_CSRF_TOKEN}" \
-        -X POST "${API_URL}/predicciones/ejecutar/${EQUIPO_ID}"
+        -X POST "${API_BASE}/predicciones/ejecutar/${EQUIPO_ID}"
     })"
   fi
 
@@ -201,7 +216,7 @@ make up
 wait_for_backend
 
 log "Verificando frontend disponible"
-curl --silent --show-error --fail "${FRONTEND_URL}" >/dev/null
+wait_for_frontend
 
 log "Cargando datos base de demo"
 # El seed debe ejecutarse ANTES del login para garantizar que el usuario admin exista,
@@ -213,7 +228,7 @@ login_backend
 log "Escenario 1/3: operación normal (simulador -> persistencia)"
 make simulate
 
-LECTURAS_JSON="$(curl --silent --show-error --fail --cookie "$AUTH_COOKIE_FILE" "${API_URL}/lecturas?equipo_id=${EQUIPO_ID}")"
+LECTURAS_JSON="$(curl --silent --show-error --fail --cookie "$AUTH_COOKIE_FILE" "${API_BASE}/lecturas?equipo_id=${EQUIPO_ID}")"
 export LECTURAS_JSON
 python3 - <<'PY'
 import json
@@ -238,12 +253,12 @@ curl \
   --fail \
   --cookie "$AUTH_COOKIE_FILE" \
   -H "X-CSRF-Token: ${SMOKE_CSRF_TOKEN}" \
-  -X POST "${API_URL}/lecturas" \
+  -X POST "${API_BASE}/lecturas" \
   -H "Content-Type: application/json" \
   -d "{\"equipo_id\":${EQUIPO_ID},\"temperatura\":95.0,\"humedad\":30.0,\"vib_x\":2.5,\"vib_y\":2.5,\"vib_z\":25.0}" \
   >/dev/null
 
-ALERTAS_JSON="$(curl --silent --show-error --fail --cookie "$AUTH_COOKIE_FILE" "${API_URL}/alertas?equipo_id=${EQUIPO_ID}&solo_no_leidas=true&limite=100")"
+ALERTAS_JSON="$(curl --silent --show-error --fail --cookie "$AUTH_COOKIE_FILE" "${API_BASE}/alertas?equipo_id=${EQUIPO_ID}&solo_no_leidas=true&limite=100")"
 export ALERTAS_JSON
 python3 - <<'PY'
 import json
@@ -288,7 +303,7 @@ if [ "$IS_RISK" != "1" ]; then
     --fail \
     --cookie "$AUTH_COOKIE_FILE" \
     -H "X-CSRF-Token: ${SMOKE_CSRF_TOKEN}" \
-    -X POST "${API_URL}/lecturas" \
+    -X POST "${API_BASE}/lecturas" \
     -H "Content-Type: application/json" \
     -d "{\"equipo_id\":${EQUIPO_ID},\"temperatura\":110.0,\"humedad\":20.0,\"vib_x\":3.5,\"vib_y\":3.5,\"vib_z\":30.0}" \
     >/dev/null
@@ -297,7 +312,7 @@ if [ "$IS_RISK" != "1" ]; then
   export PREDICCION_JSON
 fi
 
-SUMMARY_JSON="$(curl --silent --show-error --fail --cookie "$AUTH_COOKIE_FILE" "${API_URL}/dashboard/resumen")"
+SUMMARY_JSON="$(curl --silent --show-error --fail --cookie "$AUTH_COOKIE_FILE" "${API_BASE}/dashboard/resumen")"
 export SUMMARY_JSON
 export EQUIPO_ID
 python3 - <<'PY'
@@ -359,7 +374,7 @@ fi
 
 if [ -n "$SMTP_HOST_CHECK" ]; then
   log "SMTP configurado (${SMTP_HOST_CHECK}), verificando envío de email de prueba..."
-  if docker compose exec backend python /scripts/test_smtp_real.py; then
+  if docker compose exec backend env PYTHONPATH=/app python /scripts/test_smtp_real.py; then
     log "Email SMTP OK ✅"
   else
     log "⚠️  Email SMTP falló — revisar configuración SMTP en backend/.env (no bloquea smoke)"

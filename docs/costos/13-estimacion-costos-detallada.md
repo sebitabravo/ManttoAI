@@ -4,6 +4,12 @@
 
 ManttoAI como empresa real opera con un capital inicial de **$3.000.000 CLP** aportado por los 3 socios fundadores. La estimación es ascendente (bottom-up) para activos y análoga para honorarios profesionales.
 
+> **Alcance de esta estimación:** las cifras siguientes son una proyección del
+> plan de negocios y mantienen el escenario DigitalOcean/PostgreSQL/Spaces
+> usado para la evaluación académica. No deben confundirse con el blueprint
+> técnico free-tier de la demo (`Vercel + Render + Aiven MySQL`), que se
+> documenta por separado y no está desplegado ni verificado públicamente.
+
 ### Inversión inicial Año 1
 
 | Categoría | Ítem | Justificación | Monto (CLP) |
@@ -53,4 +59,6 @@ El presupuesto académico simulado (CLP $9.790.000) incluía honorarios del equi
 
 ---
 
-*Fuentes: Digital Ocean Pricing 2026, MercadoLibre CL, contadoresenlinea.cl, NIC Chile, OficinVirtual.cl, Hetzner Cloud.*
+*Fuentes: DigitalOcean Pricing 2026, GitHub Education Student Developer Pack,
+MercadoLibre CL, contadoresenlinea.cl, NIC Chile, OficinVirtual.cl, Hetzner
+Cloud. La vigencia de beneficios y precios debe verificarse antes de contratar.*

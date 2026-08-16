@@ -30,13 +30,34 @@ config: setup-env
 
 # === Backend ===
 test:
-	cd backend && pytest tests/ -v --cov=app --cov-report=term-missing
+	@if [ -x backend/.venv/bin/python ]; then \
+		cd backend && .venv/bin/python -m pytest tests/ -v --cov=app --cov-report=term-missing; \
+	elif command -v python >/dev/null 2>&1; then \
+		cd backend && python -m pytest tests/ -v --cov=app --cov-report=term-missing; \
+	else \
+		echo "No se encontró un intérprete Python ejecutable para el runner backend" >&2; \
+		exit 127; \
+	fi
 
 lint:
-	cd backend && ruff check app/ && black --check app/
+	@if [ -x backend/.venv/bin/ruff ] && [ -x backend/.venv/bin/black ]; then \
+		cd backend && .venv/bin/ruff check app/ && .venv/bin/black --check app/; \
+	elif command -v ruff >/dev/null 2>&1 && command -v black >/dev/null 2>&1; then \
+		cd backend && ruff check app/ && black --check app/; \
+	else \
+		echo "No se encontraron ruff y black ejecutables para el lint backend" >&2; \
+		exit 127; \
+	fi
 
 lint-fix:
-	cd backend && ruff check app/ --fix && black app/
+	@if [ -x backend/.venv/bin/ruff ] && [ -x backend/.venv/bin/black ]; then \
+		cd backend && .venv/bin/ruff check app/ --fix && .venv/bin/black app/; \
+	elif command -v ruff >/dev/null 2>&1 && command -v black >/dev/null 2>&1; then \
+		cd backend && ruff check app/ --fix && black app/; \
+	else \
+		echo "No se encontraron ruff y black ejecutables para el lint backend" >&2; \
+		exit 127; \
+	fi
 
 seed:
 	# Requiere backend en ejecución y montaje de ./scripts en /scripts
@@ -69,7 +90,7 @@ smoke-front:
 
 # === IoT ===
 simulate:
-	docker compose exec backend python /simulator/mqtt_simulator.py --host mosquitto --port 1883 --username "$${MQTT_USERNAME:-manttoai_mqtt}" --password "$${MQTT_PASSWORD:-manttoai_mqtt_dev}" --devices 3 --count 8 --interval 1
+	docker compose exec backend sh -c 'python /simulator/mqtt_simulator.py --host mosquitto --port 1883 --username "$$MQTT_USERNAME" --password "$$MQTT_PASSWORD" --devices 3 --count 8 --interval 1'
 
 verify-3-nodes:
 	python scripts/verify_three_nodes.py --api-url "http://localhost:8000" --equipos "1,2,3" --auth-email "$${SEED_ADMIN_EMAIL:-admin@manttoai.local}" --ventana-minutos 10 --max-desfase-segundos 120
@@ -96,5 +117,4 @@ mqtt-listen:
 	mosquitto_sub -h localhost -t "manttoai/#" -v
 
 mqtt-test:
-	mosquitto_pub -h localhost -u "$${MQTT_USERNAME:-manttoai_mqtt}" -P "$${MQTT_PASSWORD:-manttoai_mqtt_dev}" -t "manttoai/telemetria/AA:BB:CC:DD:EE:FF" \
-		-m '{"temperatura":45.2,"humedad":60,"vib_x":0.3,"vib_y":0.1,"vib_z":9.8}'
+	docker compose exec mosquitto sh -c 'mosquitto_pub -h 127.0.0.1 -u "$$MQTT_USERNAME" -P "$$MQTT_PASSWORD" -t "manttoai/telemetria/AA:BB:CC:DD:EE:FF" -m '\''{"temperatura":45.2,"humedad":60,"vib_x":0.3,"vib_y":0.1,"vib_z":9.8}'\'''

@@ -17,7 +17,7 @@ class APIKey(Base):
     key_hash: Mapped[str] = mapped_column(String(255))  # Hash bcrypt de la key
     key_prefix: Mapped[str] = mapped_column(
         String(20), index=True
-    )  # Últimos 12 caracteres para UI (mayor entropía que 8)
+    )  # Primeros 12 caracteres para búsqueda y UI
     device_id: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     created_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("usuarios.id"))

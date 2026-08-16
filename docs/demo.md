@@ -33,7 +33,7 @@ El script ejecuta:
 - `make up`
 - `make seed`
 - `make simulate`
-- lectura de endpoints críticos (`/lecturas`, `/alertas`, `/predicciones`, `/dashboard/resumen`)
+- lectura de endpoints críticos (`/api/v1/lecturas`, `/api/v1/alertas`, `/api/v1/predicciones`, `/api/v1/dashboard/resumen`)
 - verificación de disponibilidad frontend (`http://localhost:5173`)
 
 Si el modelo no está disponible, lo entrena automáticamente antes de reintentar predicción.
@@ -59,7 +59,7 @@ make seed
 
 ```bash
 make simulate
-curl "http://localhost:8000/lecturas?equipo_id=1"
+curl "http://localhost:8000/api/v1/lecturas?equipo_id=1"
 ```
 
 Resultado esperado: lista de lecturas no vacía.
@@ -79,11 +79,11 @@ Resultado esperado:
 ### 3) Escenario de breach de umbral con alerta
 
 ```bash
-curl -X POST "http://localhost:8000/lecturas" \
+curl -X POST "http://localhost:8000/api/v1/lecturas" \
   -H "Content-Type: application/json" \
   -d '{"equipo_id":1,"temperatura":95.0,"humedad":30.0,"vib_x":2.5,"vib_y":2.5,"vib_z":25.0}'
 
-curl "http://localhost:8000/alertas?equipo_id=1&solo_no_leidas=true&limite=100"
+curl "http://localhost:8000/api/v1/alertas?equipo_id=1&solo_no_leidas=true&limite=100"
 ```
 
 Resultado esperado: al menos una alerta activa (`tipo` temperatura o vibración).
@@ -91,15 +91,15 @@ Resultado esperado: al menos una alerta activa (`tipo` temperatura o vibración)
 ### 4) Escenario de predicción de riesgo visible en dashboard
 
 ```bash
-curl -X POST "http://localhost:8000/predicciones/ejecutar/1"
-curl "http://localhost:8000/dashboard/resumen"
+curl -X POST "http://localhost:8000/api/v1/predicciones/ejecutar/1"
+curl "http://localhost:8000/api/v1/dashboard/resumen"
 ```
 
-Si `/predicciones/ejecutar/1` responde `503` por artefacto ausente:
+Si `/api/v1/predicciones/ejecutar/1` responde `503` por artefacto ausente:
 
 ```bash
 docker compose exec backend python /app/app/ml/train.py
-curl -X POST "http://localhost:8000/predicciones/ejecutar/1"
+curl -X POST "http://localhost:8000/api/v1/predicciones/ejecutar/1"
 ```
 
 Resultado esperado en dashboard:

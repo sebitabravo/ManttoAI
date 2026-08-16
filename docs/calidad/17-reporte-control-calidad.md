@@ -12,7 +12,7 @@ Este reporte detalla los resultados empíricos extraídos de la auditoría del r
 
 ### 1. Calidad del Modelo Machine Learning
 - **Métrica:** F1-Score ≥ 80%
-- **Resultado:** ✅ **94.1%** (Superado)
+- **Resultado:** ✅ **93.0% F1** (Superado; accuracy: **94.1%**)
 - **Evidencia:** Reporte reproducible en `backend/reports/ml-evaluation-latest.md` y `ml-evaluation-latest.json`.
 
 ### 2. Cobertura de Tests (Backend)

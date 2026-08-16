@@ -9,16 +9,17 @@ from functools import wraps
 from threading import RLock
 from time import perf_counter
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_current_user, get_db, require_role
 from app.models.alerta import Alerta
 from app.models.equipo import Equipo
 from app.models.lectura import Lectura
 from app.models.usuario import Usuario
+from app.services.tenant_scope import add_organization_scope
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 logger = logging.getLogger(__name__)
@@ -43,23 +44,22 @@ def _get_redis():
 
     try:
         import redis as redis_lib
-        from app.config import get_settings
+        from app.config import get_redis_connection_kwargs, get_settings
 
         settings = get_settings()
-        _redis_client = redis_lib.Redis(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            password=settings.redis_password or None,
+        redis_url = settings.redis_url.strip()
+        if not redis_url:
+            return None
+
+        _redis_client = redis_lib.from_url(
+            redis_url,
             socket_connect_timeout=1,
             decode_responses=True,
+            **get_redis_connection_kwargs(settings),
         )
         # Verificar conexion
         _redis_client.ping()
-        logger.info(
-            "Métricas conectadas a Redis %s:%s",
-            settings.redis_host,
-            settings.redis_port,
-        )
+        logger.info("Métricas conectadas a Redis.")
         return _redis_client
     except Exception:
         # Fallback a memoria si Redis no está disponible
@@ -166,7 +166,7 @@ def _get_average_duration(endpoint: str, last_n: int = 100) -> float | None:
         return sum(recent) / len(recent) if recent else None
 
 
-@router.get("/summary")
+@router.get("/summary", dependencies=[Depends(require_role("admin"))])
 async def get_metrics_summary(
     request: Request,
     db: Session = Depends(get_db),
@@ -175,16 +175,36 @@ async def get_metrics_summary(
     """Retorna un resumen de métricas del sistema."""
 
     # Métricas de base de datos
-    total_equipos = db.scalar(select(func.count(Equipo.id)))
-    total_alertas_activas = db.scalar(
-        select(func.count(Alerta.id)).where(Alerta.leida.is_(False))
-    )
-    total_lecturas_24h = db.scalar(
-        select(func.count(Lectura.id)).where(
-            Lectura.timestamp >= datetime.now(timezone.utc) - timedelta(hours=24)
+    total_equipos = db.scalar(
+        add_organization_scope(
+            select(func.count(Equipo.id)), Equipo.organizacion_id, db
         )
     )
-    total_usuarios = db.scalar(select(func.count(Usuario.id)))
+    total_alertas_activas = db.scalar(
+        add_organization_scope(
+            select(func.count(Alerta.id))
+            .join(Equipo, Equipo.id == Alerta.equipo_id)
+            .where(Alerta.leida.is_(False)),
+            Equipo.organizacion_id,
+            db,
+        )
+    )
+    total_lecturas_24h = db.scalar(
+        add_organization_scope(
+            select(func.count(Lectura.id))
+            .join(Equipo, Equipo.id == Lectura.equipo_id)
+            .where(
+                Lectura.timestamp >= datetime.now(timezone.utc) - timedelta(hours=24)
+            ),
+            Equipo.organizacion_id,
+            db,
+        )
+    )
+    total_usuarios = db.scalar(
+        add_organization_scope(
+            select(func.count(Usuario.id)), Usuario.organizacion_id, db
+        )
+    )
 
     request_count_snapshot = _get_all_counts()
 
@@ -220,7 +240,7 @@ async def get_metrics_summary(
     }
 
 
-@router.get("/health-detailed")
+@router.get("/health-detailed", dependencies=[Depends(require_role("admin"))])
 async def get_detailed_health(
     request: Request,
     db: Session = Depends(get_db),
@@ -237,7 +257,11 @@ async def get_detailed_health(
             "message": "Database connection OK",
         }
     except SQLAlchemyError as exc:
-        components["database"] = {"status": "unhealthy", "message": str(exc)}
+        logger.warning("Health check de DB falló: %s", type(exc).__name__)
+        components["database"] = {
+            "status": "unhealthy",
+            "message": "Database unavailable",
+        }
 
     # Verificar Redis
     r = _get_redis()
@@ -249,7 +273,11 @@ async def get_detailed_health(
                 "message": "Redis connection OK",
             }
         except Exception as exc:
-            components["redis"] = {"status": "unhealthy", "message": str(exc)}
+            logger.warning("Health check de Redis falló: %s", type(exc).__name__)
+            components["redis"] = {
+                "status": "unhealthy",
+                "message": "Redis unavailable",
+            }
     else:
         components["redis"] = {
             "status": "degraded",
@@ -277,15 +305,9 @@ async def get_detailed_health(
 @router.post("/reset")
 async def reset_metrics(
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_role("admin")),
 ):
     """Reseta las métricas acumuladas (solo admin)."""
-
-    if current_user.rol != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo admin puede resetear métricas",
-        )
 
     # Limpiar Redis
     r = _get_redis()

@@ -10,8 +10,7 @@ static const char* MQTT_HOST = "REEMPLAZAR_MQTT_HOST";  // p.ej. IP local o host
 static const int MQTT_PORT = 1883;
 static const char* MQTT_USERNAME = "REEMPLAZAR_MQTT_USERNAME";
 static const char* MQTT_PASSWORD = "REEMPLAZAR_MQTT_PASSWORD";
-// Para demo con múltiples nodos, cada ESP32 debe usar un EQUIPO_ID distinto.
-static const int EQUIPO_ID = 1;
+// El backend enruta por la MAC de hardware; cada ESP32 debe usar una MAC distinta.
 
 static const unsigned long MQTT_PUBLISH_INTERVAL_MS = 10000;
 static const unsigned long WIFI_RETRY_INTERVAL_MS = 5000;

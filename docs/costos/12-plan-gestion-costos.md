@@ -7,6 +7,19 @@
 **Integrantes:** Sebastián Bravo · Luis Loyola · Ángel Rubilar
 **Temuco, mayo de 2026**
 
+> **Nota de vigencia — 16 de agosto de 2026:** este documento conserva la
+> línea base académica y la proyección comercial construida sobre DigitalOcean;
+> sus montos no representan un presupuesto confirmado para la demo pública
+> actual. La oferta de GitHub Student Developer Pack registra créditos de
+> DigitalOcean válidos hasta el **31 de julio de 2026**, por lo que no deben
+> presentarse como infraestructura gratuita permanente. Para la vitrina
+> recruiter-facing se preparó un escenario separado con Vercel Hobby, Render
+> Free y Aiven MySQL Free; ese escenario todavía no tiene URL pública ni
+> recursos externos verificados. Aiven documenta su MySQL Free como servicio
+> sin tarjeta y sin límite temporal, pero con límites de 1 GB de RAM, 1 GB de
+> almacenamiento y apagado por inactividad. Ver el detalle operativo en
+> [`docs/despliegue-render.md`](../despliegue-render.md).
+
 ---
 
 ## 1. Marco Teórico — Gestión de los Costos según PMBOK 6ta Edición
@@ -116,6 +129,8 @@ El prototipo técnico implementado en este repositorio tuvo un costo real de **U
 ## Referencias
 
 - Project Management Institute. (2017). *Guía de los Fundamentos para la Dirección de Proyectos (Guía del PMBOK®) — Sexta Edición*. PMI.
+- GitHub Education. (2026). *GitHub Student Developer Pack — DigitalOcean offer*. https://education.github.com/pack
+- Aiven. (2026). *Aiven for MySQL free tier*. https://aiven.io/docs/products/mysql/concepts/mysql-free-tier
 - Digital Ocean. (2026). *Pricing — Droplets, Managed Databases, Spaces*. https://www.digitalocean.com/pricing
 - contadoresenlinea.cl. (2026). *Planes de contabilidad para microempresas*. https://www.contadoresenlinea.cl/
 - NIC Chile. (2026). *Aranceles y registro de dominios .cl*. https://www.nic.cl/
